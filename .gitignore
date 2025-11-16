@@ -1,0 +1,50 @@
+# Rust
+/src-tauri/target/
+**/*.rs.bk
+*.pdb
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Vite
+dist/
+dist-ssr/
+*.local
+
+# Frontend build
+/frontend/dist/
+/frontend/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tauri
+/src-tauri/target/
+/src-tauri/WixTools/
+
+# App data (sensitive!)
+*.enc
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
