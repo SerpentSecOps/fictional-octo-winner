@@ -4,6 +4,7 @@ import Settings from './views/Settings';
 import Chat from './views/Chat';
 import Canvas from './views/Canvas';
 import CodeLab from './views/CodeLab';
+import RAG from './views/RAG';
 import { useAppStore } from './store/appStore';
 import { getProviders } from './api/config';
 import { listProjects } from './api/rag';
@@ -34,6 +35,8 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'chat':
         return <Chat />;
+      case 'rag':
+        return <RAG />;
       case 'canvas':
         return <Canvas />;
       case 'codelab':

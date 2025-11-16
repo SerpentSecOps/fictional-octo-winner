@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { MaskedProviderConfig, Project } from '../api/types';
 
-export type ViewType = 'chat' | 'canvas' | 'codelab' | 'settings';
+export type ViewType = 'chat' | 'rag' | 'canvas' | 'codelab' | 'settings';
 
 interface AppState {
   // Current view

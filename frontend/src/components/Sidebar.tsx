@@ -3,6 +3,7 @@ import { useAppStore } from '../store/appStore';
 import type { ViewType } from '../store/appStore';
 import {
   MessageSquare,
+  Database,
   Layout,
   Code,
   Settings,
@@ -14,6 +15,7 @@ const Sidebar: React.FC = () => {
 
   const navItems: Array<{ id: ViewType; label: string; icon: React.ReactNode }> = [
     { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
+    { id: 'rag', label: 'RAG', icon: <Database size={20} /> },
     { id: 'canvas', label: 'Canvas', icon: <Layout size={20} /> },
     { id: 'codelab', label: 'Code Lab', icon: <Code size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
