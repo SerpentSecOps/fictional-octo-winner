@@ -11,6 +11,7 @@ import type { Project, Document, ChunkMatch } from '../api/types';
 import { open } from '@tauri-apps/api/dialog';
 import { readTextFile } from '@tauri-apps/api/fs';
 import { Upload, FileText, Trash2, Search, Loader2, MessageSquare } from 'lucide-react';
+import { showError, showSuccess, showLoading, dismissToast } from '../utils/toast';
 
 const RAG: React.FC = () => {
   const { providers, selectedProject, setSelectedProject, projects, setProjects } =
@@ -62,13 +63,13 @@ const RAG: React.FC = () => {
       setShowNewProject(false);
     } catch (error) {
       console.error('Failed to create project:', error);
-      alert('Failed to create project');
+      showError('Failed to create project');
     }
   };
 
   const handleUploadDocument = async () => {
     if (!selectedProject || !selectedProvider) {
-      alert('Please select a project and provider first');
+      showError('Please select a project and provider first');
       return;
     }
 
@@ -100,7 +101,7 @@ const RAG: React.FC = () => {
         provider_id: selectedProvider,
       });
 
-      alert(
+      showSuccess(
         `Document uploaded! Created ${response.chunks_created} chunks for indexing.`
       );
 
@@ -108,7 +109,7 @@ const RAG: React.FC = () => {
       await loadDocuments();
     } catch (error) {
       console.error('Upload failed:', error);
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadingDoc(false);
     }
@@ -137,7 +138,7 @@ const RAG: React.FC = () => {
       setSearchResults(response.sources);
     } catch (error) {
       console.error('RAG chat failed:', error);
-      alert(`Query failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showError(`Query failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSearching(false);
     }

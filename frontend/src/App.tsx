@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Sidebar from './components/Sidebar';
 import Settings from './views/Settings';
-import Chat from './views/Chat';
+import ChatV2 from './views/ChatV2';
 import Canvas from './views/Canvas';
 import CodeLab from './views/CodeLab';
 import RAG from './views/RAG';
@@ -34,7 +35,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'chat':
-        return <Chat />;
+        return <ChatV2 />;
       case 'rag':
         return <RAG />;
       case 'canvas':
@@ -44,12 +45,13 @@ const App: React.FC = () => {
       case 'settings':
         return <Settings />;
       default:
-        return <Chat />;
+        return <ChatV2 />;
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      <Toaster />
       <Sidebar />
       <main className="flex-1 overflow-hidden">{renderView()}</main>
     </div>

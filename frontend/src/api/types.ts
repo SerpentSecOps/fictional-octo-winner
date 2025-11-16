@@ -83,3 +83,25 @@ export interface CanvasEdge {
   source: string;
   target: string;
 }
+
+export interface Conversation {
+  id: number;
+  title: string;
+  provider_id: string;
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  role: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ConversationWithMessages {
+  conversation: Conversation;
+  messages: Message[];
+}

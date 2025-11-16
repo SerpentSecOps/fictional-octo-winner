@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Code, AlertCircle } from 'lucide-react';
+import { showInfo } from '../utils/toast';
 
 const CodeLab: React.FC = () => {
   const [code, setCode] = useState(`// JavaScript/TypeScript Code Editor
@@ -21,7 +22,7 @@ console.log(greet("World"));
 
   // TODO: Implement lint_code Tauri command
   const handleLint = async () => {
-    alert('Linting feature TODO: Requires ESLint integration via Tauri command');
+    showInfo('Linting feature TODO: Requires ESLint integration via Tauri command');
   };
 
   return (
