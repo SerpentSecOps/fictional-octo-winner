@@ -7,17 +7,16 @@ import {
   addDocument,
   ragChat,
 } from '../api/rag';
-import type { Project, Document, ChunkMatch } from '../api/types';
+import type { Document, ChunkMatch } from '../api/types';
 import { open } from '@tauri-apps/api/dialog';
 import { readTextFile } from '@tauri-apps/api/fs';
-import { Upload, FileText, Trash2, Search, Loader2, MessageSquare } from 'lucide-react';
-import { showError, showSuccess, showLoading, dismissToast } from '../utils/toast';
+import { Upload, FileText, Trash2, Loader2, MessageSquare } from 'lucide-react';
+import { showError, showSuccess } from '../utils/toast';
 
 const RAG: React.FC = () => {
   const { providers, selectedProject, setSelectedProject, projects, setProjects } =
     useAppStore();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);

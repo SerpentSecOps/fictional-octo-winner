@@ -9,7 +9,7 @@ import {
   addMessage,
   updateConversationTitle,
 } from '../api/conversation';
-import type { Conversation, Message as DbMessage } from '../api/types';
+import type { Conversation } from '../api/types';
 import { Send, Loader2, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { showError, showSuccess } from '../utils/toast';

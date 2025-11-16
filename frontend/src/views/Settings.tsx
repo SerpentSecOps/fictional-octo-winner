@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import { updateProvider, testProviderConnection, getProviders } from '../api/config';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 
 const AVAILABLE_PROVIDERS = [
   {
