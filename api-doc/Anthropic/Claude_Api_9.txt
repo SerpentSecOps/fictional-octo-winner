@@ -1,0 +1,4361 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: CLAUDEYMQTNG8LK (sha256-58db9600ba88963038e35c57e5e4c5cf76c136a1bd3b9350752bbf54c9ff3847) | Title: Typescript]
+[DocID: CLAUDE1KGVC2O2ED (sha256-90e2e5c30425b80c51a30dd46bd5649152025059ea3336e92587d080f385d553) | Title: Usage-Cost-Api]
+[DocID: CLAUDE26J0672AVE (sha256-c97c56a1a28ae7e128b25d3280e011b30d7aa749be84253058a27176bac0961a) | Title: Use-Xml-Tags]
+[DocID: CLAUDENLX3BQ5SW (sha256-3c9344afc6e0c81911406a2be7312afc9805ffd5e66ad26dfe03ea83b32d0452) | Title: Vision]
+[DocID: CLAUDEN0DEOSIL9 (sha256-3b0a227b2d1ddfea68b9f0926d28dd4b9ec34316fd41fc5a6f4b2463680038bd) | Title: Web-Fetch-Tool]
+[DocID: CLAUDE1TEBI0X13R (sha256-a7cbebd53bd729b296dccdb1cfaa4060b5ef9cc0bc46dc6e82d0faea1d4d1be6) | Title: Web-Search-Tool]
+[DocID: CLAUDE221K1Z7AUU (sha256-bdfaa1b659b61613217791316597bdd4b095ca1e112dc7e203df41bdc6f634b6) | Title: Whats-New-Claude-4-5]
+[DocID: CLAUDE27LRE5TGOE (sha256-cc3f777b06ae7607f2ecad5274dd8a810e027ec76f79bffa4a8423501b21d2bf) | Title: Working-With-Messages]
+--- END OF TOC ---
+
+[START OF DOCUMENT: CLAUDEYMQTNG8LK | Title: Typescript]
+
+# Agent SDK reference - TypeScript
+
+> Complete API reference for the TypeScript Agent SDK, including all functions, types, and interfaces.
+
+<script src="/components/typescript-sdk-type-links.js" defer />
+
+## Installation```bash  theme={null}
+npm install @anthropic-ai/claude-agent-sdk
+```## Functions
+
+### `query()`
+
+The primary function for interacting with Claude Code. Creates an async generator that streams messages as they arrive.```ts  theme={null}
+function query({
+  prompt,
+  options
+}: {
+  prompt: string | AsyncIterable<SDKUserMessage>;
+  options?: Options;
+}): Query
+```#### Parameters
+
+| Parameter | Type | Description |
+| :-------- | :--------------------------------------------------------------- | :---------------------------------------------------------------- |
+| `prompt` | `string \| AsyncIterable<`[`SDKUserMessage`](#sdkusermessage)`>` | The input prompt as a string or async iterable for streaming mode |
+| `options` | [`Options`](#options) | Optional configuration object (see Options type below) |
+
+#### Returns
+
+Returns a [`Query`](#query-1) object that extends `AsyncGenerator<`[`SDKMessage`](#sdkmessage)`, void>` with additional methods.
+
+### `tool()`
+
+Creates a type-safe MCP tool definition for use with SDK MCP servers.```ts  theme={null}
+function tool<Schema extends ZodRawShape>(
+  name: string,
+  description: string,
+  inputSchema: Schema,
+  handler: (args: z.infer<ZodObject<Schema>>, extra: unknown) => Promise<CallToolResult>
+): SdkMcpToolDefinition<Schema>
+```#### Parameters
+
+| Parameter | Type | Description |
+| :------------ | :---------------------------------------------------------------- | :---------------------------------------------- |
+| `name` | `string` | The name of the tool |
+| `description` | `string` | A description of what the tool does |
+| `inputSchema` | `Schema extends ZodRawShape` | Zod schema defining the tool's input parameters |
+| `handler` | `(args, extra) => Promise<`[`CallToolResult`](#calltoolresult)`>` | Async function that executes the tool logic |
+
+### `createSdkMcpServer()`
+
+Creates an MCP server instance that runs in the same process as your application.```ts  theme={null}
+function createSdkMcpServer(options: {
+  name: string;
+  version?: string;
+  tools?: Array<SdkMcpToolDefinition<any>>;
+}): McpSdkServerConfigWithInstance
+```#### Parameters
+
+| Parameter | Type | Description |
+| :---------------- | :---------------------------- | :------------------------------------------------------- |
+| `options.name` | `string` | The name of the MCP server |
+| `options.version` | `string` | Optional version string |
+| `options.tools` | `Array<SdkMcpToolDefinition>` | Array of tool definitions created with [`tool()`](#tool) |
+
+## Types
+
+### `Options`
+
+Configuration object for the `query()` function.
+
+| Property | Type | Default | Description |
+| :--------------------------- | :------------------------------------------------------------------------------------------------ | :------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `abortController` | `AbortController` | `new AbortController()` | Controller for cancelling operations |
+| `additionalDirectories` | `string[]` | `[]` | Additional directories Claude can access |
+| `agents` | `Record<string, [`AgentDefinition`](#agentdefinition)>` | `undefined` | Programmatically define subagents |
+| `allowedTools` | `string[]` | All tools | List of allowed tool names |
+| `canUseTool` | [`CanUseTool`](#canusetool) | `undefined` | Custom permission function for tool usage |
+| `continue` | `boolean` | `false` | Continue the most recent conversation |
+| `cwd` | `string` | `process.cwd()` | Current working directory |
+| `disallowedTools` | `string[]` | `[]` | List of disallowed tool names |
+| `env` | `Dict<string>` | `process.env` | Environment variables |
+| `executable` | `'bun' \| 'deno' \| 'node'` | Auto-detected | JavaScript runtime to use |
+| `executableArgs` | `string[]` | `[]` | Arguments to pass to the executable |
+| `extraArgs` | `Record<string, string \| null>` | `{}` | Additional arguments |
+| `fallbackModel` | `string` | `undefined` | Model to use if primary fails |
+| `forkSession` | `boolean` | `false` | When resuming with `resume`, fork to a new session ID instead of continuing the original session |
+| `hooks` | `Partial<Record<`[`HookEvent`](#hookevent)`, `[`HookCallbackMatcher`](#hookcallbackmatcher)`[]>>` | `{}` | Hook callbacks for events |
+| `includePartialMessages` | `boolean` | `false` | Include partial message events |
+| `maxThinkingTokens` | `number` | `undefined` | Maximum tokens for thinking process |
+| `maxTurns` | `number` | `undefined` | Maximum conversation turns |
+| `mcpServers` | `Record<string, [`McpServerConfig`](#mcpserverconfig)>` | `{}` | MCP server configurations |
+| `model` | `string` | Default from CLI | Claude model to use |
+| `pathToClaudeCodeExecutable` | `string` | Auto-detected | Path to Claude Code executable |
+| `permissionMode` | [`PermissionMode`](#permissionmode) | `'default'` | Permission mode for the session |
+| `permissionPromptToolName` | `string` | `undefined` | MCP tool name for permission prompts |
+| `plugins` | [`SdkPluginConfig`](#sdkpluginconfig)`[]` | `[]` | Load custom plugins from local paths. See [Plugins](/en/docs/agent-sdk/plugins) for details |
+| `resume` | `string` | `undefined` | Session ID to resume |
+| `settingSources` | [`SettingSource`](#settingsource)`[]` | `[]` (no settings) | Control which filesystem settings to load. When omitted, no settings are loaded. **Note:** Must include `'project'` to load CLAUDE.md files |
+| `stderr` | `(data: string) => void` | `undefined` | Callback for stderr output |
+| `strictMcpConfig` | `boolean` | `false` | Enforce strict MCP validation |
+| `systemPrompt` | `string \| { type: 'preset'; preset: 'claude_code'; append?: string }` | `undefined` (empty prompt) | System prompt configuration. Pass a string for custom prompt, or `{ type: 'preset', preset: 'claude_code' }` to use Claude Code's system prompt. When using the preset object form, add `append` to extend the system prompt with additional instructions |
+
+### `Query`
+
+Interface returned by the `query()` function.```ts  theme={null}
+interface Query extends AsyncGenerator<SDKMessage, void> {
+  interrupt(): Promise<void>;
+  setPermissionMode(mode: PermissionMode): Promise<void>;
+}
+```#### Methods
+
+| Method | Description |
+| :-------------------- | :------------------------------------------------------------------- |
+| `interrupt()` | Interrupts the query (only available in streaming input mode) |
+| `setPermissionMode()` | Changes the permission mode (only available in streaming input mode) |
+
+### `AgentDefinition`
+
+Configuration for a subagent defined programmatically.```ts  theme={null}
+type AgentDefinition = {
+  description: string;
+  tools?: string[];
+  prompt: string;
+  model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+}
+```| Field | Required | Description |
+| :------------ | :------- | :------------------------------------------------------------- |
+| `description` | Yes | Natural language description of when to use this agent |
+| `tools` | No | Array of allowed tool names. If omitted, inherits all tools |
+| `prompt` | Yes | The agent's system prompt |
+| `model` | No | Model override for this agent. If omitted, uses the main model |
+
+### `SettingSource`
+
+Controls which filesystem-based configuration sources the SDK loads settings from.```ts  theme={null}
+type SettingSource = 'user' | 'project' | 'local';
+```| Value | Description | Location |
+| :---------- | :------------------------------------------- | :---------------------------- |
+| `'user'` | Global user settings | `~/.claude/settings.json` |
+| `'project'` | Shared project settings (version controlled) | `.claude/settings.json` |
+| `'local'` | Local project settings (gitignored) | `.claude/settings.local.json` |
+
+#### Default behavior
+
+When `settingSources` is **omitted** or **undefined**, the SDK does **not** load any filesystem settings. This provides isolation for SDK applications.
+
+#### Why use settingSources?
+
+**Load all filesystem settings (legacy behavior):**```typescript  theme={null}
+// Load all settings like SDK v0.0.x did
+const result = query({
+  prompt: "Analyze this code",
+  options: {
+    settingSources: ['user', 'project', 'local']  // Load all settings
+  }
+});
+```**Load only specific setting sources:**```typescript  theme={null}
+// Load only project settings, ignore user and local
+const result = query({
+  prompt: "Run CI checks",
+  options: {
+    settingSources: ['project']  // Only .claude/settings.json
+  }
+});
+```**Testing and CI environments:**```typescript  theme={null}
+// Ensure consistent behavior in CI by excluding local settings
+const result = query({
+  prompt: "Run tests",
+  options: {
+    settingSources: ['project'],  // Only team-shared settings
+    permissionMode: 'bypassPermissions'
+  }
+});
+```**SDK-only applications:**```typescript  theme={null}
+// Define everything programmatically (default behavior)
+// No filesystem dependencies - settingSources defaults to []
+const result = query({
+  prompt: "Review this PR",
+  options: {
+    // settingSources: [] is the default, no need to specify
+    agents: { /* ... */ },
+    mcpServers: { /* ... */ },
+    allowedTools: ['Read', 'Grep', 'Glob']
+  }
+});
+```**Loading CLAUDE.md project instructions:**```typescript  theme={null}
+// Load project settings to include CLAUDE.md files
+const result = query({
+  prompt: "Add a new feature following project conventions",
+  options: {
+    systemPrompt: {
+      type: 'preset',
+      preset: 'claude_code'  // Required to use CLAUDE.md
+    },
+    settingSources: ['project'],  // Loads CLAUDE.md from project directory
+    allowedTools: ['Read', 'Write', 'Edit']
+  }
+});
+```#### Settings precedence
+
+When multiple sources are loaded, settings are merged with this precedence (highest to lowest):
+
+1. Local settings (`.claude/settings.local.json`)
+2. Project settings (`.claude/settings.json`)
+3. User settings (`~/.claude/settings.json`)
+
+Programmatic options (like `agents`, `allowedTools`) always override filesystem settings.
+
+### `PermissionMode````ts  theme={null}
+type PermissionMode =
+  | 'default'           // Standard permission behavior
+  | 'acceptEdits'       // Auto-accept file edits
+  | 'bypassPermissions' // Bypass all permission checks
+  | 'plan'              // Planning mode - no execution
+```### `CanUseTool`
+
+Custom permission function type for controlling tool usage.```ts  theme={null}
+type CanUseTool = (
+  toolName: string,
+  input: ToolInput,
+  options: {
+    signal: AbortSignal;
+    suggestions?: PermissionUpdate[];
+  }
+) => Promise<PermissionResult>;
+```### `PermissionResult`
+
+Result of a permission check.```ts  theme={null}
+type PermissionResult = 
+  | {
+      behavior: 'allow';
+      updatedInput: ToolInput;
+      updatedPermissions?: PermissionUpdate[];
+    }
+  | {
+      behavior: 'deny';
+      message: string;
+      interrupt?: boolean;
+    }
+```### `McpServerConfig`
+
+Configuration for MCP servers.```ts  theme={null}
+type McpServerConfig = 
+  | McpStdioServerConfig
+  | McpSSEServerConfig
+  | McpHttpServerConfig
+  | McpSdkServerConfigWithInstance;
+```#### `McpStdioServerConfig````ts  theme={null}
+type McpStdioServerConfig = {
+  type?: 'stdio';
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+```#### `McpSSEServerConfig````ts  theme={null}
+type McpSSEServerConfig = {
+  type: 'sse';
+  url: string;
+  headers?: Record<string, string>;
+}
+```#### `McpHttpServerConfig````ts  theme={null}
+type McpHttpServerConfig = {
+  type: 'http';
+  url: string;
+  headers?: Record<string, string>;
+}
+```#### `McpSdkServerConfigWithInstance````ts  theme={null}
+type McpSdkServerConfigWithInstance = {
+  type: 'sdk';
+  name: string;
+  instance: McpServer;
+}
+```### `SdkPluginConfig`
+
+Configuration for loading plugins in the SDK.```ts  theme={null}
+type SdkPluginConfig = {
+  type: 'local';
+  path: string;
+}
+```| Field | Type | Description |
+| :----- | :-------- | :--------------------------------------------------------- |
+| `type` | `'local'` | Must be `'local'` (only local plugins currently supported) |
+| `path` | `string` | Absolute or relative path to the plugin directory |
+
+**Example:**```ts  theme={null}
+plugins: [
+  { type: 'local', path: './my-plugin' },
+  { type: 'local', path: '/absolute/path/to/plugin' }
+]
+```For complete information on creating and using plugins, see [Plugins](/en/docs/agent-sdk/plugins).
+
+## Message Types
+
+### `SDKMessage`
+
+Union type of all possible messages returned by the query.```ts  theme={null}
+type SDKMessage = 
+  | SDKAssistantMessage
+  | SDKUserMessage
+  | SDKUserMessageReplay
+  | SDKResultMessage
+  | SDKSystemMessage
+  | SDKPartialAssistantMessage
+  | SDKCompactBoundaryMessage;
+```### `SDKAssistantMessage`
+
+Assistant response message.```ts  theme={null}
+type SDKAssistantMessage = {
+  type: 'assistant';
+  uuid: UUID;
+  session_id: string;
+  message: APIAssistantMessage; // From Anthropic SDK
+  parent_tool_use_id: string | null;
+}
+```### `SDKUserMessage`
+
+User input message.```ts  theme={null}
+type SDKUserMessage = {
+  type: 'user';
+  uuid?: UUID;
+  session_id: string;
+  message: APIUserMessage; // From Anthropic SDK
+  parent_tool_use_id: string | null;
+}
+```### `SDKUserMessageReplay`
+
+Replayed user message with required UUID.```ts  theme={null}
+type SDKUserMessageReplay = {
+  type: 'user';
+  uuid: UUID;
+  session_id: string;
+  message: APIUserMessage;
+  parent_tool_use_id: string | null;
+}
+```### `SDKResultMessage`
+
+Final result message.```ts  theme={null}
+type SDKResultMessage = 
+  | {
+      type: 'result';
+      subtype: 'success';
+      uuid: UUID;
+      session_id: string;
+      duration_ms: number;
+      duration_api_ms: number;
+      is_error: boolean;
+      num_turns: number;
+      result: string;
+      total_cost_usd: number;
+      usage: NonNullableUsage;
+      permission_denials: SDKPermissionDenial[];
+    }
+  | {
+      type: 'result';
+      subtype: 'error_max_turns' | 'error_during_execution';
+      uuid: UUID;
+      session_id: string;
+      duration_ms: number;
+      duration_api_ms: number;
+      is_error: boolean;
+      num_turns: number;
+      total_cost_usd: number;
+      usage: NonNullableUsage;
+      permission_denials: SDKPermissionDenial[];
+    }
+```### `SDKSystemMessage`
+
+System initialization message.```ts  theme={null}
+type SDKSystemMessage = {
+  type: 'system';
+  subtype: 'init';
+  uuid: UUID;
+  session_id: string;
+  apiKeySource: ApiKeySource;
+  cwd: string;
+  tools: string[];
+  mcp_servers: {
+    name: string;
+    status: string;
+  }[];
+  model: string;
+  permissionMode: PermissionMode;
+  slash_commands: string[];
+  output_style: string;
+}
+```### `SDKPartialAssistantMessage`
+
+Streaming partial message (only when `includePartialMessages` is true).```ts  theme={null}
+type SDKPartialAssistantMessage = {
+  type: 'stream_event';
+  event: RawMessageStreamEvent; // From Anthropic SDK
+  parent_tool_use_id: string | null;
+  uuid: UUID;
+  session_id: string;
+}
+```### `SDKCompactBoundaryMessage`
+
+Message indicating a conversation compaction boundary.```ts  theme={null}
+type SDKCompactBoundaryMessage = {
+  type: 'system';
+  subtype: 'compact_boundary';
+  uuid: UUID;
+  session_id: string;
+  compact_metadata: {
+    trigger: 'manual' | 'auto';
+    pre_tokens: number;
+  };
+}
+```### `SDKPermissionDenial`
+
+Information about a denied tool use.```ts  theme={null}
+type SDKPermissionDenial = {
+  tool_name: string;
+  tool_use_id: string;
+  tool_input: ToolInput;
+}
+```## Hook Types
+
+### `HookEvent`
+
+Available hook events.```ts  theme={null}
+type HookEvent = 
+  | 'PreToolUse'
+  | 'PostToolUse'
+  | 'Notification'
+  | 'UserPromptSubmit'
+  | 'SessionStart'
+  | 'SessionEnd'
+  | 'Stop'
+  | 'SubagentStop'
+  | 'PreCompact';
+```### `HookCallback`
+
+Hook callback function type.```ts  theme={null}
+type HookCallback = (
+  input: HookInput, // Union of all hook input types
+  toolUseID: string | undefined,
+  options: { signal: AbortSignal }
+) => Promise<HookJSONOutput>;
+```### `HookCallbackMatcher`
+
+Hook configuration with optional matcher.```ts  theme={null}
+interface HookCallbackMatcher {
+  matcher?: string;
+  hooks: HookCallback[];
+}
+```### `HookInput`
+
+Union type of all hook input types.```ts  theme={null}
+type HookInput = 
+  | PreToolUseHookInput
+  | PostToolUseHookInput
+  | NotificationHookInput
+  | UserPromptSubmitHookInput
+  | SessionStartHookInput
+  | SessionEndHookInput
+  | StopHookInput
+  | SubagentStopHookInput
+  | PreCompactHookInput;
+```### `BaseHookInput`
+
+Base interface that all hook input types extend.```ts  theme={null}
+type BaseHookInput = {
+  session_id: string;
+  transcript_path: string;
+  cwd: string;
+  permission_mode?: string;
+}
+```#### `PreToolUseHookInput````ts  theme={null}
+type PreToolUseHookInput = BaseHookInput & {
+  hook_event_name: 'PreToolUse';
+  tool_name: string;
+  tool_input: ToolInput;
+}
+```#### `PostToolUseHookInput````ts  theme={null}
+type PostToolUseHookInput = BaseHookInput & {
+  hook_event_name: 'PostToolUse';
+  tool_name: string;
+  tool_input: ToolInput;
+  tool_response: ToolOutput;
+}
+```#### `NotificationHookInput````ts  theme={null}
+type NotificationHookInput = BaseHookInput & {
+  hook_event_name: 'Notification';
+  message: string;
+  title?: string;
+}
+```#### `UserPromptSubmitHookInput````ts  theme={null}
+type UserPromptSubmitHookInput = BaseHookInput & {
+  hook_event_name: 'UserPromptSubmit';
+  prompt: string;
+}
+```#### `SessionStartHookInput````ts  theme={null}
+type SessionStartHookInput = BaseHookInput & {
+  hook_event_name: 'SessionStart';
+  source: 'startup' | 'resume' | 'clear' | 'compact';
+}
+```#### `SessionEndHookInput````ts  theme={null}
+type SessionEndHookInput = BaseHookInput & {
+  hook_event_name: 'SessionEnd';
+  reason: 'clear' | 'logout' | 'prompt_input_exit' | 'other';
+}
+```#### `StopHookInput````ts  theme={null}
+type StopHookInput = BaseHookInput & {
+  hook_event_name: 'Stop';
+  stop_hook_active: boolean;
+}
+```#### `SubagentStopHookInput````ts  theme={null}
+type SubagentStopHookInput = BaseHookInput & {
+  hook_event_name: 'SubagentStop';
+  stop_hook_active: boolean;
+}
+```#### `PreCompactHookInput````ts  theme={null}
+type PreCompactHookInput = BaseHookInput & {
+  hook_event_name: 'PreCompact';
+  trigger: 'manual' | 'auto';
+  custom_instructions: string | null;
+}
+```### `HookJSONOutput`
+
+Hook return value.```ts  theme={null}
+type HookJSONOutput = AsyncHookJSONOutput | SyncHookJSONOutput;
+```#### `AsyncHookJSONOutput````ts  theme={null}
+type AsyncHookJSONOutput = {
+  async: true;
+  asyncTimeout?: number;
+}
+```#### `SyncHookJSONOutput````ts  theme={null}
+type SyncHookJSONOutput = {
+  continue?: boolean;
+  suppressOutput?: boolean;
+  stopReason?: string;
+  decision?: 'approve' | 'block';
+  systemMessage?: string;
+  reason?: string;
+  hookSpecificOutput?:
+    | {
+        hookEventName: 'PreToolUse';
+        permissionDecision?: 'allow' | 'deny' | 'ask';
+        permissionDecisionReason?: string;
+      }
+    | {
+        hookEventName: 'UserPromptSubmit';
+        additionalContext?: string;
+      }
+    | {
+        hookEventName: 'SessionStart';
+        additionalContext?: string;
+      }
+    | {
+        hookEventName: 'PostToolUse';
+        additionalContext?: string;
+      };
+}
+```## Tool Input Types
+
+Documentation of input schemas for all built-in Claude Code tools. These types are exported from `@anthropic-ai/claude-agent-sdk` and can be used for type-safe tool interactions.
+
+### `ToolInput`
+
+**Note:** This is a documentation-only type for clarity. It represents the union of all tool input types.```ts  theme={null}
+type ToolInput = 
+  | AgentInput
+  | BashInput
+  | BashOutputInput
+  | FileEditInput
+  | FileReadInput
+  | FileWriteInput
+  | GlobInput
+  | GrepInput
+  | KillShellInput
+  | NotebookEditInput
+  | WebFetchInput
+  | WebSearchInput
+  | TodoWriteInput
+  | ExitPlanModeInput
+  | ListMcpResourcesInput
+  | ReadMcpResourceInput;
+```### Task
+
+**Tool name:** `Task````ts  theme={null}
+interface AgentInput {
+  /**
+   * A short (3-5 word) description of the task
+   */
+  description: string;
+  /**
+   * The task for the agent to perform
+   */
+  prompt: string;
+  /**
+   * The type of specialized agent to use for this task
+   */
+  subagent_type: string;
+}
+```Launches a new agent to handle complex, multi-step tasks autonomously.
+
+### Bash
+
+**Tool name:** `Bash````ts  theme={null}
+interface BashInput {
+  /**
+   * The command to execute
+   */
+  command: string;
+  /**
+   * Optional timeout in milliseconds (max 600000)
+   */
+  timeout?: number;
+  /**
+   * Clear, concise description of what this command does in 5-10 words
+   */
+  description?: string;
+  /**
+   * Set to true to run this command in the background
+   */
+  run_in_background?: boolean;
+}
+```Executes bash commands in a persistent shell session with optional timeout and background execution.
+
+### BashOutput
+
+**Tool name:** `BashOutput````ts  theme={null}
+interface BashOutputInput {
+  /**
+   * The ID of the background shell to retrieve output from
+   */
+  bash_id: string;
+  /**
+   * Optional regex to filter output lines
+   */
+  filter?: string;
+}
+```Retrieves output from a running or completed background bash shell.
+
+### Edit
+
+**Tool name:** `Edit````ts  theme={null}
+interface FileEditInput {
+  /**
+   * The absolute path to the file to modify
+   */
+  file_path: string;
+  /**
+   * The text to replace
+   */
+  old_string: string;
+  /**
+   * The text to replace it with (must be different from old_string)
+   */
+  new_string: string;
+  /**
+   * Replace all occurrences of old_string (default false)
+   */
+  replace_all?: boolean;
+}
+```Performs exact string replacements in files.
+
+### Read
+
+**Tool name:** `Read````ts  theme={null}
+interface FileReadInput {
+  /**
+   * The absolute path to the file to read
+   */
+  file_path: string;
+  /**
+   * The line number to start reading from
+   */
+  offset?: number;
+  /**
+   * The number of lines to read
+   */
+  limit?: number;
+}
+```Reads files from the local filesystem, including text, images, PDFs, and Jupyter notebooks.
+
+### Write
+
+**Tool name:** `Write````ts  theme={null}
+interface FileWriteInput {
+  /**
+   * The absolute path to the file to write
+   */
+  file_path: string;
+  /**
+   * The content to write to the file
+   */
+  content: string;
+}
+```Writes a file to the local filesystem, overwriting if it exists.
+
+### Glob
+
+**Tool name:** `Glob````ts  theme={null}
+interface GlobInput {
+  /**
+   * The glob pattern to match files against
+   */
+  pattern: string;
+  /**
+   * The directory to search in (defaults to cwd)
+   */
+  path?: string;
+}
+```Fast file pattern matching that works with any codebase size.
+
+### Grep
+
+**Tool name:** `Grep````ts  theme={null}
+interface GrepInput {
+  /**
+   * The regular expression pattern to search for
+   */
+  pattern: string;
+  /**
+   * File or directory to search in (defaults to cwd)
+   */
+  path?: string;
+  /**
+   * Glob pattern to filter files (e.g. "*.js")
+   */
+  glob?: string;
+  /**
+   * File type to search (e.g. "js", "py", "rust")
+   */
+  type?: string;
+  /**
+   * Output mode: "content", "files_with_matches", or "count"
+   */
+  output_mode?: 'content' | 'files_with_matches' | 'count';
+  /**
+   * Case insensitive search
+   */
+  '-i'?: boolean;
+  /**
+   * Show line numbers (for content mode)
+   */
+  '-n'?: boolean;
+  /**
+   * Lines to show before each match
+   */
+  '-B'?: number;
+  /**
+   * Lines to show after each match
+   */
+  '-A'?: number;
+  /**
+   * Lines to show before and after each match
+   */
+  '-C'?: number;
+  /**
+   * Limit output to first N lines/entries
+   */
+  head_limit?: number;
+  /**
+   * Enable multiline mode
+   */
+  multiline?: boolean;
+}
+```Powerful search tool built on ripgrep with regex support.
+
+### KillBash
+
+**Tool name:** `KillBash````ts  theme={null}
+interface KillShellInput {
+  /**
+   * The ID of the background shell to kill
+   */
+  shell_id: string;
+}
+```Kills a running background bash shell by its ID.
+
+### NotebookEdit
+
+**Tool name:** `NotebookEdit````ts  theme={null}
+interface NotebookEditInput {
+  /**
+   * The absolute path to the Jupyter notebook file
+   */
+  notebook_path: string;
+  /**
+   * The ID of the cell to edit
+   */
+  cell_id?: string;
+  /**
+   * The new source for the cell
+   */
+  new_source: string;
+  /**
+   * The type of the cell (code or markdown)
+   */
+  cell_type?: 'code' | 'markdown';
+  /**
+   * The type of edit (replace, insert, delete)
+   */
+  edit_mode?: 'replace' | 'insert' | 'delete';
+}
+```Edits cells in Jupyter notebook files.
+
+### WebFetch
+
+**Tool name:** `WebFetch````ts  theme={null}
+interface WebFetchInput {
+  /**
+   * The URL to fetch content from
+   */
+  url: string;
+  /**
+   * The prompt to run on the fetched content
+   */
+  prompt: string;
+}
+```Fetches content from a URL and processes it with an AI model.
+
+### WebSearch
+
+**Tool name:** `WebSearch````ts  theme={null}
+interface WebSearchInput {
+  /**
+   * The search query to use
+   */
+  query: string;
+  /**
+   * Only include results from these domains
+   */
+  allowed_domains?: string[];
+  /**
+   * Never include results from these domains
+   */
+  blocked_domains?: string[];
+}
+```Searches the web and returns formatted results.
+
+### TodoWrite
+
+**Tool name:** `TodoWrite````ts  theme={null}
+interface TodoWriteInput {
+  /**
+   * The updated todo list
+   */
+  todos: Array<{
+    /**
+     * The task description
+     */
+    content: string;
+    /**
+     * The task status
+     */
+    status: 'pending' | 'in_progress' | 'completed';
+    /**
+     * Active form of the task description
+     */
+    activeForm: string;
+  }>;
+}
+```Creates and manages a structured task list for tracking progress.
+
+### ExitPlanMode
+
+**Tool name:** `ExitPlanMode````ts  theme={null}
+interface ExitPlanModeInput {
+  /**
+   * The plan to run by the user for approval
+   */
+  plan: string;
+}
+```Exits planning mode and prompts the user to approve the plan.
+
+### ListMcpResources
+
+**Tool name:** `ListMcpResources````ts  theme={null}
+interface ListMcpResourcesInput {
+  /**
+   * Optional server name to filter resources by
+   */
+  server?: string;
+}
+```Lists available MCP resources from connected servers.
+
+### ReadMcpResource
+
+**Tool name:** `ReadMcpResource````ts  theme={null}
+interface ReadMcpResourceInput {
+  /**
+   * The MCP server name
+   */
+  server: string;
+  /**
+   * The resource URI to read
+   */
+  uri: string;
+}
+```Reads a specific MCP resource from a server.
+
+## Tool Output Types
+
+Documentation of output schemas for all built-in Claude Code tools. These types represent the actual response data returned by each tool.
+
+### `ToolOutput`
+
+**Note:** This is a documentation-only type for clarity. It represents the union of all tool output types.```ts  theme={null}
+type ToolOutput = 
+  | TaskOutput
+  | BashOutput
+  | BashOutputToolOutput
+  | EditOutput
+  | ReadOutput
+  | WriteOutput
+  | GlobOutput
+  | GrepOutput
+  | KillBashOutput
+  | NotebookEditOutput
+  | WebFetchOutput
+  | WebSearchOutput
+  | TodoWriteOutput
+  | ExitPlanModeOutput
+  | ListMcpResourcesOutput
+  | ReadMcpResourceOutput;
+```### Task
+
+**Tool name:** `Task````ts  theme={null}
+interface TaskOutput {
+  /**
+   * Final result message from the subagent
+   */
+  result: string;
+  /**
+   * Token usage statistics
+   */
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
+  };
+  /**
+   * Total cost in USD
+   */
+  total_cost_usd?: number;
+  /**
+   * Execution duration in milliseconds
+   */
+  duration_ms?: number;
+}
+```Returns the final result from the subagent after completing the delegated task.
+
+### Bash
+
+**Tool name:** `Bash````ts  theme={null}
+interface BashOutput {
+  /**
+   * Combined stdout and stderr output
+   */
+  output: string;
+  /**
+   * Exit code of the command
+   */
+  exitCode: number;
+  /**
+   * Whether the command was killed due to timeout
+   */
+  killed?: boolean;
+  /**
+   * Shell ID for background processes
+   */
+  shellId?: string;
+}
+```Returns command output with exit status. Background commands return immediately with a shellId.
+
+### BashOutput
+
+**Tool name:** `BashOutput````ts  theme={null}
+interface BashOutputToolOutput {
+  /**
+   * New output since last check
+   */
+  output: string;
+  /**
+   * Current shell status
+   */
+  status: 'running' | 'completed' | 'failed';
+  /**
+   * Exit code (when completed)
+   */
+  exitCode?: number;
+}
+```Returns incremental output from background shells.
+
+### Edit
+
+**Tool name:** `Edit````ts  theme={null}
+interface EditOutput {
+  /**
+   * Confirmation message
+   */
+  message: string;
+  /**
+   * Number of replacements made
+   */
+  replacements: number;
+  /**
+   * File path that was edited
+   */
+  file_path: string;
+}
+```Returns confirmation of successful edits with replacement count.
+
+### Read
+
+**Tool name:** `Read````ts  theme={null}
+type ReadOutput = 
+  | TextFileOutput
+  | ImageFileOutput
+  | PDFFileOutput
+  | NotebookFileOutput;
+
+interface TextFileOutput {
+  /**
+   * File contents with line numbers
+   */
+  content: string;
+  /**
+   * Total number of lines in file
+   */
+  total_lines: number;
+  /**
+   * Lines actually returned
+   */
+  lines_returned: number;
+}
+
+interface ImageFileOutput {
+  /**
+   * Base64 encoded image data
+   */
+  image: string;
+  /**
+   * Image MIME type
+   */
+  mime_type: string;
+  /**
+   * File size in bytes
+   */
+  file_size: number;
+}
+
+interface PDFFileOutput {
+  /**
+   * Array of page contents
+   */
+  pages: Array<{
+    page_number: number;
+    text?: string;
+    images?: Array<{
+      image: string;
+      mime_type: string;
+    }>;
+  }>;
+  /**
+   * Total number of pages
+   */
+  total_pages: number;
+}
+
+interface NotebookFileOutput {
+  /**
+   * Jupyter notebook cells
+   */
+  cells: Array<{
+    cell_type: 'code' | 'markdown';
+    source: string;
+    outputs?: any[];
+    execution_count?: number;
+  }>;
+  /**
+   * Notebook metadata
+   */
+  metadata?: Record<string, any>;
+}
+```Returns file contents in format appropriate to file type.
+
+### Write
+
+**Tool name:** `Write````ts  theme={null}
+interface WriteOutput {
+  /**
+   * Success message
+   */
+  message: string;
+  /**
+   * Number of bytes written
+   */
+  bytes_written: number;
+  /**
+   * File path that was written
+   */
+  file_path: string;
+}
+```Returns confirmation after successfully writing the file.
+
+### Glob
+
+**Tool name:** `Glob````ts  theme={null}
+interface GlobOutput {
+  /**
+   * Array of matching file paths
+   */
+  matches: string[];
+  /**
+   * Number of matches found
+   */
+  count: number;
+  /**
+   * Search directory used
+   */
+  search_path: string;
+}
+```Returns file paths matching the glob pattern, sorted by modification time.
+
+### Grep
+
+**Tool name:** `Grep````ts  theme={null}
+type GrepOutput = 
+  | GrepContentOutput
+  | GrepFilesOutput
+  | GrepCountOutput;
+
+interface GrepContentOutput {
+  /**
+   * Matching lines with context
+   */
+  matches: Array<{
+    file: string;
+    line_number?: number;
+    line: string;
+    before_context?: string[];
+    after_context?: string[];
+  }>;
+  /**
+   * Total number of matches
+   */
+  total_matches: number;
+}
+
+interface GrepFilesOutput {
+  /**
+   * Files containing matches
+   */
+  files: string[];
+  /**
+   * Number of files with matches
+   */
+  count: number;
+}
+
+interface GrepCountOutput {
+  /**
+   * Match counts per file
+   */
+  counts: Array<{
+    file: string;
+    count: number;
+  }>;
+  /**
+   * Total matches across all files
+   */
+  total: number;
+}
+```Returns search results in the format specified by output\_mode.
+
+### KillBash
+
+**Tool name:** `KillBash````ts  theme={null}
+interface KillBashOutput {
+  /**
+   * Success message
+   */
+  message: string;
+  /**
+   * ID of the killed shell
+   */
+  shell_id: string;
+}
+```Returns confirmation after terminating the background shell.
+
+### NotebookEdit
+
+**Tool name:** `NotebookEdit````ts  theme={null}
+interface NotebookEditOutput {
+  /**
+   * Success message
+   */
+  message: string;
+  /**
+   * Type of edit performed
+   */
+  edit_type: 'replaced' | 'inserted' | 'deleted';
+  /**
+   * Cell ID that was affected
+   */
+  cell_id?: string;
+  /**
+   * Total cells in notebook after edit
+   */
+  total_cells: number;
+}
+```Returns confirmation after modifying the Jupyter notebook.
+
+### WebFetch
+
+**Tool name:** `WebFetch````ts  theme={null}
+interface WebFetchOutput {
+  /**
+   * AI model's response to the prompt
+   */
+  response: string;
+  /**
+   * URL that was fetched
+   */
+  url: string;
+  /**
+   * Final URL after redirects
+   */
+  final_url?: string;
+  /**
+   * HTTP status code
+   */
+  status_code?: number;
+}
+```Returns the AI's analysis of the fetched web content.
+
+### WebSearch
+
+**Tool name:** `WebSearch````ts  theme={null}
+interface WebSearchOutput {
+  /**
+   * Search results
+   */
+  results: Array<{
+    title: string;
+    url: string;
+    snippet: string;
+    /**
+     * Additional metadata if available
+     */
+    metadata?: Record<string, any>;
+  }>;
+  /**
+   * Total number of results
+   */
+  total_results: number;
+  /**
+   * The query that was searched
+   */
+  query: string;
+}
+```Returns formatted search results from the web.
+
+### TodoWrite
+
+**Tool name:** `TodoWrite````ts  theme={null}
+interface TodoWriteOutput {
+  /**
+   * Success message
+   */
+  message: string;
+  /**
+   * Current todo statistics
+   */
+  stats: {
+    total: number;
+    pending: number;
+    in_progress: number;
+    completed: number;
+  };
+}
+```Returns confirmation with current task statistics.
+
+### ExitPlanMode
+
+**Tool name:** `ExitPlanMode````ts  theme={null}
+interface ExitPlanModeOutput {
+  /**
+   * Confirmation message
+   */
+  message: string;
+  /**
+   * Whether user approved the plan
+   */
+  approved?: boolean;
+}
+```Returns confirmation after exiting plan mode.
+
+### ListMcpResources
+
+**Tool name:** `ListMcpResources````ts  theme={null}
+interface ListMcpResourcesOutput {
+  /**
+   * Available resources
+   */
+  resources: Array<{
+    uri: string;
+    name: string;
+    description?: string;
+    mimeType?: string;
+    server: string;
+  }>;
+  /**
+   * Total number of resources
+   */
+  total: number;
+}
+```Returns list of available MCP resources.
+
+### ReadMcpResource
+
+**Tool name:** `ReadMcpResource````ts  theme={null}
+interface ReadMcpResourceOutput {
+  /**
+   * Resource contents
+   */
+  contents: Array<{
+    uri: string;
+    mimeType?: string;
+    text?: string;
+    blob?: string;
+  }>;
+  /**
+   * Server that provided the resource
+   */
+  server: string;
+}
+```Returns the contents of the requested MCP resource.
+
+## Permission Types
+
+### `PermissionUpdate`
+
+Operations for updating permissions.```ts  theme={null}
+type PermissionUpdate = 
+  | {
+      type: 'addRules';
+      rules: PermissionRuleValue[];
+      behavior: PermissionBehavior;
+      destination: PermissionUpdateDestination;
+    }
+  | {
+      type: 'replaceRules';
+      rules: PermissionRuleValue[];
+      behavior: PermissionBehavior;
+      destination: PermissionUpdateDestination;
+    }
+  | {
+      type: 'removeRules';
+      rules: PermissionRuleValue[];
+      behavior: PermissionBehavior;
+      destination: PermissionUpdateDestination;
+    }
+  | {
+      type: 'setMode';
+      mode: PermissionMode;
+      destination: PermissionUpdateDestination;
+    }
+  | {
+      type: 'addDirectories';
+      directories: string[];
+      destination: PermissionUpdateDestination;
+    }
+  | {
+      type: 'removeDirectories';
+      directories: string[];
+      destination: PermissionUpdateDestination;
+    }
+```### `PermissionBehavior````ts  theme={null}
+type PermissionBehavior = 'allow' | 'deny' | 'ask';
+```### `PermissionUpdateDestination````ts  theme={null}
+type PermissionUpdateDestination = 
+  | 'userSettings'     // Global user settings
+  | 'projectSettings'  // Per-directory project settings
+  | 'localSettings'    // Gitignored local settings
+  | 'session'          // Current session only
+```### `PermissionRuleValue````ts  theme={null}
+type PermissionRuleValue = {
+  toolName: string;
+  ruleContent?: string;
+}
+```## Other Types
+
+### `ApiKeySource````ts  theme={null}
+type ApiKeySource = 'user' | 'project' | 'org' | 'temporary';
+```### `ConfigScope````ts  theme={null}
+type ConfigScope = 'local' | 'user' | 'project';
+```### `NonNullableUsage`
+
+A version of [`Usage`](#usage) with all nullable fields made non-nullable.```ts  theme={null}
+type NonNullableUsage = {
+  [K in keyof Usage]: NonNullable<Usage[K]>;
+}
+```### `Usage`
+
+Token usage statistics (from `@anthropic-ai/sdk`).```ts  theme={null}
+type Usage = {
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cache_creation_input_tokens?: number | null;
+  cache_read_input_tokens?: number | null;
+}
+```### `CallToolResult`
+
+MCP tool result type (from `@modelcontextprotocol/sdk/types.js`).```ts  theme={null}
+type CallToolResult = {
+  content: Array<{
+    type: 'text' | 'image' | 'resource';
+    // Additional fields vary by type
+  }>;
+  isError?: boolean;
+}
+```### `AbortError`
+
+Custom error class for abort operations.```ts  theme={null}
+class AbortError extends Error {}
+```## See also
+
+* [SDK overview](/en/docs/agent-sdk/overview) - General SDK concepts
+* [Python SDK reference](/en/docs/agent-sdk/python) - Python SDK documentation
+* [CLI reference](https://code.claude.com/docs/en/cli-reference) - Command-line interface
+* [Common workflows](https://code.claude.com/docs/en/common-workflows) - Step-by-step guides
+
+[END OF DOCUMENT: CLAUDEYMQTNG8LK]
+---
+
+[START OF DOCUMENT: CLAUDE1KGVC2O2ED | Title: Usage-Cost-Api]
+
+# Usage and Cost API
+
+> Programmatically access your organization's API usage and cost data with the Usage & Cost Admin API.
+
+<Tip>
+ **The Admin API is unavailable for individual accounts.** To collaborate with teammates and add members, set up your organization in **Console → Settings → Organization**.
+</Tip>
+
+The Usage & Cost Admin API provides programmatic and granular access to historical API usage and cost data for your organization. This data is similar to the information available in the [Usage](https://console.anthropic.com/usage) and [Cost](https://console.anthropic.com/cost) pages of the Claude Console.
+
+This API enables you to better monitor, analyze, and optimize your Claude implementations:
+
+* **Accurate Usage Tracking:** Get precise token counts and usage patterns instead of relying solely on response token counting
+* **Cost Reconciliation:** Match internal records with Anthropic billing for finance and accounting teams
+* **Product performance and improvement:** Monitor product performance while measuring if changes to the system have improved it, or setup alerting
+* **[Rate limit](/en/api/rate-limits) and [Priority Tier](/en/api/service-tiers#get-started-with-priority-tier) optimization:** Optimize features like [prompt caching](/en/docs/build-with-claude/prompt-caching) or specific prompts to make the most of one’s allocated capacity, or purchase dedicated capacity.
+* **Advanced Analysis:** Perform deeper data analysis than what's available in Console
+
+<Check>
+ **Admin API key required**
+
+ This API is part of the [Admin API](/en/docs/build-with-claude/administration-api). These endpoints require an Admin API key (starting with `sk-ant-admin...`) that differs from standard API keys. Only organization members with the admin role can provision Admin API keys through the [Claude Console](https://console.anthropic.com/settings/admin-keys).
+</Check>
+
+## Partner solutions
+
+Leading observability platforms offer ready-to-use integrations for monitoring your Claude API usage and cost, without writing custom code. These integrations provide dashboards, alerting, and analytics to help you manage your API usage effectively.
+
+<CardGroup cols={3}>
+ <Card title="Datadog" icon="chart-line" href="https://docs.datadoghq.com/integrations/anthropic/">
+ LLM Observability with automatic tracing and monitoring
+ </Card>
+
+ <Card title="Grafana Cloud" icon="chart-area" href="https://grafana.com/docs/grafana-cloud/monitor-infrastructure/integrations/integration-reference/integration-anthropic/">
+ Agentless integration for easy LLM observability with out-of-the-box dashboards and alerts
+ </Card>
+
+ <Card title="Honeycomb" icon="hexagon" href="https://docs.honeycomb.io/integrations/anthropic-usage-monitoring/">
+ Advanced querying and visualization through OpenTelemetry
+ </Card>
+</CardGroup>
+
+## Quick start
+
+Get your organization's daily usage for the last 7 days:```bash  theme={null}
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-08T00:00:00Z&\
+ending_at=2025-01-15T00:00:00Z&\
+bucket_width=1d" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```<Tip>
+ **Set a User-Agent header for integrations**
+
+ If you're building an integration, set your User-Agent header to help us understand usage patterns:```
+  User-Agent: YourApp/1.0.0 (https://yourapp.com)
+  ```</Tip>
+
+## Usage API
+
+Track token consumption across your organization with detailed breakdowns by model, workspace, and service tier with the `/v1/organizations/usage_report/messages` endpoint.
+
+### Key concepts
+
+* **Time buckets**: Aggregate usage data in fixed intervals (`1m`, `1h`, or `1d`)
+* **Token tracking**: Measure uncached input, cached input, cache creation, and output tokens
+* **Filtering & grouping**: Filter by API key, workspace, model, service tier, or context window, and group results by these dimensions
+* **Server tool usage**: Track usage of server-side tools like web search
+
+For complete parameter details and response schemas, see the [Usage API reference](/en/api/admin-api/usage-cost/get-messages-usage-report).
+
+### Basic examples
+
+#### Daily usage by model```bash  theme={null}
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-01T00:00:00Z&\
+ending_at=2025-01-08T00:00:00Z&\
+group_by[]=model&\
+bucket_width=1d" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```#### Hourly usage with filtering```bash  theme={null}
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-15T00:00:00Z&\
+ending_at=2025-01-15T23:59:59Z&\
+models[]=claude-sonnet-4-5-20250929&\
+service_tiers[]=batch&\
+context_window[]=0-200k&\
+bucket_width=1h" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```#### Filter usage by API keys and workspaces```bash  theme={null}
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-01T00:00:00Z&\
+ending_at=2025-01-08T00:00:00Z&\
+api_key_ids[]=apikey_01Rj2N8SVvo6BePZj99NhmiT&\
+api_key_ids[]=apikey_01ABC123DEF456GHI789JKL&\
+workspace_ids[]=wrkspc_01JwQvzr7rXLA5AGx3HKfFUJ&\
+workspace_ids[]=wrkspc_01XYZ789ABC123DEF456MNO&\
+bucket_width=1d" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```<Tip>
+ To retrieve your organization's API key IDs, use the [List API Keys](/en/api/admin-api/apikeys/list-api-keys) endpoint.
+
+ To retrieve your organization's workspace IDs, use the [List Workspaces](/en/api/admin-api/workspaces/list-workspaces) endpoint, or find your organization's workspace IDs in the Anthropic Console.
+</Tip>
+
+### Time granularity limits
+
+| Granularity | Default Limit | Maximum Limit | Use Case |
+| ----------- | ------------- | ------------- | ---------------------- |
+| `1m` | 60 buckets | 1440 buckets | Real-time monitoring |
+| `1h` | 24 buckets | 168 buckets | Daily patterns |
+| `1d` | 7 buckets | 31 buckets | Weekly/monthly reports |
+
+## Cost API
+
+Retrieve service-level cost breakdowns in USD with the `/v1/organizations/cost_report` endpoint.
+
+### Key concepts
+
+* **Currency**: All costs in USD, reported as decimal strings in lowest units (cents)
+* **Cost types**: Track token usage, web search, and code execution costs
+* **Grouping**: Group costs by workspace or description for detailed breakdowns
+* **Time buckets**: Daily granularity only (`1d`)
+
+For complete parameter details and response schemas, see the [Cost API reference](/en/api/admin-api/usage-cost/get-cost-report).
+
+<Warning>
+ Priority Tier costs use a different billing model and are not included in the cost endpoint. Track Priority Tier usage through the usage endpoint instead.
+</Warning>
+
+### Basic example```bash  theme={null}
+curl "https://api.anthropic.com/v1/organizations/cost_report?\
+starting_at=2025-01-01T00:00:00Z&\
+ending_at=2025-01-31T00:00:00Z&\
+group_by[]=workspace_id&\
+group_by[]=description" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```## Pagination
+
+Both endpoints support pagination for large datasets:
+
+1. Make your initial request
+2. If `has_more` is `true`, use the `next_page` value in your next request
+3. Continue until `has_more` is `false````bash  theme={null}
+# First request
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-01T00:00:00Z&\
+ending_at=2025-01-31T00:00:00Z&\
+limit=7" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+
+# Response includes: "has_more": true, "next_page": "page_xyz..."
+
+# Next request with pagination
+curl "https://api.anthropic.com/v1/organizations/usage_report/messages?\
+starting_at=2025-01-01T00:00:00Z&\
+ending_at=2025-01-31T00:00:00Z&\
+limit=7&\
+page=page_xyz..." \
+  --header "anthropic-version: 2023-06-01" \
+  --header "x-api-key: $ADMIN_API_KEY"
+```## Common use cases
+
+Explore detailed implementations in [anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook):
+
+* **Daily usage reports**: Track token consumption trends
+* **Cost attribution**: Allocate expenses by workspace for chargebacks
+* **Cache efficiency**: Measure and optimize prompt caching
+* **Budget monitoring**: Set up alerts for spending thresholds
+* **CSV export**: Generate reports for finance teams
+
+## Frequently asked questions
+
+### How fresh is the data?
+
+Usage and cost data typically appears within 5 minutes of API request completion, though delays may occasionally be longer.
+
+### What's the recommended polling frequency?
+
+The API supports polling once per minute for sustained use. For short bursts (e.g., downloading paginated data), more frequent polling is acceptable. Cache results for dashboards that need frequent updates.
+
+### How do I track code execution usage?
+
+Code execution costs appear in the cost endpoint grouped under `Code Execution Usage` in the description field. Code execution is not included in the usage endpoint.
+
+### How do I track Priority Tier usage?
+
+Filter or group by `service_tier` in the usage endpoint and look for the `priority` value. Priority Tier costs are not available in the cost endpoint.
+
+### What happens with Workbench usage?
+
+API usage from the Workbench is not associated with an API key, so `api_key_id` will be `null` even when grouping by that dimension.
+
+### How is the default workspace represented?
+
+Usage and costs attributed to the default workspace have a `null` value for `workspace_id`.
+
+### How do I get per-user cost breakdowns for Claude Code?
+
+Use the [Claude Code Analytics API](/en/docs/build-with-claude/claude-code-analytics-api), which provides per-user estimated costs and productivity metrics without the performance limitations of breaking down costs by many API keys. For general API usage with many keys, use the [Usage API](#usage-api) to track token consumption as a cost proxy.
+
+## See also
+
+The Usage and Cost APIs can be used to help you deliver a better experience for your users, help you manage costs, and preserve your rate limit. Learn more about some of these other features:
+
+* [Admin API overview](/en/docs/build-with-claude/administration-api)
+* [Admin API reference](/en/api/admin-api)
+* [Pricing](/en/docs/about-claude/pricing)
+* [Prompt caching](/en/docs/build-with-claude/prompt-caching) - Optimize costs with caching
+* [Batch processing](/en/docs/build-with-claude/batch-processing) - 50% discount on batch requests
+* [Rate limits](/en/api/rate-limits) - Understand usage tiers
+
+[END OF DOCUMENT: CLAUDE1KGVC2O2ED]
+---
+
+[START OF DOCUMENT: CLAUDE26J0672AVE | Title: Use-Xml-Tags]
+
+# Use XML tags to structure your prompts
+
+<Note>
+ While these tips apply broadly to all Claude models, you can find prompting tips specific to extended thinking models [here](/en/docs/build-with-claude/prompt-engineering/extended-thinking-tips).
+</Note>
+
+When your prompts involve multiple components like context, instructions, and examples, XML tags can be a game-changer. They help Claude parse your prompts more accurately, leading to higher-quality outputs.
+
+<Tip>**XML tip**: Use tags like `<instructions>`, `<example>`, and `<formatting>` to clearly separate different parts of your prompt. This prevents Claude from mixing up instructions with examples or context.</Tip>
+
+## Why use XML tags?
+
+* **Clarity:** Clearly separate different parts of your prompt and ensure your prompt is well structured.
+* **Accuracy:** Reduce errors caused by Claude misinterpreting parts of your prompt.
+* **Flexibility:** Easily find, add, remove, or modify parts of your prompt without rewriting everything.
+* **Parseability:** Having Claude use XML tags in its output makes it easier to extract specific parts of its response by post-processing.
+
+<Note>There are no canonical "best" XML tags that Claude has been trained with in particular, although we recommend that your tag names make sense with the information they surround.</Note>
+
+***
+
+## Tagging best practices
+
+1. **Be consistent**: Use the same tag names throughout your prompts, and refer to those tag names when talking about the content (e.g, `Using the contract in <contract> tags...`).
+2. **Nest tags**: You should nest tags `<outer><inner></inner></outer>` for hierarchical content.
+
+<Tip>**Power user tip**: Combine XML tags with other techniques like multishot prompting (`<examples>`) or chain of thought (`<thinking>`, `<answer>`). This creates super-structured, high-performance prompts.</Tip>
+
+### Examples
+
+<AccordionGroup>
+ <Accordion title="Example: Generating financial reports">
+ Without XML tags, Claude misunderstands the task and generates a report that doesn't match the required structure or tone. After substitution, there is also a chance that Claude misunderstands where one section (like the the Q1 report example) stops and another begins.
+
+ | Role | No XML Tags | With XML Tags |
+ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | You're a financial analyst at AcmeCorp. Generate a Q2 financial report for our investors. Include sections on Revenue Growth, Profit Margins, and Cash Flow, like with this example from last year: \{\{Q1\_REPORT}}. Use data points from this spreadsheet: \{\{SPREADSHEET\_DATA}}. The report should be extremely concise, to the point, professional, and in list format. It should and highlight both strengths and areas for improvement. | You're a financial analyst at AcmeCorp. Generate a Q2 financial report for our investors.<br /><br />AcmeCorp is a B2B SaaS company. Our investors value transparency and actionable insights.<br /><br />Use this data for your report:\<data>\{\{SPREADSHEET\_DATA}}\</data><br /><br />\<instructions><br />1. Include sections: Revenue Growth, Profit Margins, Cash Flow.<br />2. Highlight strengths and areas for improvement.<br />\</instructions><br /><br />Make your tone concise and professional. Follow this structure:<br />\<formatting\_example>\{\{Q1\_REPORT}}\</formatting\_example> |
+ | Assistant | Q2 Financial Report for AcmeCorp Investors<br /><br />Dear Valued Investors,<br /><br />I am pleased to present our Q2 financial report, showcasing AcmeCorp's continued growth and resilience in the B2B SaaS market.<br /><br />1. Revenue Growth:<br />Our Q2 revenue reached \$15.2M, a 22% YoY increase. This growth is primarily driven by a 30% expansion in our enterprise client base. However, our SMB segment saw a slight decline of 5%, which we aim to address through targeted marketing initiatives in Q3.<br /><br />2. Profit Margins:<br />Gross margin improved to 72% (up 3% from Q1) due to infrastructure optimizations. EBITDA margin, however, dipped to 18% (down 2%) as we invested heavily in R\&D for our upcoming AI-driven features.<br /><br />3. Cash Flow:<br />Operating cash flow remains strong at \$4.1M. Our cash reserves stand at \$28M, providing a 15-month runway at current burn rate. We did see a 20% increase in customer acquisition costs, which we're addressing through more efficient sales strategies.<br /><br />In summary, AcmeCorp's core financials remain robust. We're balancing growth investments with prudent cash management. Our focus for Q3 will be revitalizing SMB growth and optimizing sales efficiency.<br /><br />Thank you for your continued trust.<br /><br />Sincerely,<br />CFO, AcmeCorp | Q2 Financial Report for AcmeCorp Investors\</output><br /><br />Revenue Growth:<br />- Q2 revenue: \$15.2M (22% YoY ↑)<br />- Enterprise clients: 30% ↑<br />- SMB segment: 5% ↓<br /> Action: Targeted Q3 marketing<br /><br />Profit Margins:<br />- Gross margin: 72% (3% ↑ from Q1)<br /> Reason: Infrastructure optimizations<br />- EBITDA margin: 18% (2% ↓)<br /> Reason: R\&D investment in AI features<br /><br />Cash Flow:<br />- Operating cash flow: \$4.1M (strong)<br />- Cash reserves: \$28M (15-month runway)<br />- Customer acquisition cost: 20% ↑<br /> Action: Optimize sales strategies<br /><br />Outlook:<br />- Core financials: Robust<br />- Q3 focus: Revitalize SMB, optimize sales<br /><br />Management remains committed to balancing growth investments with financial discipline. |
+ </Accordion>
+
+ <Accordion title="Example: Legal contract analysis">
+ Without XML tags, Claude's analysis is disorganized and misses key points. With tags, it provides a structured, thorough analysis that a legal team can act on.
+
+ | Role | No XML Tags | With XML Tags |
+ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+ | User | Analyze this software licensing agreement for potential risks and liabilities: \{\{CONTRACT}}. Focus on indemnification, limitation of liability, and IP ownership clauses. Also, note any unusual or concerning terms. Here's our standard contract for reference: \{\{STANDARD\_CONTRACT}}. Give a summary of findings and recommendations for our legal team. | Analyze this software licensing agreement for legal risks and liabilities.<br /><br />We're a multinational enterprise considering this agreement for our core data infrastructure.<br /><br />\<agreement><br />\{\{CONTRACT}}\</agreement><br /><br />This is our standard contract for reference:<br />\<standard\_contract>\{\{STANDARD\_CONTRACT}}\</standard\_contract><br /><br />\<instructions><br />1. Analyze these clauses:<br /> - Indemnification<br /> - Limitation of liability<br /> - IP ownership<br /><br />2. Note unusual or concerning terms.<br /><br />3. Compare to our standard contract.<br /><br />4. Summarize findings in \<findings> tags.<br /><br />5. List actionable recommendations in \<recommendations> tags.\</instructions> |
+ | Assistant | The provided software licensing agreement presents several concerning aspects. The indemnification clause is overly broad, potentially exposing us to significant liabilities. The limitation of liability section caps damages at a mere \$500, which is inadequate for our enterprise-level usage. Regarding IP, the agreement grants the vendor joint ownership of any modifications or integrations we create.<br /><br />In summary, this agreement is not in our best interest. It exposes us to undue risk, limits our recourse in case of failures, and compromises our intellectual property rights. I recommend renegotiating these terms or seeking alternative vendors. | \<findings><br />1. Indemnification (Clause 8):<br /> - Issue: Overly broad. We indemnify vendor against "any and all claims" arising from our use.<br /> - Risk: Could hold us liable even for vendor's negligence or product defects.<br /> - Deviation: Our standard limits indemnity to claims arising from our violation of agreement.<br /><br />2. Limitation of Liability (Clause 9):<br /> - Issue: Caps all damages at \$500, including direct damages.<br /> - Risk: Grossly inadequate for enterprise use. A critical failure could cost millions.<br /> - Deviation: Our standard allows for direct damages up to 12 months of fees paid.<br /><br />3. IP Ownership (Clause 12):<br /> - Issue: Grants vendor joint ownership of our modifications/integrations.<br /> - Risk: Vendor could use or sell our proprietary algorithms or data insights.<br /> - Deviation: Our standard retains full ownership of our work.<br /><br />4. Unusual Terms:<br /> - Clause 5.3: Vendor can use our usage data for "any purpose."<br /> - Clause 7.2: Vendor can terminate for "convenience" with only 7 days' notice.<br /> - Clause 11: No warranties of any kind, even for basic merchantability.<br />\</findings><br /><br />\<recommendations><br />1. Reject this agreement. Risks far outweigh benefits for an enterprise.<br />2. Counter-propose:<br /> - Indemnification: Limit to claims arising from our violation of agreement.<br /> - Liability: Cap at 12 months' fees for direct damages; negotiate for indirect.<br /> - IP: Full ownership of our modifications/integrations.<br /> - Data Use: Restrict to service improvement only.<br /> - Termination: Minimum 90 days' notice; only for cause.<br /> - Warranties: Demand basic merchantability and fitness for purpose.<br />3. If vendor refuses, explore alternative providers or in-house solutions.<br />4. Engage legal counsel for contract negotiation given high stakes.<br />\</recommendations> |
+ </Accordion>
+</AccordionGroup>
+
+***
+
+<CardGroup cols={3}>
+ <Card title="Prompt library" icon="link" href="/en/resources/prompt-library/library">
+ Get inspired by a curated selection of prompts for various tasks and use cases.
+ </Card>
+
+ <Card title="GitHub prompting tutorial" icon="link" href="https://github.com/anthropics/prompt-eng-interactive-tutorial">
+ An example-filled tutorial that covers the prompt engineering concepts found in our docs.
+ </Card>
+
+ <Card title="Google Sheets prompting tutorial" icon="link" href="https://docs.google.com/spreadsheets/d/19jzLgRruG9kjUQNKtCg1ZjdD6l6weA6qRXG5zLIAhC8">
+ A lighter weight version of our prompt engineering tutorial via an interactive spreadsheet.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE26J0672AVE]
+---
+
+[START OF DOCUMENT: CLAUDENLX3BQ5SW | Title: Vision]
+
+# Vision
+
+> The Claude 3 and 4 families of models comes with new vision capabilities that allow Claude to understand and analyze images, opening up exciting possibilities for multimodal interaction.
+
+This guide describes how to work with images in Claude, including best practices, code examples, and limitations to keep in mind.
+
+***
+
+## How to use vision
+
+Use Claude’s vision capabilities via:
+
+* [claude.ai](https://claude.ai/). Upload an image like you would a file, or drag and drop an image directly into the chat window.
+* The [Console Workbench](https://console.anthropic.com/workbench/). If you select a model that accepts images (Claude 3 and 4 models only), a button to add images appears at the top right of every User message block.
+* **API request**. See the examples in this guide.
+
+***
+
+## Before you upload
+
+### Basics and Limits
+
+You can include multiple images in a single request (up to 20 for [claude.ai](https://claude.ai/) and 100 for API requests). Claude will analyze all provided images when formulating its response. This can be helpful for comparing or contrasting images.
+
+If you submit an image larger than 8000x8000 px, it will be rejected. If you submit more than 20 images in one API request, this limit is 2000x2000 px.
+
+<Note>
+ While the API supports 100 images per request, there is a [32MB request size limit](/en/api/overview#request-size-limits) for standard endpoints.
+</Note>
+
+### Evaluate image size
+
+For optimal performance, we recommend resizing images before uploading if they are too large. If your image’s long edge is more than 1568 pixels, or your image is more than \~1,600 tokens, it will first be scaled down, preserving aspect ratio, until it’s within the size limits.
+
+If your input image is too large and needs to be resized, it will increase latency of [time-to-first-token](/en/docs/about-claude/glossary), without giving you any additional model performance. Very small images under 200 pixels on any given edge may degrade performance.
+
+<Tip>
+ To improve [time-to-first-token](/en/docs/about-claude/glossary), we recommend
+ resizing images to no more than 1.15 megapixels (and within 1568 pixels in
+ both dimensions).
+</Tip>
+
+Here is a table of maximum image sizes accepted by our API that will not be resized for common aspect ratios. With the Claude Sonnet 3.7 model, these images use approximately 1,600 tokens and around \$4.80/1K images.
+
+| Aspect ratio | Image size |
+| ------------ | ------------ |
+| 1:1 | 1092x1092 px |
+| 3:4 | 951x1268 px |
+| 2:3 | 896x1344 px |
+| 9:16 | 819x1456 px |
+| 1:2 | 784x1568 px |
+
+### Calculate image costs
+
+Each image you include in a request to Claude counts towards your token usage. To calculate the approximate cost, multiply the approximate number of image tokens by the [per-token price of the model](https://claude.com/pricing) you’re using.
+
+If your image does not need to be resized, you can estimate the number of tokens used through this algorithm: `tokens = (width px * height px)/750`
+
+Here are examples of approximate tokenization and costs for different image sizes within our API’s size constraints based on Claude Sonnet 3.7 per-token price of \$3 per million input tokens:
+
+| Image size | # of Tokens | Cost / image | Cost / 1K images |
+| ----------------------------- | ----------- | ------------ | ---------------- |
+| 200x200 px(0.04 megapixels) | \~54 | \~\$0.00016 | \~\$0.16 |
+| 1000x1000 px(1 megapixel) | \~1334 | \~\$0.004 | \~\$4.00 |
+| 1092x1092 px(1.19 megapixels) | \~1590 | \~\$0.0048 | \~\$4.80 |
+
+### Ensuring image quality
+
+When providing images to Claude, keep the following in mind for best results:
+
+* **Image format**: Use a supported image format: JPEG, PNG, GIF, or WebP.
+* **Image clarity**: Ensure images are clear and not too blurry or pixelated.
+* **Text**: If the image contains important text, make sure it’s legible and not too small. Avoid cropping out key visual context just to enlarge the text.
+
+***
+
+## Prompt examples
+
+Many of the [prompting techniques](/en/docs/build-with-claude/prompt-engineering/overview) that work well for text-based interactions with Claude can also be applied to image-based prompts.
+
+These examples demonstrate best practice prompt structures involving images.
+
+<Tip>
+ Just as with document-query placement, Claude works best when images come
+ before text. Images placed after text or interpolated with text will still
+ perform well, but if your use case allows it, we recommend an image-then-text
+ structure.
+</Tip>
+
+### About the prompt examples
+
+The following examples demonstrate how to use Claude's vision capabilities using various programming languages and approaches. You can provide images to Claude in three ways:
+
+1. As a base64-encoded image in `image` content blocks
+2. As a URL reference to an image hosted online
+3. Using the Files API (upload once, use multiple times)
+
+The base64 example prompts use these variables:
+
+<CodeGroup>```bash Shell theme={null}
+      # For URL-based images, you can use the URL directly in your JSON request
+      
+      # For base64-encoded images, you need to first encode the image
+      # Example of how to encode an image to base64 in bash:
+      BASE64_IMAGE_DATA=$(curl -s "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg" | base64)
+      
+      # The encoded data can now be used in your API calls
+  ``````Python Python theme={null}
+  import base64
+  import httpx
+
+  # For base64-encoded images
+  image1_url = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+  image1_media_type = "image/jpeg"
+  image1_data = base64.standard_b64encode(httpx.get(image1_url).content).decode("utf-8")
+
+  image2_url = "https://upload.wikimedia.org/wikipedia/commons/b/b5/Iridescent.green.sweat.bee1.jpg"
+  image2_media_type = "image/jpeg"
+  image2_data = base64.standard_b64encode(httpx.get(image2_url).content).decode("utf-8")
+
+  # For URL-based images, you can use the URLs directly in your requests
+  ``````TypeScript TypeScript theme={null}
+  import axios from 'axios';
+
+  // For base64-encoded images
+  async function getBase64Image(url: string): Promise<string> {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    return Buffer.from(response.data, 'binary').toString('base64');
+  }
+
+  // Usage
+  async function prepareImages() {
+    const imageData = await getBase64Image('https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg');
+    // Now you can use imageData in your API calls
+  }
+
+  // For URL-based images, you can use the URLs directly in your requests
+  ``````java Java theme={null}
+  import java.io.IOException;
+  import java.util.Base64;
+  import java.io.InputStream;
+  import java.net.URL;
+
+  public class ImageHandlingExample {
+
+      public static void main(String[] args) throws IOException, InterruptedException {
+          // For base64-encoded images
+          String image1Url = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg";
+          String image1MediaType = "image/jpeg";
+          String image1Data = downloadAndEncodeImage(image1Url);
+
+          String image2Url = "https://upload.wikimedia.org/wikipedia/commons/b/b5/Iridescent.green.sweat.bee1.jpg";
+          String image2MediaType = "image/jpeg";
+          String image2Data = downloadAndEncodeImage(image2Url);
+
+          // For URL-based images, you can use the URLs directly in your requests
+      }
+
+      private static String downloadAndEncodeImage(String imageUrl) throws IOException {
+          try (InputStream inputStream = new URL(imageUrl).openStream()) {
+              return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
+          }
+      }
+
+  }
+  ```</CodeGroup>
+
+Below are examples of how to include images in a Messages API request using base64-encoded images and URL references:
+
+### Base64-encoded image example
+
+<CodeGroup>```bash Shell theme={null}
+  curl https://api.anthropic.com/v1/messages \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "content-type: application/json" \
+    -d '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image",
+              "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": "'"$BASE64_IMAGE_DATA"'"
+              }
+            },
+            {
+              "type": "text",
+              "text": "Describe this image."
+            }
+          ]
+        }
+      ]
+    }'
+  ``````Python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+  message = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "base64",
+                          "media_type": image1_media_type,
+                          "data": image1_data,
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "Describe this image."
+                  }
+              ],
+          }
+      ],
+  )
+  print(message)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  async function main() {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/jpeg",
+                data: imageData, // Base64-encoded image data as string
+              }
+            },
+            {
+              type: "text",
+              text: "Describe this image."
+            }
+          ]
+        }
+      ]
+    });
+    
+    console.log(message);
+  }
+
+  main();
+  ``````Java Java theme={null}
+  import java.io.IOException;
+  import java.util.List;
+
+  import com.anthropic.client.AnthropicClient;
+  import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+  import com.anthropic.models.messages.*;
+
+  public class VisionExample {
+      public static void main(String[] args) throws IOException, InterruptedException {
+          AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+          String imageData = ""; // // Base64-encoded image data as string
+
+          List<ContentBlockParam> contentBlockParams = List.of(
+                  ContentBlockParam.ofImage(
+                          ImageBlockParam.builder()
+                                  .source(Base64ImageSource.builder()
+                                          .data(imageData)
+                                          .build())
+                                  .build()
+                  ),
+                  ContentBlockParam.ofText(TextBlockParam.builder()
+                          .text("Describe this image.")
+                          .build())
+          );
+          Message message = client.messages().create(
+                  MessageCreateParams.builder()
+                          .model(Model.CLAUDE_3_7_SONNET_LATEST)
+                          .maxTokens(1024)
+                          .addUserMessageOfBlockParams(contentBlockParams)
+                          .build()
+          );
+
+          System.out.println(message);
+      }
+  }
+  ```</CodeGroup>
+
+### URL-based image example
+
+<CodeGroup>```bash Shell theme={null}
+  curl https://api.anthropic.com/v1/messages \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "content-type: application/json" \
+    -d '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image",
+              "source": {
+                "type": "url",
+                "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+              }
+            },
+            {
+              "type": "text",
+              "text": "Describe this image."
+            }
+          ]
+        }
+      ]
+    }'
+  ``````Python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+  message = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "url",
+                          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "Describe this image."
+                  }
+              ],
+          }
+      ],
+  )
+  print(message)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  async function main() {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "url",
+                url: "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+              }
+            },
+            {
+              type: "text",
+              text: "Describe this image."
+            }
+          ]
+        }
+      ]
+    });
+    
+    console.log(message);
+  }
+
+  main();
+  ``````Java Java theme={null}
+  import java.io.IOException;
+  import java.util.List;
+
+  import com.anthropic.client.AnthropicClient;
+  import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+  import com.anthropic.models.messages.*;
+
+  public class VisionExample {
+
+      public static void main(String[] args) throws IOException, InterruptedException {
+          AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+
+          List<ContentBlockParam> contentBlockParams = List.of(
+                  ContentBlockParam.ofImage(
+                          ImageBlockParam.builder()
+                                  .source(UrlImageSource.builder()
+                                          .url("https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg")
+                                          .build())
+                                  .build()
+                  ),
+                  ContentBlockParam.ofText(TextBlockParam.builder()
+                          .text("Describe this image.")
+                          .build())
+          );
+          Message message = client.messages().create(
+                  MessageCreateParams.builder()
+                          .model(Model.CLAUDE_3_7_SONNET_LATEST)
+                          .maxTokens(1024)
+                          .addUserMessageOfBlockParams(contentBlockParams)
+                          .build()
+          );
+          System.out.println(message);
+      }
+  }
+  ```</CodeGroup>
+
+### Files API image example
+
+For images you'll use repeatedly or when you want to avoid encoding overhead, use the [Files API](/en/docs/build-with-claude/files):
+
+<CodeGroup>```bash Shell theme={null}
+  # First, upload your image to the Files API
+  curl -X POST https://api.anthropic.com/v1/files \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: files-api-2025-04-14" \
+    -F "file=@image.jpg"
+
+  # Then use the returned file_id in your message
+  curl https://api.anthropic.com/v1/messages \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: files-api-2025-04-14" \
+    -H "content-type: application/json" \
+    -d '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image",
+              "source": {
+                "type": "file",
+                "file_id": "file_abc123"
+              }
+            },
+            {
+              "type": "text",
+              "text": "Describe this image."
+            }
+          ]
+        }
+      ]
+    }'
+  ``````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  # Upload the image file
+  with open("image.jpg", "rb") as f:
+      file_upload = client.beta.files.upload(file=("image.jpg", f, "image/jpeg"))
+
+  # Use the uploaded file in a message
+  message = client.beta.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      betas=["files-api-2025-04-14"],
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "file",
+                          "file_id": file_upload.id
+                      }
+                  },
+                  {
+                      "type": "text",
+                      "text": "Describe this image."
+                  }
+              ]
+          }
+      ],
+  )
+
+  print(message.content)
+  ``````typescript TypeScript theme={null}
+  import { Anthropic, toFile } from '@anthropic-ai/sdk';
+  import fs from 'fs';
+
+  const anthropic = new Anthropic();
+
+  async function main() {
+    // Upload the image file
+    const fileUpload = await anthropic.beta.files.upload({
+      file: toFile(fs.createReadStream('image.jpg'), undefined, { type: "image/jpeg" })
+    }, {
+      betas: ['files-api-2025-04-14']
+    });
+
+    // Use the uploaded file in a message
+    const response = await anthropic.beta.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      betas: ['files-api-2025-04-14'],
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'file',
+                file_id: fileUpload.id
+              }
+            },
+            {
+              type: 'text',
+              text: 'Describe this image.'
+            }
+          ]
+        }
+      ]
+    });
+
+    console.log(response);
+  }
+
+  main();
+  ``````java Java theme={null}
+  import java.io.IOException;
+  import java.nio.file.Files;
+  import java.nio.file.Path;
+  import java.util.List;
+
+  import com.anthropic.client.AnthropicClient;
+  import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+  import com.anthropic.models.File;
+  import com.anthropic.models.files.FileUploadParams;
+  import com.anthropic.models.messages.*;
+
+  public class ImageFilesExample {
+      public static void main(String[] args) throws IOException {
+          AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+
+          // Upload the image file
+          File file = client.beta().files().upload(FileUploadParams.builder()
+                  .file(Files.newInputStream(Path.of("image.jpg")))
+                  .build());
+
+          // Use the uploaded file in a message
+          ImageBlockParam imageParam = ImageBlockParam.builder()
+                  .fileSource(file.id())
+                  .build();
+
+          MessageCreateParams params = MessageCreateParams.builder()
+                  .model(Model.CLAUDE_3_7_SONNET_LATEST)
+                  .maxTokens(1024)
+                  .addUserMessageOfBlockParams(
+                          List.of(
+                                  ContentBlockParam.ofImage(imageParam),
+                                  ContentBlockParam.ofText(
+                                          TextBlockParam.builder()
+                                                  .text("Describe this image.")
+                                                  .build()
+                                  )
+                          )
+                  )
+                  .build();
+
+          Message message = client.messages().create(params);
+          System.out.println(message.content());
+      }
+  }
+  ```</CodeGroup>
+
+See [Messages API examples](/en/api/messages) for more example code and parameter details.
+
+<AccordionGroup>
+ <Accordion title="Example: One image">
+ It’s best to place images earlier in the prompt than questions about them or instructions for tasks that use them.
+
+ Ask Claude to describe one image.
+
+ | Role | Content |
+ | ---- | ----------------------------- |
+ | User | \[Image] Describe this image. |
+
+ Here is the corresponding API call using the Claude Sonnet 3.7 model.
+
+ <Tabs>
+ <Tab title="Using Base64">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image1_media_type,
+                                "data": image1_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Describe this image."
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+
+ <Tab title="Using URL">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "url",
+                                "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Describe this image."
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+ </Tabs>
+ </Accordion>
+
+ <Accordion title="Example: Multiple images">
+ In situations where there are multiple images, introduce each image with `Image 1:` and `Image 2:` and so on. You don’t need newlines between images or between images and the prompt.
+
+ Ask Claude to describe the differences between multiple images.
+
+ | Role | Content |
+ | ---- | ----------------------------------------------------------------------- |
+ | User | Image 1: \[Image 1] Image 2: \[Image 2] How are these images different? |
+
+ Here is the corresponding API call using the Claude Sonnet 3.7 model.
+
+ <Tabs>
+ <Tab title="Using Base64">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Image 1:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image1_media_type,
+                                "data": image1_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Image 2:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image2_media_type,
+                                "data": image2_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "How are these images different?"
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+
+ <Tab title="Using URL">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Image 1:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "url",
+                                "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Image 2:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "url",
+                                "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Iridescent.green.sweat.bee1.jpg",
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "How are these images different?"
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+ </Tabs>
+ </Accordion>
+
+ <Accordion title="Example: Multiple images with a system prompt">
+ Ask Claude to describe the differences between multiple images, while giving it a system prompt for how to respond.
+
+ | Content | |
+ | ------- | ----------------------------------------------------------------------- |
+ | System | Respond only in Spanish. |
+ | User | Image 1: \[Image 1] Image 2: \[Image 2] How are these images different? |
+
+ Here is the corresponding API call using the Claude Sonnet 3.7 model.
+
+ <Tabs>
+ <Tab title="Using Base64">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            system="Respond only in Spanish.",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Image 1:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image1_media_type,
+                                "data": image1_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Image 2:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image2_media_type,
+                                "data": image2_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "How are these images different?"
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+
+ <Tab title="Using URL">```Python Python theme={null}
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            system="Respond only in Spanish.",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Image 1:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "url",
+                                "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Image 2:"
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "url",
+                                "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Iridescent.green.sweat.bee1.jpg",
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "How are these images different?"
+                        }
+                    ],
+                }
+            ],
+        )
+        ```</Tab>
+ </Tabs>
+ </Accordion>
+
+ <Accordion title="Example: Four images across two conversation turns">
+ Claude’s vision capabilities shine in multimodal conversations that mix images and text. You can have extended back-and-forth exchanges with Claude, adding new images or follow-up questions at any point. This enables powerful workflows for iterative image analysis, comparison, or combining visuals with other knowledge.
+
+ Ask Claude to contrast two images, then ask a follow-up question comparing the first images to two new images.
+
+ | Role | Content |
+ | --------- | ---------------------------------------------------------------------------------- |
+ | User | Image 1: \[Image 1] Image 2: \[Image 2] How are these images different? |
+ | Assistant | \[Claude's response] |
+ | User | Image 1: \[Image 3] Image 2: \[Image 4] Are these images similar to the first two? |
+ | Assistant | \[Claude's response] |
+
+ When using the API, simply insert new images into the array of Messages in the `user` role as part of any standard [multiturn conversation](/en/api/messages) structure.
+ </Accordion>
+</AccordionGroup>
+
+***
+
+## Limitations
+
+While Claude's image understanding capabilities are cutting-edge, there are some limitations to be aware of:
+
+* **People identification**: Claude [cannot be used](https://www.anthropic.com/legal/aup) to identify (i.e., name) people in images and will refuse to do so.
+* **Accuracy**: Claude may hallucinate or make mistakes when interpreting low-quality, rotated, or very small images under 200 pixels.
+* **Spatial reasoning**: Claude's spatial reasoning abilities are limited. It may struggle with tasks requiring precise localization or layouts, like reading an analog clock face or describing exact positions of chess pieces.
+* **Counting**: Claude can give approximate counts of objects in an image but may not always be precisely accurate, especially with large numbers of small objects.
+* **AI generated images**: Claude does not know if an image is AI-generated and may be incorrect if asked. Do not rely on it to detect fake or synthetic images.
+* **Inappropriate content**: Claude will not process inappropriate or explicit images that violate our [Acceptable Use Policy](https://www.anthropic.com/legal/aup).
+* **Healthcare applications**: While Claude can analyze general medical images, it is not designed to interpret complex diagnostic scans such as CTs or MRIs. Claude's outputs should not be considered a substitute for professional medical advice or diagnosis.
+
+Always carefully review and verify Claude's image interpretations, especially for high-stakes use cases. Do not use Claude for tasks requiring perfect precision or sensitive image analysis without human oversight.
+
+***
+
+## FAQ
+
+<AccordionGroup>
+ <Accordion title="What image file types does Claude support?">
+ Claude currently supports JPEG, PNG, GIF, and WebP image formats, specifically:
+
+ * `image/jpeg`
+ * `image/png`
+ * `image/gif`
+ * `image/webp`
+ </Accordion>
+
+ {" "}
+
+ <Accordion title="Can Claude read image URLs?">
+ Yes, Claude can now process images from URLs with our URL image source blocks in the API.
+ Simply use the "url" source type instead of "base64" in your API requests.
+ Example:```json  theme={null}
+    {
+      "type": "image",
+      "source": {
+        "type": "url",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+      }
+    }
+    ```</Accordion>
+
+ <Accordion title="Is there a limit to the image file size I can upload?">
+ Yes, there are limits:
+
+ * API: Maximum 5MB per image
+ * claude.ai: Maximum 10MB per image
+
+ Images larger than these limits will be rejected and return an error when using our API.
+ </Accordion>
+
+ <Accordion title="How many images can I include in one request?">
+ The image limits are:
+
+ * Messages API: Up to 100 images per request
+ * claude.ai: Up to 20 images per turn
+
+ Requests exceeding these limits will be rejected and return an error.
+ </Accordion>
+
+ {" "}
+
+ <Accordion title="Does Claude read image metadata?">
+ No, Claude does not parse or receive any metadata from images passed to it.
+ </Accordion>
+
+ {" "}
+
+ <Accordion title="Can I delete images I've uploaded?">
+ No. Image uploads are ephemeral and not stored beyond the duration of the API
+ request. Uploaded images are automatically deleted after they have been
+ processed.
+ </Accordion>
+
+ {" "}
+
+ <Accordion title="Where can I find details on data privacy for image uploads?">
+ Please refer to our privacy policy page for information on how we handle
+ uploaded images and other data. We do not use uploaded images to train our
+ models.
+ </Accordion>
+
+ <Accordion title="What if Claude's image interpretation seems wrong?">
+ If Claude's image interpretation seems incorrect:
+
+ 1. Ensure the image is clear, high-quality, and correctly oriented.
+ 2. Try prompt engineering techniques to improve results.
+ 3. If the issue persists, flag the output in claude.ai (thumbs up/down) or contact our support team.
+
+ Your feedback helps us improve!
+ </Accordion>
+
+ <Accordion title="Can Claude generate or edit images?">
+ No, Claude is an image understanding model only. It can interpret and analyze images, but it cannot generate, produce, edit, manipulate, or create images.
+ </Accordion>
+</AccordionGroup>
+
+***
+
+## Dive deeper into vision
+
+Ready to start building with images using Claude? Here are a few helpful resources:
+
+* [Multimodal cookbook](https://github.com/anthropics/anthropic-cookbook/tree/main/multimodal): This cookbook has tips on [getting started with images](https://github.com/anthropics/anthropic-cookbook/blob/main/multimodal/getting%5Fstarted%5Fwith%5Fvision.ipynb) and [best practice techniques](https://github.com/anthropics/anthropic-cookbook/blob/main/multimodal/best%5Fpractices%5Ffor%5Fvision.ipynb) to ensure the highest quality performance with images. See how you can effectively prompt Claude with images to carry out tasks such as [interpreting and analyzing charts](https://github.com/anthropics/anthropic-cookbook/blob/main/multimodal/reading%5Fcharts%5Fgraphs%5Fpowerpoints.ipynb) or [extracting content from forms](https://github.com/anthropics/anthropic-cookbook/blob/main/multimodal/how%5Fto%5Ftranscribe%5Ftext.ipynb).
+* [API reference](/en/api/messages): Visit our documentation for the Messages API, including example [API calls involving images](/en/docs/build-with-claude/working-with-messages#vision).
+
+If you have any other questions, feel free to reach out to our [support team](https://support.claude.com/). You can also join our [developer community](https://www.anthropic.com/discord) to connect with other creators and get help from Anthropic experts.
+
+[END OF DOCUMENT: CLAUDENLX3BQ5SW]
+---
+
+[START OF DOCUMENT: CLAUDEN0DEOSIL9 | Title: Web-Fetch-Tool]
+
+# Web fetch tool
+
+The web fetch tool allows Claude to retrieve full content from specified web pages and PDF documents.
+
+<Note>
+ The web fetch tool is currently in beta. To enable it, use the beta header `web-fetch-2025-09-10` in your API requests.
+
+ Please use [this form](https://forms.gle/NhWcgmkcvPCMmPE86) to provide feedback on the quality of the model responses, the API itself, or the quality of the documentation.
+</Note>
+
+<Warning>
+ Enabling the web fetch tool in environments where Claude processes untrusted input alongside sensitive data poses data exfiltration risks. We recommend only using this tool in trusted environments or when handling non-sensitive data.
+
+ To minimize exfiltration risks, Claude is not allowed to dynamically construct URLs. Claude can only fetch URLs that have been explicitly provided by the user or that come from previous web search or web fetch results. However, there is still residual risk that should be carefully considered when using this tool.
+
+ If data exfiltration is a concern, consider:
+
+ * Disabling the web fetch tool entirely
+ * Using the `max_uses` parameter to limit the number of requests
+ * Using the `allowed_domains` parameter to restrict to known safe domains
+</Warning>
+
+## Supported models
+
+Web fetch is available on:
+
+* Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`)
+* Claude Sonnet 4 (`claude-sonnet-4-20250514`)
+* Claude Sonnet 3.7 ([deprecated](/en/docs/about-claude/model-deprecations)) (`claude-3-7-sonnet-20250219`)
+* Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+* Claude Haiku 3.5 (`claude-3-5-haiku-latest`)
+* Claude Opus 4.1 (`claude-opus-4-1-20250805`)
+* Claude Opus 4 (`claude-opus-4-20250514`)
+
+## How web fetch works
+
+When you add the web fetch tool to your API request:
+
+1. Claude decides when to fetch content based on the prompt and available URLs.
+2. The API retrieves the full text content from the specified URL.
+3. For PDFs, automatic text extraction is performed.
+4. Claude analyzes the fetched content and provides a response with optional citations.
+
+<Note>
+ The web fetch tool currently does not support web sites dynamically rendered via Javascript.
+</Note>
+
+## How to use web fetch
+
+Provide the web fetch tool in your API request:
+
+<CodeGroup>```bash Shell theme={null}
+  curl https://api.anthropic.com/v1/messages \
+      --header "x-api-key: $ANTHROPIC_API_KEY" \
+      --header "anthropic-version: 2023-06-01" \
+      --header "anthropic-beta: web-fetch-2025-09-10" \
+      --header "content-type: application/json" \
+      --data '{
+          "model": "claude-sonnet-4-5",
+          "max_tokens": 1024,
+          "messages": [
+              {
+                  "role": "user",
+                  "content": "Please analyze the content at https://example.com/article"
+              }
+          ],
+          "tools": [{
+              "type": "web_fetch_20250910",
+              "name": "web_fetch",
+              "max_uses": 5
+          }]
+      }'
+  ``````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  response = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": "Please analyze the content at https://example.com/article"
+          }
+      ],
+      tools=[{
+          "type": "web_fetch_20250910",
+          "name": "web_fetch",
+          "max_uses": 5
+      }],
+      extra_headers={
+          "anthropic-beta": "web-fetch-2025-09-10"
+      }
+  )
+  print(response)
+  ``````typescript TypeScript theme={null}
+  import { Anthropic } from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  async function main() {
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: "Please analyze the content at https://example.com/article"
+        }
+      ],
+      tools: [{
+        type: "web_fetch_20250910",
+        name: "web_fetch",
+        max_uses: 5
+      }],
+      headers: {
+        "anthropic-beta": "web-fetch-2025-09-10"
+      }
+    });
+
+    console.log(response);
+  }
+
+  main().catch(console.error);
+  ```</CodeGroup>
+
+### Tool definition
+
+The web fetch tool supports the following parameters:```json JSON theme={null}
+{
+  "type": "web_fetch_20250910",
+  "name": "web_fetch",
+
+  // Optional: Limit the number of fetches per request
+  "max_uses": 10,
+
+  // Optional: Only fetch from these domains
+  "allowed_domains": ["example.com", "docs.example.com"],
+
+  // Optional: Never fetch from these domains
+  "blocked_domains": ["private.example.com"],
+
+  // Optional: Enable citations for fetched content
+  "citations": {
+    "enabled": true
+  },
+
+  // Optional: Maximum content length in tokens
+  "max_content_tokens": 100000
+}
+```#### Max uses
+
+The `max_uses` parameter limits the number of web fetches performed. If Claude attempts more fetches than allowed, the `web_fetch_tool_result` will be an error with the `max_uses_exceeded` error code. There is currently no default limit.
+
+#### Domain filtering
+
+When using domain filters:
+
+* Domains should not include the HTTP/HTTPS scheme (use `example.com` instead of `https://example.com`)
+* Subdomains are automatically included (`example.com` covers `docs.example.com`)
+* Subpaths are supported (`example.com/blog`)
+* You can use either `allowed_domains` or `blocked_domains`, but not both in the same request.
+
+<Warning>
+ Be aware that Unicode characters in domain names can create security vulnerabilities through homograph attacks, where visually similar characters from different scripts can bypass domain filters. For example, `аmazon.com` (using Cyrillic 'а') may appear identical to `amazon.com` but represents a different domain.
+
+ When configuring domain allow/block lists:
+
+ * Use ASCII-only domain names when possible
+ * Consider that URL parsers may handle Unicode normalization differently
+ * Test your domain filters with potential homograph variations
+ * Regularly audit your domain configurations for suspicious Unicode characters
+</Warning>
+
+#### Content limits
+
+The `max_content_tokens` parameter limits the amount of content that will be included in the context. If the fetched content exceeds this limit, it will be truncated. This helps control token usage when fetching large documents.
+
+<Note>
+ The `max_content_tokens` parameter limit is approximate. The actual number of input tokens used can vary by a small amount.
+</Note>
+
+#### Citations
+
+Unlike web search where citations are always enabled, citations are optional for web fetch. Set `"citations": {"enabled": true}` to enable Claude to cite specific passages from fetched documents.
+
+<Note>
+ When displaying API outputs directly to end users, citations must be included to the original source. If you are making modifications to API outputs, including by reprocessing and/or combining them with your own material before displaying them to end users, display citations as appropriate based on consultation with your legal team.
+</Note>
+
+### Response
+
+Here's an example response structure:```json  theme={null}
+{
+  "role": "assistant",
+  "content": [
+    // 1. Claude's decision to fetch
+    {
+      "type": "text",
+      "text": "I'll fetch the content from the article to analyze it."
+    },
+    // 2. The fetch request
+    {
+      "type": "server_tool_use",
+      "id": "srvtoolu_01234567890abcdef",
+      "name": "web_fetch",
+      "input": {
+        "url": "https://example.com/article"
+      }
+    },
+    // 3. Fetch results
+    {
+      "type": "web_fetch_tool_result",
+      "tool_use_id": "srvtoolu_01234567890abcdef",
+      "content": {
+        "type": "web_fetch_result",
+        "url": "https://example.com/article",
+        "content": {
+          "type": "document",
+          "source": {
+            "type": "text",
+            "media_type": "text/plain",
+            "data": "Full text content of the article..."
+          },
+          "title": "Article Title",
+          "citations": {"enabled": true}
+        },
+        "retrieved_at": "2025-08-25T10:30:00Z"
+      }
+    },
+    // 4. Claude's analysis with citations (if enabled)
+    {
+      "text": "Based on the article, ",
+      "type": "text"
+    },
+    {
+      "text": "the main argument presented is that artificial intelligence will transform healthcare",
+      "type": "text",
+      "citations": [
+        {
+          "type": "char_location",
+          "document_index": 0,
+          "document_title": "Article Title",
+          "start_char_index": 1234,
+          "end_char_index": 1456,
+          "cited_text": "Artificial intelligence is poised to revolutionize healthcare delivery..."
+        }
+      ]
+    }
+  ],
+  "id": "msg_a930390d3a",
+  "usage": {
+    "input_tokens": 25039,
+    "output_tokens": 931,
+    "server_tool_use": {
+      "web_fetch_requests": 1
+    }
+  },
+  "stop_reason": "end_turn"
+}
+```#### Fetch results
+
+Fetch results include:
+
+* `url`: The URL that was fetched
+* `content`: A document block containing the fetched content
+* `retrieved_at`: Timestamp when the content was retrieved
+
+<Note>
+ The web fetch tool caches results to improve performance and reduce redundant requests. This means the content returned may not always be the latest version available at the URL. The cache behavior is managed automatically and may change over time to optimize for different content types and usage patterns.
+</Note>
+
+For PDF documents, the content will be returned as base64-encoded data:```json  theme={null}
+{
+  "type": "web_fetch_tool_result",
+  "tool_use_id": "srvtoolu_02",
+  "content": {
+    "type": "web_fetch_result",
+    "url": "https://example.com/paper.pdf",
+    "content": {
+      "type": "document",
+      "source": {
+        "type": "base64",
+        "media_type": "application/pdf",
+        "data": "JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmo..."
+      },
+      "citations": {"enabled": true}
+    },
+    "retrieved_at": "2025-08-25T10:30:02Z"
+  }
+}
+```#### Errors
+
+When the web fetch tool encounters an error, the Claude API returns a 200 (success) response with the error represented in the response body:```json  theme={null}
+{
+  "type": "web_fetch_tool_result",
+  "tool_use_id": "srvtoolu_a93jad",
+  "content": {
+    "type": "web_fetch_tool_error",
+    "error_code": "url_not_accessible"
+  }
+}
+```These are the possible error codes:
+
+* `invalid_input`: Invalid URL format
+* `url_too_long`: URL exceeds maximum length (250 characters)
+* `url_not_allowed`: URL blocked by domain filtering rules and model restrictions
+* `url_not_accessible`: Failed to fetch content (HTTP error)
+* `too_many_requests`: Rate limit exceeded
+* `unsupported_content_type`: Content type not supported (only text and PDF)
+* `max_uses_exceeded`: Maximum web fetch tool uses exceeded
+* `unavailable`: An internal error occurred
+
+## URL validation
+
+For security reasons, the web fetch tool can only fetch URLs that have previously appeared in the conversation context. This includes:
+
+* URLs in user messages
+* URLs in client-side tool results
+* URLs from previous web search or web fetch results
+
+The tool cannot fetch arbitrary URLs that Claude generates or URLs from container-based server tools (Code Execution, Bash, etc.).
+
+## Combined search and fetch
+
+Web fetch works seamlessly with web search for comprehensive information gathering:```python  theme={null}
+import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=4096,
+    messages=[
+        {
+            "role": "user",
+            "content": "Find recent articles about quantum computing and analyze the most relevant one in detail"
+        }
+    ],
+    tools=[
+        {
+            "type": "web_search_20250305",
+            "name": "web_search",
+            "max_uses": 3
+        },
+        {
+            "type": "web_fetch_20250910",
+            "name": "web_fetch",
+            "max_uses": 5,
+            "citations": {"enabled": True}
+        }
+    ],
+    extra_headers={
+        "anthropic-beta": "web-fetch-2025-09-10"
+    }
+)
+```In this workflow, Claude will:
+
+1. Use web search to find relevant articles
+2. Select the most promising results
+3. Use web fetch to retrieve full content
+4. Provide detailed analysis with citations
+
+## Prompt caching
+
+Web fetch works with [prompt caching](/en/docs/build-with-claude/prompt-caching). To enable prompt caching, add `cache_control` breakpoints in your request. Cached fetch results can be reused across conversation turns.```python  theme={null}
+import anthropic
+
+client = anthropic.Anthropic()
+
+# First request with web fetch
+messages = [
+    {
+        "role": "user",
+        "content": "Analyze this research paper: https://arxiv.org/abs/2024.12345"
+    }
+]
+
+response1 = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=1024,
+    messages=messages,
+    tools=[{
+        "type": "web_fetch_20250910",
+        "name": "web_fetch"
+    }],
+    extra_headers={
+        "anthropic-beta": "web-fetch-2025-09-10"
+    }
+)
+
+# Add Claude's response to conversation
+messages.append({
+    "role": "assistant",
+    "content": response1.content
+})
+
+# Second request with cache breakpoint
+messages.append({
+    "role": "user",
+    "content": "What methodology does the paper use?",
+    "cache_control": {"type": "ephemeral"}
+})
+
+response2 = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=1024,
+    messages=messages,
+    tools=[{
+        "type": "web_fetch_20250910",
+        "name": "web_fetch"
+    }],
+    extra_headers={
+        "anthropic-beta": "web-fetch-2025-09-10"
+    }
+)
+
+# The second response benefits from cached fetch results
+print(f"Cache read tokens: {response2.usage.get('cache_read_input_tokens', 0)}")
+```## Streaming
+
+With streaming enabled, fetch events are part of the stream with a pause during content retrieval:```javascript  theme={null}
+event: message_start
+data: {"type": "message_start", "message": {"id": "msg_abc123", "type": "message"}}
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
+
+// Claude's decision to fetch
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 1, "content_block": {"type": "server_tool_use", "id": "srvtoolu_xyz789", "name": "web_fetch"}}
+
+// Fetch URL streamed
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 1, "delta": {"type": "input_json_delta", "partial_json": "{\"url\":\"https://example.com/article\"}"}}
+
+// Pause while fetch executes
+
+// Fetch results streamed
+event: content_block_start
+data: {"type": "content_block_start", "index": 2, "content_block": {"type": "web_fetch_tool_result", "tool_use_id": "srvtoolu_xyz789", "content": {"type": "web_fetch_result", "url": "https://example.com/article", "content": {"type": "document", "source": {"type": "text", "media_type": "text/plain", "data": "Article content..."}}}}}
+
+// Claude's response continues...
+```## Batch requests
+
+You can include the web fetch tool in the [Messages Batches API](/en/docs/build-with-claude/batch-processing). Web fetch tool calls through the Messages Batches API are priced the same as those in regular Messages API requests.
+
+## Usage and pricing
+
+Web fetch usage has **no additional charges** beyond standard token costs:```json  theme={null}
+"usage": {
+  "input_tokens": 25039,
+  "output_tokens": 931,
+  "cache_read_input_tokens": 0,
+  "cache_creation_input_tokens": 0,
+  "server_tool_use": {
+    "web_fetch_requests": 1
+  }
+}
+```The web fetch tool is available on the Claude API at **no additional cost**. You only pay standard token costs for the fetched content that becomes part of your conversation context.
+
+To protect against inadvertently fetching large content that would consume excessive tokens, use the `max_content_tokens` parameter to set appropriate limits based on your use case and budget considerations.
+
+Example token usage for typical content:
+
+* Average web page (10KB): \~2,500 tokens
+* Large documentation page (100KB): \~25,000 tokens
+* Research paper PDF (500KB): \~125,000 tokens
+
+[END OF DOCUMENT: CLAUDEN0DEOSIL9]
+---
+
+[START OF DOCUMENT: CLAUDE1TEBI0X13R | Title: Web-Search-Tool]
+
+# Web search tool
+
+The web search tool gives Claude direct access to real-time web content, allowing it to answer questions with up-to-date information beyond its knowledge cutoff. Claude automatically cites sources from search results as part of its answer.
+
+<Note>
+ Please reach out through our [feedback form](https://forms.gle/sWjBtsrNEY2oKGuE8) to share your experience with the web search tool.
+</Note>
+
+## Supported models
+
+Web search is available on:
+
+* Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`)
+* Claude Sonnet 4 (`claude-sonnet-4-20250514`)
+* Claude Sonnet 3.7 ([deprecated](/en/docs/about-claude/model-deprecations)) (`claude-3-7-sonnet-20250219`)
+* Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+* Claude Haiku 3.5 (`claude-3-5-haiku-latest`)
+* Claude Opus 4.1 (`claude-opus-4-1-20250805`)
+* Claude Opus 4 (`claude-opus-4-20250514`)
+
+## How web search works
+
+When you add the web search tool to your API request:
+
+1. Claude decides when to search based on the prompt.
+2. The API executes the searches and provides Claude with the results. This process may repeat multiple times throughout a single request.
+3. At the end of its turn, Claude provides a final response with cited sources.
+
+## How to use web search
+
+<Note>
+ Your organization's administrator must enable web search in [Console](https://console.anthropic.com/settings/privacy).
+</Note>
+
+Provide the web search tool in your API request:
+
+<CodeGroup>```bash Shell theme={null}
+  curl https://api.anthropic.com/v1/messages \
+      --header "x-api-key: $ANTHROPIC_API_KEY" \
+      --header "anthropic-version: 2023-06-01" \
+      --header "content-type: application/json" \
+      --data '{
+          "model": "claude-sonnet-4-5",
+          "max_tokens": 1024,
+          "messages": [
+              {
+                  "role": "user",
+                  "content": "What's the weather in NYC?"
+              }
+          ],
+          "tools": [{
+              "type": "web_search_20250305",
+              "name": "web_search",
+              "max_uses": 5
+          }]
+      }'
+  ``````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  response = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": "What's the weather in NYC?"
+          }
+      ],
+      tools=[{
+          "type": "web_search_20250305",
+          "name": "web_search",
+          "max_uses": 5
+      }]
+  )
+  print(response)
+  ``````typescript TypeScript theme={null}
+  import { Anthropic } from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  async function main() {
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: "What's the weather in NYC?"
+        }
+      ],
+      tools: [{
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 5
+      }]
+    });
+
+    console.log(response);
+  }
+
+  main().catch(console.error);
+  ```</CodeGroup>
+
+### Tool definition
+
+The web search tool supports the following parameters:```json JSON theme={null}
+{
+  "type": "web_search_20250305",
+  "name": "web_search",
+
+  // Optional: Limit the number of searches per request
+  "max_uses": 5,
+
+  // Optional: Only include results from these domains
+  "allowed_domains": ["example.com", "trusteddomain.org"],
+
+  // Optional: Never include results from these domains
+  "blocked_domains": ["untrustedsource.com"],
+
+  // Optional: Localize search results
+  "user_location": {
+    "type": "approximate",
+    "city": "San Francisco",
+    "region": "California",
+    "country": "US",
+    "timezone": "America/Los_Angeles"
+  }
+}
+```#### Max uses
+
+The `max_uses` parameter limits the number of searches performed. If Claude attempts more searches than allowed, the `web_search_tool_result` will be an error with the `max_uses_exceeded` error code.
+
+#### Domain filtering
+
+When using domain filters:
+
+* Domains should not include the HTTP/HTTPS scheme (use `example.com` instead of `https://example.com`)
+* Subdomains are automatically included (`example.com` covers `docs.example.com`)
+* Specific subdomains restrict results to only that subdomain (`docs.example.com` returns only results from that subdomain, not from `example.com` or `api.example.com`)
+* Subpaths are supported (`example.com/blog`)
+* You can use either `allowed_domains` or `blocked_domains`, but not both in the same request.
+
+<Note>
+ Request-level domain restrictions must be compatible with organization-level domain restrictions configured in the Console. Request-level domains can only further restrict domains, not override or expand beyond the organization-level list. If your request includes domains that conflict with organization settings, the API will return a validation error.
+</Note>
+
+#### Localization
+
+The `user_location` parameter allows you to localize search results based on a user's location.
+
+* `type`: The type of location (must be `approximate`)
+* `city`: The city name
+* `region`: The region or state
+* `country`: The country
+* `timezone`: The [IANA timezone ID](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
+### Response
+
+Here's an example response structure:```json  theme={null}
+{
+  "role": "assistant",
+  "content": [
+    // 1. Claude's decision to search
+    {
+      "type": "text",
+      "text": "I'll search for when Claude Shannon was born."
+    },
+    // 2. The search query used
+    {
+      "type": "server_tool_use",
+      "id": "srvtoolu_01WYG3ziw53XMcoyKL4XcZmE",
+      "name": "web_search",
+      "input": {
+        "query": "claude shannon birth date"
+      }
+    },
+    // 3. Search results
+    {
+      "type": "web_search_tool_result",
+      "tool_use_id": "srvtoolu_01WYG3ziw53XMcoyKL4XcZmE",
+      "content": [
+        {
+          "type": "web_search_result",
+          "url": "https://en.wikipedia.org/wiki/Claude_Shannon",
+          "title": "Claude Shannon - Wikipedia",
+          "encrypted_content": "EqgfCioIARgBIiQ3YTAwMjY1Mi1mZjM5LTQ1NGUtODgxNC1kNjNjNTk1ZWI3Y...",
+          "page_age": "April 30, 2025"
+        }
+      ]
+    },
+    {
+      "text": "Based on the search results, ",
+      "type": "text"
+    },
+    // 4. Claude's response with citations
+    {
+      "text": "Claude Shannon was born on April 30, 1916, in Petoskey, Michigan",
+      "type": "text",
+      "citations": [
+        {
+          "type": "web_search_result_location",
+          "url": "https://en.wikipedia.org/wiki/Claude_Shannon",
+          "title": "Claude Shannon - Wikipedia",
+          "encrypted_index": "Eo8BCioIAhgBIiQyYjQ0OWJmZi1lNm..",
+          "cited_text": "Claude Elwood Shannon (April 30, 1916 – February 24, 2001) was an American mathematician, electrical engineer, computer scientist, cryptographer and i..."
+        }
+      ]
+    }
+  ],
+  "id": "msg_a930390d3a",
+  "usage": {
+    "input_tokens": 6039,
+    "output_tokens": 931,
+    "server_tool_use": {
+      "web_search_requests": 1
+    }
+  },
+  "stop_reason": "end_turn"
+}
+```#### Search results
+
+Search results include:
+
+* `url`: The URL of the source page
+* `title`: The title of the source page
+* `page_age`: When the site was last updated
+* `encrypted_content`: Encrypted content that must be passed back in multi-turn conversations for citations
+
+#### Citations
+
+Citations are always enabled for web search, and each `web_search_result_location` includes:
+
+* `url`: The URL of the cited source
+* `title`: The title of the cited source
+* `encrypted_index`: A reference that must be passed back for multi-turn conversations.
+* `cited_text`: Up to 150 characters of the cited content
+
+The web search citation fields `cited_text`, `title`, and `url` do not count towards input or output token usage.
+
+<Note>
+ When displaying API outputs directly to end users, citations must be included to the original source. If you are making modifications to API outputs, including by reprocessing and/or combining them with your own material before displaying them to end users, display citations as appropriate based on consultation with your legal team.
+</Note>
+
+#### Errors
+
+When the web search tool encounters an error (such as hitting rate limits), the Claude API still returns a 200 (success) response. The error is represented within the response body using the following structure:```json  theme={null}
+{
+  "type": "web_search_tool_result",
+  "tool_use_id": "servertoolu_a93jad",
+  "content": {
+    "type": "web_search_tool_result_error",
+    "error_code": "max_uses_exceeded"
+  }
+}
+```These are the possible error codes:
+
+* `too_many_requests`: Rate limit exceeded
+* `invalid_input`: Invalid search query parameter
+* `max_uses_exceeded`: Maximum web search tool uses exceeded
+* `query_too_long`: Query exceeds maximum length
+* `unavailable`: An internal error occurred
+
+#### `pause_turn` stop reason
+
+The response may include a `pause_turn` stop reason, which indicates that the API paused a long-running turn. You may provide the response back as-is in a subsequent request to let Claude continue its turn, or modify the content if you wish to interrupt the conversation.
+
+## Prompt caching
+
+Web search works with [prompt caching](/en/docs/build-with-claude/prompt-caching). To enable prompt caching, add at least one `cache_control` breakpoint in your request. The system will automatically cache up until the last `web_search_tool_result` block when executing the tool.
+
+For multi-turn conversations, set a `cache_control` breakpoint on or after the last `web_search_tool_result` block to reuse cached content.
+
+For example, to use prompt caching with web search for a multi-turn conversation:
+
+<CodeGroup>```python  theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  # First request with web search and cache breakpoint
+  messages = [
+      {
+          "role": "user",
+          "content": "What's the current weather in San Francisco today?"
+      }
+  ]
+
+  response1 = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=messages,
+      tools=[{
+          "type": "web_search_20250305",
+          "name": "web_search",
+          "user_location": {
+              "type": "approximate",
+              "city": "San Francisco",
+              "region": "California",
+              "country": "US",
+              "timezone": "America/Los_Angeles"
+          }
+      }]
+  )
+
+  # Add Claude's response to the conversation
+  messages.append({
+      "role": "assistant",
+      "content": response1.content
+  })
+
+  # Second request with cache breakpoint after the search results
+  messages.append({
+      "role": "user",
+      "content": "Should I expect rain later this week?",
+      "cache_control": {"type": "ephemeral"}  # Cache up to this point
+  })
+
+  response2 = client.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=messages,
+      tools=[{
+          "type": "web_search_20250305",
+          "name": "web_search",
+          "user_location": {
+              "type": "approximate",
+              "city": "San Francisco",
+              "region": "California",
+              "country": "US",
+              "timezone": "America/Los_Angeles"
+          }
+      }]
+  )
+  # The second response will benefit from cached search results
+  # while still being able to perform new searches if needed
+  print(f"Cache read tokens: {response2.usage.get('cache_read_input_tokens', 0)}")
+  ```</CodeGroup>
+
+## Streaming
+
+With streaming enabled, you'll receive search events as part of the stream. There will be a pause while the search executes:```javascript  theme={null}
+event: message_start
+data: {"type": "message_start", "message": {"id": "msg_abc123", "type": "message"}}
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
+
+// Claude's decision to search
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 1, "content_block": {"type": "server_tool_use", "id": "srvtoolu_xyz789", "name": "web_search"}}
+
+// Search query streamed
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 1, "delta": {"type": "input_json_delta", "partial_json": "{\"query\":\"latest quantum computing breakthroughs 2025\"}"}}
+
+// Pause while search executes
+
+// Search results streamed
+event: content_block_start
+data: {"type": "content_block_start", "index": 2, "content_block": {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_xyz789", "content": [{"type": "web_search_result", "title": "Quantum Computing Breakthroughs in 2025", "url": "https://example.com"}]}}
+
+// Claude's response with citations (omitted in this example)
+```## Batch requests
+
+You can include the web search tool in the [Messages Batches API](/en/docs/build-with-claude/batch-processing). Web search tool calls through the Messages Batches API are priced the same as those in regular Messages API requests.
+
+## Usage and pricing
+
+Web search usage is charged in addition to token usage:```json  theme={null}
+"usage": {
+  "input_tokens": 105,
+  "output_tokens": 6039,
+  "cache_read_input_tokens": 7123,
+  "cache_creation_input_tokens": 7345,
+  "server_tool_use": {
+    "web_search_requests": 1
+  }
+}
+```Web search is available on the Claude API for **\$10 per 1,000 searches**, plus standard token costs for search-generated content. Web search results retrieved throughout a conversation are counted as input tokens, in search iterations executed during a single turn and in subsequent conversation turns.
+
+Each web search counts as one use, regardless of the number of results returned. If an error occurs during web search, the web search will not be billed.
+
+[END OF DOCUMENT: CLAUDE1TEBI0X13R]
+---
+
+[START OF DOCUMENT: CLAUDE221K1Z7AUU | Title: Whats-New-Claude-4-5]
+
+# What's new in Claude 4.5
+
+Claude 4.5 introduces two models designed for different use cases:
+
+* **Claude Sonnet 4.5**: Our best model for complex agents and coding, with the highest intelligence across most tasks
+* **Claude Haiku 4.5**: Our fastest and most intelligent Haiku model with near-frontier performance. The first Haiku model with extended thinking
+
+## Key improvements in Sonnet 4.5 over Sonnet 4
+
+### Coding excellence
+
+Claude Sonnet 4.5 is our best coding model to date, with significant improvements across the entire development lifecycle:
+
+* **SWE-bench Verified performance**: Advanced state-of-the-art on coding benchmarks
+* **Enhanced planning and system design**: Better architectural decisions and code organization
+* **Improved security engineering**: More robust security practices and vulnerability detection
+* **Better instruction following**: More precise adherence to coding specifications and requirements
+
+<Note>
+ Claude Sonnet 4.5 performs significantly better on coding tasks when [extended thinking](/en/docs/build-with-claude/extended-thinking) is enabled. Extended thinking is disabled by default, but we recommend enabling it for complex coding work. Be aware that extended thinking impacts [prompt caching efficiency](/en/docs/build-with-claude/prompt-caching#caching-with-thinking-blocks). See the [migration guide](/en/docs/about-claude/models/migrating-to-claude-4#extended-thinking-recommendations) for configuration details.
+</Note>
+
+### Agent capabilities
+
+Claude Sonnet 4.5 introduces major advances in agent capabilities:
+
+* **Extended autonomous operation**: Sonnet 4.5 can work independently for hours while maintaining clarity and focus on incremental progress. The model makes steady advances on a few tasks at a time rather than attempting everything at once. It provides fact-based progress updates that accurately reflect what has been accomplished.
+* **Context awareness**: Claude now tracks its token usage throughout conversations, receiving updates after each tool call. This awareness helps prevent premature task abandonment and enables more effective execution on long-running tasks. See [Context awareness](/en/docs/build-with-claude/context-windows#context-awareness-in-claude-sonnet-4-5) for technical details and [prompting guidance](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices#context-awareness-and-multi-window-workflows).
+* **Enhanced tool usage**: The model more effectively uses parallel tool calls, firing off multiple speculative searches simultaneously during research and reading several files at once to build context faster. Improved coordination across multiple tools and information sources enables the model to effectively leverage a wide range of capabilities in agentic search and coding workflows.
+* **Advanced context management**: Sonnet 4.5 maintains exceptional state tracking in external files, preserving goal-orientation across sessions. Combined with more effective context window usage and our new context management API features, the model optimally handles information across extended sessions to maintain coherence over time.
+
+<Note>Context awareness is available in Claude Sonnet 4, Sonnet 4.5, Haiku 4.5, Opus 4, and Opus 4.1.</Note>
+
+### Communication and interaction style
+
+Claude Sonnet 4.5 has a refined communication approach that is concise, direct, and natural. It provides fact-based progress updates and may skip verbose summaries after tool calls to maintain workflow momentum (though this can be adjusted with prompting).
+
+For detailed guidance on working with this communication style, see [Claude 4 best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices).
+
+### Creative content generation
+
+Claude Sonnet 4.5 excels at creative content tasks:
+
+* **Presentations and animations**: Matches or exceeds Claude Opus 4.1 for creating slides and visual content
+* **Creative flair**: Produces polished, professional output with strong instruction following
+* **First-try quality**: Generates usable, well-designed content in initial attempts
+
+## Key improvements in Haiku 4.5 over Haiku 3.5
+
+Claude Haiku 4.5 represents a transformative leap for the Haiku model family, bringing frontier capabilities to our fastest model class:
+
+### Near-frontier intelligence with blazing speed
+
+Claude Haiku 4.5 delivers near-frontier performance matching Sonnet 4 at significantly lower cost and faster speed:
+
+* **Near-frontier intelligence**: Matches Sonnet 4 performance across reasoning, coding, and complex tasks
+* **Enhanced speed**: More than twice the speed of Sonnet 4, with optimizations for output tokens per second (OTPS)
+* **Optimal cost-performance**: Near-frontier intelligence at one-third the cost, ideal for high-volume deployments
+
+### Extended thinking capabilities
+
+Claude Haiku 4.5 is the **first Haiku model** to support extended thinking, bringing advanced reasoning capabilities to the Haiku family:
+
+* **Reasoning at speed**: Access to Claude's internal reasoning process for complex problem-solving
+* **Thinking Summarization**: Summarized thinking output for production-ready deployments
+* **Interleaved thinking**: Think between tool calls for more sophisticated multi-step workflows
+* **Budget control**: Configure thinking token budgets to balance reasoning depth with speed
+
+Extended thinking must be enabled explicitly by adding a `thinking` parameter to your API requests. See the [Extended thinking documentation](/en/docs/build-with-claude/extended-thinking) for implementation details.
+
+<Note>
+ Claude Haiku 4.5 performs significantly better on coding and reasoning tasks when [extended thinking](/en/docs/build-with-claude/extended-thinking) is enabled. Extended thinking is disabled by default, but we recommend enabling it for complex problem-solving, coding work, and multi-step reasoning. Be aware that extended thinking impacts [prompt caching efficiency](/en/docs/build-with-claude/prompt-caching#caching-with-thinking-blocks). See the [migration guide](/en/docs/about-claude/models/migrating-to-claude-4#extended-thinking-recommendations) for configuration details.
+</Note>
+
+<Note>Available in Claude Sonnet 3.7, Sonnet 4, Sonnet 4.5, Haiku 4.5, Opus 4, and Opus 4.1.</Note>
+
+### Context awareness
+
+Claude Haiku 4.5 features **context awareness**, enabling the model to track its remaining context window throughout a conversation:
+
+* **Token budget tracking**: Claude receives real-time updates on remaining context capacity after each tool call
+* **Better task persistence**: The model can execute tasks more effectively by understanding available working space
+* **Multi-context-window workflows**: Improved handling of state transitions across extended sessions
+
+This is the first Haiku model with native context awareness capabilities. For prompting guidance, see [Claude 4 best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices#context-awareness-and-multi-window-workflows).
+
+<Note>Available in Claude Sonnet 4, Sonnet 4.5, Haiku 4.5, Opus 4, and Opus 4.1.</Note>
+
+### Strong coding and tool use
+
+Claude Haiku 4.5 delivers robust coding capabilities expected from modern Claude models:
+
+* **Coding proficiency**: Strong performance across code generation, debugging, and refactoring tasks
+* **Full tool support**: Compatible with all Claude 4 tools including bash, code execution, text editor, web search, and computer use
+* **Enhanced computer use**: Optimized for autonomous desktop interaction and browser automation workflows
+* **Parallel tool execution**: Efficient coordination across multiple tools for complex workflows
+
+Haiku 4.5 is designed for use cases that demand both intelligence and efficiency:
+
+* **Real-time applications**: Fast response times for interactive user experiences
+* **High-volume processing**: Cost-effective intelligence for large-scale deployments
+* **Free tier implementations**: Premium model quality at accessible pricing
+* **Sub-agent architectures**: Fast, intelligent agents for multi-agent systems
+* **Computer use at scale**: Cost-effective autonomous desktop and browser automation
+
+## New API features
+
+### Memory tool (Beta)
+
+The new [memory tool](/en/docs/agents-and-tools/tool-use/memory-tool) enables Claude to store and retrieve information outside the context window:```python  theme={null}
+tools=[
+    {
+        "type": "memory_20250818",
+        "name": "memory"
+    }
+]
+```This allows for:
+
+* Building knowledge bases over time
+* Maintaining project state across sessions
+* Preserving effectively unlimited context through file-based storage
+
+<Note>Available in Claude Sonnet 4, Sonnet 4.5, Haiku 4.5, Opus 4, and Opus 4.1. Requires [beta header](/en/api/beta-headers): `context-management-2025-06-27`</Note>
+
+### Context editing
+
+Use [context editing](/en/docs/build-with-claude/context-editing) for intelligent context management through automatic tool call clearing:```python  theme={null}
+response = client.beta.messages.create(
+    betas=["context-management-2025-06-27"],
+    model="claude-sonnet-4-5",  # or claude-haiku-4-5
+    max_tokens=4096,
+    messages=[{"role": "user", "content": "..."}],
+    context_management={
+        "edits": [
+            {
+                "type": "clear_tool_uses_20250919",
+                "trigger": {"type": "input_tokens", "value": 500},
+                "keep": {"type": "tool_uses", "value": 2},
+                "clear_at_least": {"type": "input_tokens", "value": 100}
+            }
+        ]
+    },
+    tools=[...]
+)
+```This feature automatically removes older tool calls and results when approaching token limits, helping manage context in long-running agent sessions.
+
+<Note>Available in Claude Sonnet 4, Sonnet 4.5, Haiku 4.5, Opus 4, and Opus 4.1. Requires [beta header](/en/api/beta-headers): `context-management-2025-06-27`</Note>
+
+### Enhanced stop reasons
+
+Claude 4.5 models introduce a new `model_context_window_exceeded` stop reason that explicitly indicates when generation stopped due to hitting the context window limit, rather than the requested `max_tokens` limit. This makes it easier to handle context window limits in your application logic.```json  theme={null}
+{
+  "stop_reason": "model_context_window_exceeded",
+  "usage": {
+    "input_tokens": 150000,
+    "output_tokens": 49950
+  }
+}
+```### Improved tool parameter handling
+
+Claude 4.5 models include a bug fix that preserves intentional formatting in tool call string parameters. Previously, trailing newlines in string parameters were sometimes incorrectly stripped. This fix ensures that tools requiring precise formatting (like text editors) receive parameters exactly as intended.
+
+<Note>
+ This is a behind-the-scenes improvement with no API changes required. However, tools with string parameters may now receive values with trailing newlines that were previously stripped.
+</Note>
+
+**Example:**```json  theme={null}
+// Before: Final newline accidentally stripped
+{
+  "type": "tool_use",
+  "id": "toolu_01A09q90qw90lq917835lq9",
+  "name": "edit_todo",
+  "input": {
+    "file": "todo.txt",
+    "contents": "1. Chop onions.\n2. ???\n3. Profit"
+  }
+}
+
+// After: Trailing newline preserved as intended
+{
+  "type": "tool_use",
+  "id": "toolu_01A09q90qw90lq917835lq9",
+  "name": "edit_todo",
+  "input": {
+    "file": "todo.txt",
+    "contents": "1. Chop onions.\n2. ???\n3. Profit\n"
+  }
+}
+```### Token count optimizations
+
+Claude 4.5 models include automatic optimizations to improve model performance. These optimizations may add small amounts of tokens to requests, but **you are not billed for these system-added tokens**.
+
+## Features introduced in Claude 4
+
+The following features were introduced in Claude 4 and are available across Claude 4 models, including Claude Sonnet 4.5 and Claude Haiku 4.5.
+
+### New refusal stop reason
+
+Claude 4 models introduce a new `refusal` stop reason for content that the model declines to generate for safety reasons:```json  theme={null}
+{"id":"msg_014XEDjypDjFzgKVWdFUXxZP",
+"type":"message",
+"role":"assistant",
+"model":"claude-sonnet-4-5",
+"content":[{"type":"text","text":"I would be happy to assist you. You can "}],
+"stop_reason":"refusal",
+"stop_sequence":null,
+"usage":{"input_tokens":564,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":22}
+}
+```When using Claude 4 models, you should update your application to [handle `refusal` stop reasons](/en/docs/test-and-evaluate/strengthen-guardrails/handle-streaming-refusals).
+
+### Summarized thinking
+
+With extended thinking enabled, the Messages API for Claude 4 models returns a summary of Claude's full thinking process. Summarized thinking provides the full intelligence benefits of extended thinking, while preventing misuse.
+
+While the API is consistent across Claude 3.7 and 4 models, streaming responses for extended thinking might return in a "chunky" delivery pattern, with possible delays between streaming events.
+
+<Note>
+ Summarization is processed by a different model than the one you target in your requests. The thinking model does not see the summarized output.
+</Note>
+
+For more information, see the [Extended thinking documentation](/en/docs/build-with-claude/extended-thinking#summarized-thinking).
+
+### Interleaved thinking
+
+Claude 4 models support interleaving tool use with extended thinking, allowing for more natural conversations where tool uses and responses can be mixed with regular messages.
+
+<Note>
+ Interleaved thinking is in beta. To enable interleaved thinking, add [the beta header](/en/api/beta-headers) `interleaved-thinking-2025-05-14` to your API request.
+</Note>
+
+For more information, see the [Extended thinking documentation](/en/docs/build-with-claude/extended-thinking#interleaved-thinking).
+
+### Behavioral differences
+
+Claude 4 models have notable behavioral changes that may affect how you structure prompts:
+
+#### Communication style changes
+
+* **More concise and direct**: Claude 4 models communicate more efficiently, with less verbose explanations
+* **More natural tone**: Responses are slightly more conversational and less machine-like
+* **Efficiency-focused**: May skip detailed summaries after completing actions to maintain workflow momentum (you can prompt for more detail if needed)
+
+#### Instruction following
+
+Claude 4 models are trained for precise instruction following and require more explicit direction:
+
+* **Be explicit about actions**: Use direct language like "Make these changes" or "Implement this feature" rather than "Can you suggest changes" if you want Claude to take action
+* **State desired behaviors clearly**: Claude will follow instructions precisely, so being specific about what you want helps achieve better results
+
+For comprehensive guidance on working with these models, see [Claude 4 prompt engineering best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices).
+
+### Updated text editor tool
+
+The text editor tool has been updated for Claude 4 models with the following changes:
+
+* **Tool type**: `text_editor_20250728`
+* **Tool name**: `str_replace_based_edit_tool`
+* The `undo_edit` command is no longer supported
+
+<Note>
+ The `str_replace_editor` text editor tool remains the same for Claude Sonnet 3.7.
+</Note>
+
+If you're migrating from Claude Sonnet 3.7 and using the text editor tool:```python  theme={null}
+# Claude Sonnet 3.7
+tools=[
+    {
+        "type": "text_editor_20250124",
+        "name": "str_replace_editor"
+    }
+]
+
+# Claude 4 models
+tools=[
+    {
+        "type": "text_editor_20250728",
+        "name": "str_replace_based_edit_tool"
+    }
+]
+```For more information, see the [Text editor tool documentation](/en/docs/agents-and-tools/tool-use/text-editor-tool).
+
+### Updated code execution tool
+
+If you're using the code execution tool, ensure you're using the latest version `code_execution_20250825`, which adds Bash commands and file manipulation capabilities.
+
+The legacy version `code_execution_20250522` (Python only) is still available but not recommended for new implementations.
+
+For migration instructions, see the [Code execution tool documentation](/en/docs/agents-and-tools/tool-use/code-execution-tool#upgrade-to-latest-tool-version).
+
+## Pricing and availability
+
+### Pricing
+
+Claude 4.5 models maintain competitive pricing:
+
+| Model | Input | Output |
+| ----------------- | ---------------------- | ----------------------- |
+| Claude Sonnet 4.5 | \$3 per million tokens | \$15 per million tokens |
+| Claude Haiku 4.5 | \$1 per million tokens | \$5 per million tokens |
+
+For more details, see the [pricing documentation](/en/docs/about-claude/pricing).
+
+### Third-party platform pricing
+
+Starting with Claude 4.5 models (Sonnet 4.5 and Haiku 4.5), AWS Bedrock and Google Vertex AI offer two endpoint types:
+
+* **Global endpoints**: Dynamic routing for maximum availability
+* **Regional endpoints**: Guaranteed data routing through specific geographic regions with a **10% pricing premium**
+
+**This regional pricing applies to both Claude Sonnet 4.5 and Claude Haiku 4.5.**
+
+**The Claude API (1P) is global by default and unaffected by this change.** The Claude API is global-only (equivalent to the global endpoint offering and pricing from other providers).
+
+For implementation details and migration guidance:
+
+* [AWS Bedrock global vs regional endpoints](/en/docs/build-with-claude/claude-on-amazon-bedrock#global-vs-regional-endpoints)
+* [Google Vertex AI global vs regional endpoints](/en/docs/build-with-claude/claude-on-vertex-ai#global-vs-regional-endpoints)
+
+### Availability
+
+Claude 4.5 models are available on:
+
+| Model | Claude API | Amazon Bedrock | Google Cloud Vertex AI |
+| ----------------- | ---------------------------- | ------------------------------------------- | ---------------------------- |
+| Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` | `anthropic.claude-sonnet-4-5-20250929-v1:0` | `claude-sonnet-4-5@20250929` |
+| Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | `anthropic.claude-haiku-4-5-20251001-v1:0` | `claude-haiku-4-5@20251001` |
+
+Also available through Claude.ai and Claude Code platforms.
+
+## Migration guide
+
+Breaking changes and migration requirements vary depending on which model you're upgrading from. For detailed migration instructions, including step-by-step guides, breaking changes, and migration checklists, see [Migrating to Claude 4.5](/en/docs/about-claude/models/migrating-to-claude-4).
+
+The migration guide covers the following scenarios:
+
+* **Claude Sonnet 3.7 → Sonnet 4.5**: Complete migration path with breaking changes
+* **Claude Haiku 3.5 → Haiku 4.5**: Complete migration path with breaking changes
+* **Claude Sonnet 4 → Sonnet 4.5**: Quick upgrade with minimal changes
+* **Claude Opus 4.1 → Sonnet 4.5**: Seamless upgrade with no breaking changes
+
+## Next steps
+
+<CardGroup cols={3}>
+ <Card title="Best practices" icon="lightbulb" href="/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices">
+ Learn prompt engineering techniques for Claude 4.5 models
+ </Card>
+
+ <Card title="Model overview" icon="table" href="/en/docs/about-claude/models/overview">
+ Compare Claude 4.5 models with other Claude models
+ </Card>
+
+ <Card title="Migration guide" icon="arrow-right-arrow-left" href="/en/docs/about-claude/models/migrating-to-claude-4">
+ Upgrade from previous models
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE221K1Z7AUU]
+---
+
+[START OF DOCUMENT: CLAUDE27LRE5TGOE | Title: Working-With-Messages]
+
+# Using the Messages API
+
+> Practical patterns and examples for using the Messages API effectively
+
+This guide covers common patterns for working with the Messages API, including basic requests, multi-turn conversations, prefill techniques, and vision capabilities. For complete API specifications, see the [Messages API reference](/en/api/messages).
+
+## Basic request and response
+
+<CodeGroup>```bash Shell theme={null}
+  #!/bin/sh
+  curl https://api.anthropic.com/v1/messages \
+       --header "x-api-key: $ANTHROPIC_API_KEY" \
+       --header "anthropic-version: 2023-06-01" \
+       --header "content-type: application/json" \
+       --data \
+  '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+          {"role": "user", "content": "Hello, Claude"}
+      ]
+  }'
+  ``````Python Python theme={null}
+  import anthropic
+
+  message = anthropic.Anthropic().messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {"role": "user", "content": "Hello, Claude"}
+      ]
+  )
+  print(message)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": "Hello, Claude"}
+    ]
+  });
+  console.log(message);
+  ```</CodeGroup>```JSON JSON theme={null}
+{
+  "id": "msg_01XFDUDYJgAACzvnptvVoYEL",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello!"
+    }
+  ],
+  "model": "claude-sonnet-4-5",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 12,
+    "output_tokens": 6
+  }
+}
+```## Multiple conversational turns
+
+The Messages API is stateless, which means that you always send the full conversational history to the API. You can use this pattern to build up a conversation over time. Earlier conversational turns don't necessarily need to actually originate from Claude — you can use synthetic `assistant` messages.
+
+<CodeGroup>```bash Shell theme={null}
+  #!/bin/sh
+  curl https://api.anthropic.com/v1/messages \
+       --header "x-api-key: $ANTHROPIC_API_KEY" \
+       --header "anthropic-version: 2023-06-01" \
+       --header "content-type: application/json" \
+       --data \
+  '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+          {"role": "user", "content": "Hello, Claude"},
+          {"role": "assistant", "content": "Hello!"},
+          {"role": "user", "content": "Can you describe LLMs to me?"}
+
+      ]
+  }'
+  ``````Python Python theme={null}
+  import anthropic
+
+  message = anthropic.Anthropic().messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {"role": "user", "content": "Hello, Claude"},
+          {"role": "assistant", "content": "Hello!"},
+          {"role": "user", "content": "Can you describe LLMs to me?"}
+      ],
+  )
+  print(message)
+
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": "Hello, Claude"},
+      {"role": "assistant", "content": "Hello!"},
+      {"role": "user", "content": "Can you describe LLMs to me?"}
+    ]
+  });
+  ```</CodeGroup>```JSON JSON theme={null}
+{
+    "id": "msg_018gCsTGsXkYJVqYPxTgDHBU",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+        {
+            "type": "text",
+            "text": "Sure, I'd be happy to provide..."
+        }
+    ],
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "usage": {
+      "input_tokens": 30,
+      "output_tokens": 309
+    }
+}
+```## Putting words in Claude's mouth
+
+You can pre-fill part of Claude's response in the last position of the input messages list. This can be used to shape Claude's response. The example below uses `"max_tokens": 1` to get a single multiple choice answer from Claude.
+
+<CodeGroup>```bash Shell theme={null}
+  #!/bin/sh
+  curl https://api.anthropic.com/v1/messages \
+       --header "x-api-key: $ANTHROPIC_API_KEY" \
+       --header "anthropic-version: 2023-06-01" \
+       --header "content-type: application/json" \
+       --data \
+  '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1,
+      "messages": [
+          {"role": "user", "content": "What is latin for Ant? (A) Apoidea, (B) Rhopalocera, (C) Formicidae"},
+          {"role": "assistant", "content": "The answer is ("}
+      ]
+  }'
+  ``````Python Python theme={null}
+  import anthropic
+
+  message = anthropic.Anthropic().messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1,
+      messages=[
+          {"role": "user", "content": "What is latin for Ant? (A) Apoidea, (B) Rhopalocera, (C) Formicidae"},
+          {"role": "assistant", "content": "The answer is ("}
+      ]
+  )
+  print(message)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1,
+    messages: [
+      {"role": "user", "content": "What is latin for Ant? (A) Apoidea, (B) Rhopalocera, (C) Formicidae"},
+      {"role": "assistant", "content": "The answer is ("}
+    ]
+  });
+  console.log(message);
+  ```</CodeGroup>```JSON JSON theme={null}
+{
+  "id": "msg_01Q8Faay6S7QPTvEUUQARt7h",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "C"
+    }
+  ],
+  "model": "claude-sonnet-4-5",
+  "stop_reason": "max_tokens",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 42,
+    "output_tokens": 1
+  }
+}
+```For more information on prefill techniques, see our [prefill guide](/en/docs/build-with-claude/prompt-engineering/prefill-claudes-response).
+
+## Vision
+
+Claude can read both text and images in requests. We support both `base64` and `url` source types for images, and the `image/jpeg`, `image/png`, `image/gif`, and `image/webp` media types. See our [vision guide](/en/docs/build-with-claude/vision) for more details.
+
+<CodeGroup>```bash Shell theme={null}
+  #!/bin/sh
+
+  # Option 1: Base64-encoded image
+  IMAGE_URL="https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+  IMAGE_MEDIA_TYPE="image/jpeg"
+  IMAGE_BASE64=$(curl "$IMAGE_URL" | base64)
+
+  curl https://api.anthropic.com/v1/messages \
+       --header "x-api-key: $ANTHROPIC_API_KEY" \
+       --header "anthropic-version: 2023-06-01" \
+       --header "content-type: application/json" \
+       --data \
+  '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+          {"role": "user", "content": [
+              {"type": "image", "source": {
+                  "type": "base64",
+                  "media_type": "'$IMAGE_MEDIA_TYPE'",
+                  "data": "'$IMAGE_BASE64'"
+              }},
+              {"type": "text", "text": "What is in the above image?"}
+          ]}
+      ]
+  }'
+
+  # Option 2: URL-referenced image
+  curl https://api.anthropic.com/v1/messages \
+       --header "x-api-key: $ANTHROPIC_API_KEY" \
+       --header "anthropic-version: 2023-06-01" \
+       --header "content-type: application/json" \
+       --data \
+  '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1024,
+      "messages": [
+          {"role": "user", "content": [
+              {"type": "image", "source": {
+                  "type": "url",
+                  "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+              }},
+              {"type": "text", "text": "What is in the above image?"}
+          ]}
+      ]
+  }'
+  ``````Python Python theme={null}
+  import anthropic
+  import base64
+  import httpx
+
+  # Option 1: Base64-encoded image
+  image_url = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+  image_media_type = "image/jpeg"
+  image_data = base64.standard_b64encode(httpx.get(image_url).content).decode("utf-8")
+
+  message = anthropic.Anthropic().messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "base64",
+                          "media_type": image_media_type,
+                          "data": image_data,
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "What is in the above image?"
+                  }
+              ],
+          }
+      ],
+  )
+  print(message)
+
+  # Option 2: URL-referenced image
+  message_from_url = anthropic.Anthropic().messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "url",
+                          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "What is in the above image?"
+                  }
+              ],
+          }
+      ],
+  )
+  print(message_from_url)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  // Option 1: Base64-encoded image
+  const image_url = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+  const image_media_type = "image/jpeg"
+  const image_array_buffer = await ((await fetch(image_url)).arrayBuffer());
+  const image_data = Buffer.from(image_array_buffer).toString('base64');
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1024,
+    messages: [
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "base64",
+                          "media_type": image_media_type,
+                          "data": image_data,
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "What is in the above image?"
+                  }
+              ],
+          }
+        ]
+  });
+  console.log(message);
+
+  // Option 2: URL-referenced image
+  const messageFromUrl = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1024,
+    messages: [
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "image",
+                      "source": {
+                          "type": "url",
+                          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg",
+                      },
+                  },
+                  {
+                      "type": "text",
+                      "text": "What is in the above image?"
+                  }
+              ],
+          }
+        ]
+  });
+  console.log(messageFromUrl);
+  ```</CodeGroup>```JSON JSON theme={null}
+{
+  "id": "msg_01EcyWo6m4hyW8KHs2y2pei5",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "This image shows an ant, specifically a close-up view of an ant. The ant is shown in detail, with its distinct head, antennae, and legs clearly visible. The image is focused on capturing the intricate details and features of the ant, likely taken with a macro lens to get an extreme close-up perspective."
+    }
+  ],
+  "model": "claude-sonnet-4-5",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 1551,
+    "output_tokens": 71
+  }
+}
+```## Tool use, JSON mode, and computer use
+
+See our [guide](/en/docs/agents-and-tools/tool-use/overview) for examples for how to use tools with the Messages API.
+See our [computer use guide](/en/docs/agents-and-tools/tool-use/computer-use-tool) for examples of how to control desktop computer environments with the Messages API.
+
+[END OF DOCUMENT: CLAUDE27LRE5TGOE]
+---
+

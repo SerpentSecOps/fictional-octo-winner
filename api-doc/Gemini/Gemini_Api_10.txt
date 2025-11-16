@@ -1,0 +1,2736 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: GEMINI23ET0N5ZMQ (sha256-c17d35290aa265ea5ca3b7cfc2cd80ce32f0226c8a434930e1bd0bc63cff0e71) | Title: Text-Generation.Md]
+[DocID: GEMINI4PH6T8ALN (sha256-0c1436f54cabce332b75d1cea6e8a5c6eff1567dec56fa46a24dd1ff675801f1) | Title: Thinking.Md]
+[DocID: GEMINI2F0UL09YJM (sha256-df48a7316b22eeaf01caaf755fe038ad7f8a9978f6279c5147d631139271e9e3) | Title: Tokens.Md]
+[DocID: GEMINIUDQ3K9NM6 (sha256-4df3a5263fced1bb0111e2378368ba8b243316a1c2ab0c302571cc6482adfdb2) | Title: Troubleshooting.Md]
+[DocID: GEMINI19TE9YRB5P (sha256-758e31f7b73d2e3b08dcd6da8f29a6abc8b8618712ef16f5839719a80e039c92) | Title: Url-Context.Md]
+--- END OF TOC ---
+
+[START OF DOCUMENT: GEMINI23ET0N5ZMQ | Title: Text-Generation.Md]
+
+<br />
+
+The Gemini API can generate text output from various inputs, including text, images, video, and audio, leveraging Gemini models.
+
+Here's a basic example that takes a single text input:
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents="How does AI work?"
+ )
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: "How does AI work?",
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("Explain how AI works in a few words"),
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.types.GenerateContentResponse;
+
+ public class GenerateContentWithTextInput {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ GenerateContentResponse response =
+ client.models.generateContent("gemini-2.5-flash", "How does AI work?", null);
+
+ System.out.println(response.text());
+ }
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "How does AI work?"
+ }
+ ]
+ }
+ ]
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const payload = {
+ contents: [
+ {
+ parts: [
+ { text: 'How AI does work?' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+## Thinking with Gemini 2.5
+
+2.5 Flash and Pro models have["thinking"](https://ai.google.dev/gemini-api/docs/thinking)enabled by default to enhance quality, which may take longer to run and increase token usage.
+
+When using 2.5 Flash, you can disable thinking by setting the thinking budget to zero.
+
+For more details, see the[thinking guide](https://ai.google.dev/gemini-api/docs/thinking#set-budget).
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents="How does AI work?",
+ config=types.GenerateContentConfig(
+ thinking_config=types.ThinkingConfig(thinking_budget=0) # Disables thinking
+ ),
+ )
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: "How does AI work?",
+ config: {
+ thinkingConfig: {
+ thinkingBudget: 0, // Disables thinking
+ },
+ }
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("How does AI work?"),
+ &genai.GenerateContentConfig{
+ ThinkingConfig: &genai.ThinkingConfig{
+ ThinkingBudget: int32(0), // Disables thinking
+ },
+ }
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.types.GenerateContentConfig;
+ import com.google.genai.types.GenerateContentResponse;
+ import com.google.genai.types.ThinkingConfig;
+
+ public class GenerateContentWithThinkingConfig {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ GenerateContentConfig config =
+ GenerateContentConfig.builder()
+ // Disables thinking
+ .thinkingConfig(ThinkingConfig.builder().thinkingBudget(0))
+ .build();
+
+ GenerateContentResponse response =
+ client.models.generateContent("gemini-2.5-flash", "How does AI work?", config);
+
+ System.out.println(response.text());
+ }
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "How does AI work?"
+ }
+ ]
+ }
+ ],
+ "generationConfig": {
+ "thinkingConfig": {
+ "thinkingBudget": 0
+ }
+ }
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const payload = {
+ contents: [
+ {
+ parts: [
+ { text: 'How AI does work?' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+## System instructions and other configurations
+
+You can guide the behavior of Gemini models with system instructions. To do so, pass a[`GenerateContentConfig`](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig)object.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ config=types.GenerateContentConfig(
+ system_instruction="You are a cat. Your name is Neko."),
+ contents="Hello there"
+ )
+
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: "Hello there",
+ config: {
+ systemInstruction: "You are a cat. Your name is Neko.",
+ },
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ config := &genai.GenerateContentConfig{
+ SystemInstruction: genai.NewContentFromText("You are a cat. Your name is Neko.", genai.RoleUser),
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("Hello there"),
+ config,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.types.Content;
+ import com.google.genai.types.GenerateContentConfig;
+ import com.google.genai.types.GenerateContentResponse;
+ import com.google.genai.types.Part;
+
+ public class GenerateContentWithSystemInstruction {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ GenerateContentConfig config =
+ GenerateContentConfig.builder()
+ .systemInstruction(
+ Content.fromParts(Part.fromText("You are a cat. Your name is Neko.")))
+ .build();
+
+ GenerateContentResponse response =
+ client.models.generateContent("gemini-2.5-flash", "Hello there", config);
+
+ System.out.println(response.text());
+ }
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "system_instruction": {
+ "parts": [
+ {
+ "text": "You are a cat. Your name is Neko."
+ }
+ ]
+ },
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Hello there"
+ }
+ ]
+ }
+ ]
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const systemInstruction = {
+ parts: [{
+ text: 'You are a cat. Your name is Neko.'
+ }]
+ };
+
+ const payload = {
+ systemInstruction,
+ contents: [
+ {
+ parts: [
+ { text: 'Hello there' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+The[`GenerateContentConfig`](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig)object also lets you override default generation parameters, such as[temperature](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig).
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=["Explain how AI works"],
+ config=types.GenerateContentConfig(
+ temperature=0.1
+ )
+ )
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: "Explain how AI works",
+ config: {
+ temperature: 0.1,
+ },
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ temp := float32(0.9)
+ topP := float32(0.5)
+ topK := float32(20.0)
+
+ config := &genai.GenerateContentConfig{
+ Temperature: &temp,
+ TopP: &topP,
+ TopK: &topK,
+ ResponseMIMEType: "application/json",
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("What is the average size of a swallow?"),
+ config,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.types.GenerateContentConfig;
+ import com.google.genai.types.GenerateContentResponse;
+
+ public class GenerateContentWithConfig {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ GenerateContentConfig config = GenerateContentConfig.builder().temperature(0.1f).build();
+
+ GenerateContentResponse response =
+ client.models.generateContent("gemini-2.5-flash", "Explain how AI works", config);
+
+ System.out.println(response.text());
+ }
+ }
+
+### REST
+
+ curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Explain how AI works"
+ }
+ ]
+ }
+ ],
+ "generationConfig": {
+ "stopSequences": [
+ "Title"
+ ],
+ "temperature": 1.0,
+ "topP": 0.8,
+ "topK": 10
+ }
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const generationConfig = {
+ temperature: 1,
+ topP: 0.95,
+ topK: 40,
+ responseMimeType: 'text/plain',
+ };
+
+ const payload = {
+ generationConfig,
+ contents: [
+ {
+ parts: [
+ { text: 'Explain how AI works in a few words' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+Refer to the[`GenerateContentConfig`](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig)in our API reference for a complete list of configurable parameters and their descriptions.
+
+## Multimodal inputs
+
+The Gemini API supports multimodal inputs, allowing you to combine text with media files. The following example demonstrates providing an image:
+
+### Python
+
+ from PIL import Image
+ from google import genai
+
+ client = genai.Client()
+
+ image = Image.open("/path/to/organ.png")
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[image, "Tell me about this instrument"]
+ )
+ print(response.text)
+
+### JavaScript
+
+ import {
+ GoogleGenAI,
+ createUserContent,
+ createPartFromUri,
+ } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const image = await ai.files.upload({
+ file: "/path/to/organ.png",
+ });
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: [
+ createUserContent([
+ "Tell me about this instrument",
+ createPartFromUri(image.uri, image.mimeType),
+ ]),
+ ],
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ imagePath := "/path/to/organ.jpg"
+ imgData, _ := os.ReadFile(imagePath)
+
+ parts := []*genai.Part{
+ genai.NewPartFromText("Tell me about this instrument"),
+ &genai.Part{
+ InlineData: &genai.Blob{
+ MIMEType: "image/jpeg",
+ Data: imgData,
+ },
+ },
+ }
+
+ contents := []*genai.Content{
+ genai.NewContentFromParts(parts, genai.RoleUser),
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.Content;
+ import com.google.genai.types.GenerateContentResponse;
+ import com.google.genai.types.Part;
+
+ public class GenerateContentWithMultiModalInputs {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ Content content =
+ Content.fromParts(
+ Part.fromText("Tell me about this instrument"),
+ Part.fromUri("/path/to/organ.jpg", "image/jpeg"));
+
+ GenerateContentResponse response =
+ client.models.generateContent("gemini-2.5-flash", content, null);
+
+ System.out.println(response.text());
+ }
+ }
+
+### REST
+
+ # Use a temporary file to hold the base64 encoded image data
+ TEMP_B64=$(mktemp)
+ trap 'rm -f "$TEMP_B64"' EXIT
+ base64 $B64FLAGS $IMG_PATH > "$TEMP_B64"
+
+ # Use a temporary file to hold the JSON payload
+ TEMP_JSON=$(mktemp)
+ trap 'rm -f "$TEMP_JSON"' EXIT
+
+ cat > "$TEMP_JSON" << EOF
+ {
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Tell me about this instrument"
+ },
+ {
+ "inline_data": {
+ "mime_type": "image/jpeg",
+ "data": "$(cat "$TEMP_B64")"
+ }
+ }
+ ]
+ }
+ ]
+ }
+ EOF
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d "@$TEMP_JSON"
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const imageUrl = 'http://image/url';
+ const image = getImageData(imageUrl);
+ const payload = {
+ contents: [
+ {
+ parts: [
+ { image },
+ { text: 'Tell me about this instrument' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+ function getImageData(url) {
+ const blob = UrlFetchApp.fetch(url).getBlob();
+
+ return {
+ mimeType: blob.getContentType(),
+ data: Utilities.base64Encode(blob.getBytes())
+ };
+ }
+
+For alternative methods of providing images and more advanced image processing, see our[image understanding guide](https://ai.google.dev/gemini-api/docs/image-understanding). The API also supports[document](https://ai.google.dev/gemini-api/docs/document-processing),[video](https://ai.google.dev/gemini-api/docs/video-understanding), and[audio](https://ai.google.dev/gemini-api/docs/audio)inputs and understanding.
+
+## Streaming responses
+
+By default, the model returns a response only after the entire generation process is complete.
+
+For more fluid interactions, use streaming to receive[`GenerateContentResponse`](https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse)instances incrementally as they're generated.
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ response = client.models.generate_content_stream(
+ model="gemini-2.5-flash",
+ contents=["Explain how AI works"]
+ )
+ for chunk in response:
+ print(chunk.text, end="")
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContentStream({
+ model: "gemini-2.5-flash",
+ contents: "Explain how AI works",
+ });
+
+ for await (const chunk of response) {
+ console.log(chunk.text);
+ }
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ stream := client.Models.GenerateContentStream(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("Write a story about a magic backpack."),
+ nil,
+ )
+
+ for chunk, _ := range stream {
+ part := chunk.Candidates[0].Content.Parts[0]
+ fmt.Print(part.Text)
+ }
+ }
+
+### Java
+
+ import com.google.genai.Client;
+ import com.google.genai.ResponseStream;
+ import com.google.genai.types.GenerateContentResponse;
+
+ public class GenerateContentStream {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+
+ ResponseStream<GenerateContentResponse> responseStream =
+ client.models.generateContentStream(
+ "gemini-2.5-flash", "Write a story about a magic backpack.", null);
+
+ for (GenerateContentResponse res : responseStream) {
+ System.out.print(res.text());
+ }
+
+ // To save resources and avoid connection leaks, it is recommended to close the response
+ // stream after consumption (or using try block to get the response stream).
+ responseStream.close();
+ }
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ --no-buffer \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Explain how AI works"
+ }
+ ]
+ }
+ ]
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const payload = {
+ contents: [
+ {
+ parts: [
+ { text: 'Explain how AI works' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+## Multi-turn conversations (Chat)
+
+Our SDKs provide functionality to collect multiple rounds of prompts and responses into a chat, giving you an easy way to keep track of the conversation history.
+**Note:** Chat functionality is only implemented as part of the SDKs. Behind the scenes, it still uses the[`generateContent`](https://ai.google.dev/api/generate-content#method:-models.generatecontent)API. For multi-turn conversations, the full conversation history is sent to the model with each follow-up turn.
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+ chat = client.chats.create(model="gemini-2.5-flash")
+
+ response = chat.send_message("I have 2 dogs in my house.")
+ print(response.text)
+
+ response = chat.send_message("How many paws are in my house?")
+ print(response.text)
+
+ for message in chat.get_history():
+ print(f'role - {message.role}',end=": ")
+ print(message.parts[0].text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const chat = ai.chats.create({
+ model: "gemini-2.5-flash",
+ history: [
+ {
+ role: "user",
+ parts: [{ text: "Hello" }],
+ },
+ {
+ role: "model",
+ parts: [{ text: "Great to meet you. What would you like to know?" }],
+ },
+ ],
+ });
+
+ const response1 = await chat.sendMessage({
+ message: "I have 2 dogs in my house.",
+ });
+ console.log("Chat response 1:", response1.text);
+
+ const response2 = await chat.sendMessage({
+ message: "How many paws are in my house?",
+ });
+ console.log("Chat response 2:", response2.text);
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ history := []*genai.Content{
+ genai.NewContentFromText("Hi nice to meet you! I have 2 dogs in my house.", genai.RoleUser),
+ genai.NewContentFromText("Great to meet you. What would you like to know?", genai.RoleModel),
+ }
+
+ chat, _ := client.Chats.Create(ctx, "gemini-2.5-flash", nil, history)
+ res, _ := chat.SendMessage(ctx, genai.Part{Text: "How many paws are in my house?"})
+
+ if len(res.Candidates) > 0 {
+ fmt.Println(res.Candidates[0].Content.Parts[0].Text)
+ }
+ }
+
+### Java
+
+ import com.google.genai.Chat;
+ import com.google.genai.Client;
+ import com.google.genai.types.Content;
+ import com.google.genai.types.GenerateContentResponse;
+
+ public class MultiTurnConversation {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+ Chat chatSession = client.chats.create("gemini-2.5-flash");
+
+ GenerateContentResponse response =
+ chatSession.sendMessage("I have 2 dogs in my house.");
+ System.out.println("First response: " + response.text());
+
+ response = chatSession.sendMessage("How many paws are in my house?");
+ System.out.println("Second response: " + response.text());
+
+ // Get the history of the chat session.
+ // Passing 'true' to getHistory() returns the curated history, which excludes
+ // empty or invalid parts.
+ // Passing 'false' here would return the comprehensive history, including
+ // empty or invalid parts.
+ ImmutableList<Content> history = chatSession.getHistory(true);
+ System.out.println("History: " + history);
+ }
+ }
+
+### REST
+
+ curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "role": "user",
+ "parts": [
+ {
+ "text": "Hello"
+ }
+ ]
+ },
+ {
+ "role": "model",
+ "parts": [
+ {
+ "text": "Great to meet you. What would you like to know?"
+ }
+ ]
+ },
+ {
+ "role": "user",
+ "parts": [
+ {
+ "text": "I have two dogs in my house. How many paws are in my house?"
+ }
+ ]
+ }
+ ]
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const payload = {
+ contents: [
+ {
+ role: 'user',
+ parts: [
+ { text: 'Hello' },
+ ],
+ },
+ {
+ role: 'model',
+ parts: [
+ { text: 'Great to meet you. What would you like to know?' },
+ ],
+ },
+ {
+ role: 'user',
+ parts: [
+ { text: 'I have two dogs in my house. How many paws are in my house?' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+Streaming can also be used for multi-turn conversations.
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+ chat = client.chats.create(model="gemini-2.5-flash")
+
+ response = chat.send_message_stream("I have 2 dogs in my house.")
+ for chunk in response:
+ print(chunk.text, end="")
+
+ response = chat.send_message_stream("How many paws are in my house?")
+ for chunk in response:
+ print(chunk.text, end="")
+
+ for message in chat.get_history():
+ print(f'role - {message.role}', end=": ")
+ print(message.parts[0].text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const chat = ai.chats.create({
+ model: "gemini-2.5-flash",
+ history: [
+ {
+ role: "user",
+ parts: [{ text: "Hello" }],
+ },
+ {
+ role: "model",
+ parts: [{ text: "Great to meet you. What would you like to know?" }],
+ },
+ ],
+ });
+
+ const stream1 = await chat.sendMessageStream({
+ message: "I have 2 dogs in my house.",
+ });
+ for await (const chunk of stream1) {
+ console.log(chunk.text);
+ console.log("_".repeat(80));
+ }
+
+ const stream2 = await chat.sendMessageStream({
+ message: "How many paws are in my house?",
+ });
+ for await (const chunk of stream2) {
+ console.log(chunk.text);
+ console.log("_".repeat(80));
+ }
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ history := []*genai.Content{
+ genai.NewContentFromText("Hi nice to meet you! I have 2 dogs in my house.", genai.RoleUser),
+ genai.NewContentFromText("Great to meet you. What would you like to know?", genai.RoleModel),
+ }
+
+ chat, _ := client.Chats.Create(ctx, "gemini-2.5-flash", nil, history)
+ stream := chat.SendMessageStream(ctx, genai.Part{Text: "How many paws are in my house?"})
+
+ for chunk, _ := range stream {
+ part := chunk.Candidates[0].Content.Parts[0]
+ fmt.Print(part.Text)
+ }
+ }
+
+### Java
+
+ import com.google.genai.Chat;
+ import com.google.genai.Client;
+ import com.google.genai.ResponseStream;
+ import com.google.genai.types.GenerateContentResponse;
+
+ public class MultiTurnConversationWithStreaming {
+ public static void main(String[] args) {
+
+ Client client = new Client();
+ Chat chatSession = client.chats.create("gemini-2.5-flash");
+
+ ResponseStream<GenerateContentResponse> responseStream =
+ chatSession.sendMessageStream("I have 2 dogs in my house.", null);
+
+ for (GenerateContentResponse response : responseStream) {
+ System.out.print(response.text());
+ }
+
+ responseStream = chatSession.sendMessageStream("How many paws are in my house?", null);
+
+ for (GenerateContentResponse response : responseStream) {
+ System.out.print(response.text());
+ }
+
+ // Get the history of the chat session. History is added after the stream
+ // is consumed and includes the aggregated response from the stream.
+ System.out.println("History: " + chatSession.getHistory(false));
+ }
+ }
+
+### REST
+
+ curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "role": "user",
+ "parts": [
+ {
+ "text": "Hello"
+ }
+ ]
+ },
+ {
+ "role": "model",
+ "parts": [
+ {
+ "text": "Great to meet you. What would you like to know?"
+ }
+ ]
+ },
+ {
+ "role": "user",
+ "parts": [
+ {
+ "text": "I have two dogs in my house. How many paws are in my house?"
+ }
+ ]
+ }
+ ]
+ }'
+
+### Apps Script
+
+ // See https://developers.google.com/apps-script/guides/properties
+ // for instructions on how to set the API key.
+ const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+ function main() {
+ const payload = {
+ contents: [
+ {
+ role: 'user',
+ parts: [
+ { text: 'Hello' },
+ ],
+ },
+ {
+ role: 'model',
+ parts: [
+ { text: 'Great to meet you. What would you like to know?' },
+ ],
+ },
+ {
+ role: 'user',
+ parts: [
+ { text: 'I have two dogs in my house. How many paws are in my house?' },
+ ],
+ },
+ ],
+ };
+
+ const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent';
+ const options = {
+ method: 'POST',
+ contentType: 'application/json',
+ headers: {
+ 'x-goog-api-key': apiKey,
+ },
+ payload: JSON.stringify(payload)
+ };
+
+ const response = UrlFetchApp.fetch(url, options);
+ const data = JSON.parse(response);
+ const content = data['candidates'][0]['content']['parts'][0]['text'];
+ console.log(content);
+ }
+
+## Supported models
+
+All models in the Gemini family support text generation. To learn more about the models and their capabilities, visit the[Models](https://ai.google.dev/gemini-api/docs/models)page.
+
+## Best practices
+
+### Prompting tips
+
+For basic text generation, a[zero-shot](https://ai.google.dev/gemini-api/docs/prompting-strategies#few-shot)prompt often suffices without needing examples, system instructions or specific formatting.
+
+For more tailored outputs:
+
+- Use[System instructions](https://ai.google.dev/gemini-api/docs/text-generation#system-instructions)to guide the model.
+- Provide few example inputs and outputs to guide the model. This is often referred to as[few-shot](https://ai.google.dev/gemini-api/docs/prompting-strategies#few-shot)prompting.
+
+Consult our[prompt engineering guide](https://ai.google.dev/gemini/docs/prompting-strategies)for more tips.
+
+### Structured output
+
+In some cases, you may need structured output, such as JSON. Refer to our[structured output](https://ai.google.dev/gemini-api/docs/structured-output)guide to learn how.
+
+## What's next
+
+- Try the[Gemini API getting started Colab](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started.ipynb).
+- Explore Gemini's[image](https://ai.google.dev/gemini-api/docs/image-understanding),[video](https://ai.google.dev/gemini-api/docs/video-understanding),[audio](https://ai.google.dev/gemini-api/docs/audio)and[document](https://ai.google.dev/gemini-api/docs/document-processing)understanding capabilities.
+- Learn about multimodal[file prompting strategies](https://ai.google.dev/gemini-api/docs/files#prompt-guide).
+
+[END OF DOCUMENT: GEMINI23ET0N5ZMQ]
+---
+
+[START OF DOCUMENT: GEMINI4PH6T8ALN | Title: Thinking.Md]
+
+<br />
+
+The [Gemini 2.5 series models](https://ai.google.dev/gemini-api/docs/models) use an internal
+"thinking process" that significantly improves their reasoning and multi-step
+planning abilities, making them highly effective for complex tasks such as
+coding, advanced mathematics, and data analysis.
+
+This guide shows you how to work with Gemini's thinking capabilities using the
+Gemini API.
+
+## Before you begin
+
+Ensure you use a supported 2.5 series model for thinking.
+You might find it beneficial to explore these models in AI Studio
+before diving into the API:
+
+- [Try Gemini 2.5 Flash in AI Studio](https://aistudio.google.com/prompts/new_chat?model=gemini-2.5-flash)
+- [Try Gemini 2.5 Pro in AI Studio](https://aistudio.google.com/prompts/new_chat?model=gemini-2.5-pro)
+- [Try Gemini 2.5 Flash-Lite in AI Studio](https://aistudio.google.com/prompts/new_chat?model=gemini-2.5-flash-lite)
+
+## Generating content with thinking
+
+Initiating a request with a thinking model is similar to any other content
+generation request. The key difference lies in specifying one of the
+[models with thinking support](https://ai.google.dev/gemini-api/docs/thinking#supported-models) in the `model` field, as
+demonstrated in the following [text generation](https://ai.google.dev/gemini-api/docs/text-generation#text-input) example:
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+ prompt = "Explain the concept of Occam's Razor and provide a simple, everyday example."
+ response = client.models.generate_content(
+ model="gemini-2.5-pro",
+ contents=prompt
+ )
+
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const prompt = "Explain the concept of Occam's Razor and provide a simple, everyday example.";
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-pro",
+ contents: prompt,
+ });
+
+ console.log(response.text);
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "log"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ prompt := "Explain the concept of Occam's Razor and provide a simple, everyday example."
+ model := "gemini-2.5-pro"
+
+ resp, _ := client.Models.GenerateContent(ctx, model, genai.Text(prompt), nil)
+
+ fmt.Println(resp.Text())
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Explain the concept of Occam\'s Razor and provide a simple, everyday example."
+ }
+ ]
+ }
+ ]
+ }'
+ ```
+
+## Thinking budgets
+
+The `thinkingBudget` parameter guides the model on the number of
+thinking tokens to use when generating a response. A higher token count
+generally allows for more detailed reasoning, which can be beneficial for
+tackling more [complex tasks](https://ai.google.dev/gemini-api/docs/thinking#tasks). If latency is more important, use a lower
+budget or disable thinking by setting `thinkingBudget` to 0.
+Setting the `thinkingBudget` to -1 turns
+on **dynamic thinking**, meaning the model will adjust the budget based on the
+complexity of the request.
+
+The `thinkingBudget` is only [supported](https://ai.google.dev/gemini-api/docs/thinking#supported-models) in Gemini
+2.5 Flash, 2.5 Pro, and 2.5 Flash-Lite. Depending on the prompt, the model might
+overflow or underflow the token budget.
+
+The following are `thinkingBudget` configuration details for each model type.
+
+| Model | Default setting (Thinking budget is not set) | Range | Disable thinking | Turn on dynamic thinking |
+|---------------------------------------------------|------------------------------------------------------------|------------------|------------------------------|--------------------------|
+| **2.5 Pro** | Dynamic thinking: Model decides when and how much to think | `128` to `32768` | N/A: Cannot disable thinking | `thinkingBudget = -1` |
+| **2.5 Flash** | Dynamic thinking: Model decides when and how much to think | `0` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+| **2.5 Flash Preview** | Dynamic thinking: Model decides when and how much to think | `0` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+| **2.5 Flash Lite** | Model does not think | `512` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+| **2.5 Flash Lite Preview** | Model does not think | `512` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+| **Robotics-ER 1.5 Preview** | Dynamic thinking: Model decides when and how much to think | `0` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+| **2.5 Flash Live Native Audio Preview (09-2025)** | Dynamic thinking: Model decides when and how much to think | `0` to `24576` | `thinkingBudget = 0` | `thinkingBudget = -1` |
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-pro",
+ contents="Provide a list of 3 famous physicists and their key contributions",
+ config=types.GenerateContentConfig(
+ thinking_config=types.ThinkingConfig(thinking_budget=1024)
+ # Turn off thinking:
+ # thinking_config=types.ThinkingConfig(thinking_budget=0)
+ # Turn on dynamic thinking:
+ # thinking_config=types.ThinkingConfig(thinking_budget=-1)
+ ),
+ )
+
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-pro",
+ contents: "Provide a list of 3 famous physicists and their key contributions",
+ config: {
+ thinkingConfig: {
+ thinkingBudget: 1024,
+ // Turn off thinking:
+ // thinkingBudget: 0
+ // Turn on dynamic thinking:
+ // thinkingBudget: -1
+ },
+ },
+ });
+
+ console.log(response.text);
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "google.golang.org/genai"
+ "os"
+ )
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ thinkingBudgetVal := int32(1024)
+
+ contents := genai.Text("Provide a list of 3 famous physicists and their key contributions")
+ model := "gemini-2.5-pro"
+ resp, _ := client.Models.GenerateContent(ctx, model, contents, &genai.GenerateContentConfig{
+ ThinkingConfig: &genai.ThinkingConfig{
+ ThinkingBudget: &thinkingBudgetVal,
+ // Turn off thinking:
+ // ThinkingBudget: int32(0),
+ // Turn on dynamic thinking:
+ // ThinkingBudget: int32(-1),
+ },
+ })
+
+ fmt.Println(resp.Text())
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Provide a list of 3 famous physicists and their key contributions"
+ }
+ ]
+ }
+ ],
+ "generationConfig": {
+ "thinkingConfig": {
+ "thinkingBudget": 1024
+ }
+ }
+ }'
+
+## Thought summaries
+
+Thought summaries are synthesized versions of the model's raw thoughts and offer
+insights into the model's internal reasoning process. Note that
+thinking budgets apply to the model's raw thoughts and not to thought
+summaries.
+
+You can enable thought summaries by setting `includeThoughts` to `true` in your
+request configuration. You can then access the summary by iterating through the
+`response` parameter's `parts`, and checking the `thought` boolean.
+
+Here's an example demonstrating how to enable and retrieve thought summaries
+without streaming, which returns a single, final thought summary with the
+response:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+ prompt = "What is the sum of the first 50 prime numbers?"
+ response = client.models.generate_content(
+ model="gemini-2.5-pro",
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ thinking_config=types.ThinkingConfig(
+ include_thoughts=True
+ )
+ )
+ )
+
+ for part in response.candidates[0].content.parts:
+ if not part.text:
+ continue
+ if part.thought:
+ print("Thought summary:")
+ print(part.text)
+ print()
+ else:
+ print("Answer:")
+ print(part.text)
+ print()
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-pro",
+ contents: "What is the sum of the first 50 prime numbers?",
+ config: {
+ thinkingConfig: {
+ includeThoughts: true,
+ },
+ },
+ });
+
+ for (const part of response.candidates[0].content.parts) {
+ if (!part.text) {
+ continue;
+ }
+ else if (part.thought) {
+ console.log("Thoughts summary:");
+ console.log(part.text);
+ }
+ else {
+ console.log("Answer:");
+ console.log(part.text);
+ }
+ }
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "google.golang.org/genai"
+ "os"
+ )
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ contents := genai.Text("What is the sum of the first 50 prime numbers?")
+ model := "gemini-2.5-pro"
+ resp, _ := client.Models.GenerateContent(ctx, model, contents, &genai.GenerateContentConfig{
+ ThinkingConfig: &genai.ThinkingConfig{
+ IncludeThoughts: true,
+ },
+ })
+
+ for _, part := range resp.Candidates[0].Content.Parts {
+ if part.Text != "" {
+ if part.Thought {
+ fmt.Println("Thoughts Summary:")
+ fmt.Println(part.Text)
+ } else {
+ fmt.Println("Answer:")
+ fmt.Println(part.Text)
+ }
+ }
+ }
+ }
+
+And here is an example using thinking with streaming, which returns rolling,
+incremental summaries during generation:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ prompt = """
+ Alice, Bob, and Carol each live in a different house on the same street: red, green, and blue.
+ The person who lives in the red house owns a cat.
+ Bob does not live in the green house.
+ Carol owns a dog.
+ The green house is to the left of the red house.
+ Alice does not own a cat.
+ Who lives in each house, and what pet do they own?
+ """
+
+ thoughts = ""
+ answer = ""
+
+ for chunk in client.models.generate_content_stream(
+ model="gemini-2.5-pro",
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ thinking_config=types.ThinkingConfig(
+ include_thoughts=True
+ )
+ )
+ ):
+ for part in chunk.candidates[0].content.parts:
+ if not part.text:
+ continue
+ elif part.thought:
+ if not thoughts:
+ print("Thoughts summary:")
+ print(part.text)
+ thoughts += part.text
+ else:
+ if not answer:
+ print("Answer:")
+ print(part.text)
+ answer += part.text
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ const prompt = `Alice, Bob, and Carol each live in a different house on the same
+ street: red, green, and blue. The person who lives in the red house owns a cat.
+ Bob does not live in the green house. Carol owns a dog. The green house is to
+ the left of the red house. Alice does not own a cat. Who lives in each house,
+ and what pet do they own?`;
+
+ let thoughts = "";
+ let answer = "";
+
+ async function main() {
+ const response = await ai.models.generateContentStream({
+ model: "gemini-2.5-pro",
+ contents: prompt,
+ config: {
+ thinkingConfig: {
+ includeThoughts: true,
+ },
+ },
+ });
+
+ for await (const chunk of response) {
+ for (const part of chunk.candidates[0].content.parts) {
+ if (!part.text) {
+ continue;
+ } else if (part.thought) {
+ if (!thoughts) {
+ console.log("Thoughts summary:");
+ }
+ console.log(part.text);
+ thoughts = thoughts + part.text;
+ } else {
+ if (!answer) {
+ console.log("Answer:");
+ }
+ console.log(part.text);
+ answer = answer + part.text;
+ }
+ }
+ }
+ }
+
+ await main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "log"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ const prompt = `
+ Alice, Bob, and Carol each live in a different house on the same street: red, green, and blue.
+ The person who lives in the red house owns a cat.
+ Bob does not live in the green house.
+ Carol owns a dog.
+ The green house is to the left of the red house.
+ Alice does not own a cat.
+ Who lives in each house, and what pet do they own?
+ `
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ contents := genai.Text(prompt)
+ model := "gemini-2.5-pro"
+
+ resp := client.Models.GenerateContentStream(ctx, model, contents, &genai.GenerateContentConfig{
+ ThinkingConfig: &genai.ThinkingConfig{
+ IncludeThoughts: true,
+ },
+ })
+
+ for chunk := range resp {
+ for _, part := range chunk.Candidates[0].Content.Parts {
+ if len(part.Text) == 0 {
+ continue
+ }
+
+ if part.Thought {
+ fmt.Printf("Thought: %s\n", part.Text)
+ } else {
+ fmt.Printf("Answer: %s\n", part.Text)
+ }
+ }
+ }
+ }
+
+## Thought signatures
+
+Because standard Gemini API text and content generation calls are stateless,
+when using thinking in multi-turn interactions (such as chat), the model doesn't
+have access to thought context from previous turns.
+
+You can maintain thought context using thought signatures, which are encrypted
+representations of the model's internal thought process. The model returns
+thought signatures in the response object when thinking and
+[function calling](https://ai.google.dev/gemini-api/docs/function-calling#thinking)
+are enabled. To ensure the model maintains context across multiple turns of a
+conversation, you must provide the thought signatures back to the model in the
+subsequent requests.
+
+You will receive thought signatures when:
+
+- Thinking is enabled and thoughts are generated.
+- The request includes [function declarations](https://ai.google.dev/gemini-api/docs/function-calling#step-2).
+
+| **Note:** Thought signatures are only available when you're using function calling, specifically, your request must include [function declarations](https://ai.google.dev/gemini-api/docs/function-calling#step-2).
+
+You can find an example of thinking with function calls on the
+[Function calling](https://ai.google.dev/gemini-api/docs/function-calling#thinking) page.
+
+Other usage limitations to consider with function calling include:
+
+- Signatures are returned from the model within other parts in the response, for example function calling or text parts. Return the entire response with all parts back to the model in subsequent turns.
+- Don't concatenate parts with signatures together.
+- Don't merge one part with a signature with another part without a signature.
+
+## Pricing
+
+| **Note:** **Summaries** are available in the [free and paid tiers](https://ai.google.dev/gemini-api/docs/pricing) of the API. **Thought signatures** will increase the input tokens you are charged when sent back as part of the request.
+
+When thinking is turned on, response pricing is the sum of output
+tokens and thinking tokens. You can get the total number of generated thinking
+tokens from the `thoughtsTokenCount` field.
+
+### Python
+
+ # ...
+ print("Thoughts tokens:",response.usage_metadata.thoughts_token_count)
+ print("Output tokens:",response.usage_metadata.candidates_token_count)
+
+### JavaScript
+
+ // ...
+ console.log(`Thoughts tokens: ${response.usageMetadata.thoughtsTokenCount}`);
+ console.log(`Output tokens: ${response.usageMetadata.candidatesTokenCount}`);
+
+### Go
+
+ // ...
+ usageMetadata, err := json.MarshalIndent(response.UsageMetadata, "", " ")
+ if err != nil {
+ log.Fatal(err)
+ }
+ fmt.Println("Thoughts tokens:", string(usageMetadata.thoughts_token_count))
+ fmt.Println("Output tokens:", string(usageMetadata.candidates_token_count))
+
+Thinking models generate full thoughts to improve the quality of the final
+response, and then output [summaries](https://ai.google.dev/gemini-api/docs/thinking#summaries) to provide insight into the
+thought process. So, pricing is based on the full thought tokens the
+model needs to generate to create a summary, despite only the summary being
+output from the API.
+
+You can learn more about tokens in the [Token counting](https://ai.google.dev/gemini-api/docs/tokens)
+guide.
+
+## Supported models
+
+Thinking features are supported on all the 2.5 series models.
+You can find all model capabilities on the
+[model overview](https://ai.google.dev/gemini-api/docs/models) page.
+
+## Best practices
+
+This section includes some guidance for using thinking models efficiently.
+As always, following our [prompting guidance and best practices](https://ai.google.dev/gemini-api/docs/prompting-strategies) will get you the best results.
+
+### Debugging and steering
+
+- **Review reasoning**: When you're not getting your expected response from the
+ thinking models, it can help to carefully analyze Gemini's thought summaries.
+ You can see how it broke down the task and arrived at its conclusion, and use
+ that information to correct towards the right results.
+
+- **Provide Guidance in Reasoning** : If you're hoping for a particularly lengthy
+ output, you may want to provide guidance in your prompt to constrain the
+ [amount of thinking](https://ai.google.dev/gemini-api/docs/thinking#set-budget) the model uses. This lets you reserve more
+ of the token output for your response.
+
+### Task complexity
+
+- **Easy Tasks (Thinking could be OFF):** For straightforward requests where complex reasoning isn't required, such as fact retrieval or classification, thinking is not required. Examples include:
+ - "Where was DeepMind founded?"
+ - "Is this email asking for a meeting or just providing information?"
+- **Medium Tasks (Default/Some Thinking):** Many common requests benefit from a degree of step-by-step processing or deeper understanding. Gemini can flexibly use thinking capability for tasks like:
+ - Analogize photosynthesis and growing up.
+ - Compare and contrast electric cars and hybrid cars.
+- **Hard Tasks (Maximum Thinking Capability):** For truly complex challenges, such as solving complex math problems or coding tasks, we recommend setting a high thinking budget. These types of tasks require the model to engage its full reasoning and planning capabilities, often involving many internal steps before providing an answer. Examples include:
+ - Solve problem 1 in AIME 2025: Find the sum of all integer bases b \> 9 for which 17~b~ is a divisor of 97~b~.
+ - Write Python code for a web application that visualizes real-time stock market data, including user authentication. Make it as efficient as possible.
+
+## Thinking with tools and capabilities
+
+Thinking models work with all of Gemini's tools and capabilities. This allows
+the models to interact with external systems, execute code,
+or access real-time information, incorporating the results into their reasoning
+and final response.
+
+- The [search tool](https://ai.google.dev/gemini-api/docs/grounding) allows the model to query
+ Google Search to find up-to-date information or information beyond
+ its training data. This is useful for questions about recent events or
+ highly specific topics.
+
+- The [code execution tool](https://ai.google.dev/gemini-api/docs/code-execution) enables the model
+ to generate and run Python code to perform calculations, manipulate data,
+ or solve problems that are best handled algorithmically. The model receives
+ the code's output and can use it in its response.
+
+- With [structured output](https://ai.google.dev/gemini-api/docs/structured-output), you can
+ constrain Gemini to respond with JSON. This is particularly useful for
+ integrating the model's output into applications.
+
+- [Function calling](https://ai.google.dev/gemini-api/docs/function-calling) connects the thinking
+ model to external tools and APIs, so it can reason about when to call the right
+ function and what parameters to provide.
+
+- [URL Context](https://ai.google.dev/gemini-api/docs/url-context) provides the model with URLs as
+ additional context for your prompt. The model can then retrieve content from
+ the URLs and use that content to inform and shape its response.
+
+You can try examples of using tools with thinking models in the
+[Thinking cookbook](https://colab.sandbox.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_thinking.ipynb).
+
+## What's next?
+
+- To work through more in depth examples, like:
+
+ - Using tools with thinking
+ - Streaming with thinking
+ - Adjusting the thinking budget for different results
+
+ and more, try our [Thinking cookbook](https://colab.sandbox.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_thinking.ipynb).
+- Thinking coverage is now available in our [OpenAI Compatibility](https://ai.google.dev/gemini-api/docs/openai#thinking) guide.
+
+- For more info about Gemini 2.5 Pro, Gemini Flash 2.5, and Gemini 2.5
+ Flash-Lite, visit the [model page](https://ai.google.dev/gemini-api/docs/models).
+
+[END OF DOCUMENT: GEMINI4PH6T8ALN]
+---
+
+[START OF DOCUMENT: GEMINI2F0UL09YJM | Title: Tokens.Md]
+
+Python JavaScript Go
+
+<br />
+
+Gemini and other generative AI models process input and output at a granularity
+called a *token*.
+
+## About tokens
+
+Tokens can be single characters like `z` or whole words like `cat`. Long words
+are broken up into several tokens. The set of all tokens used by the model is
+called the vocabulary, and the process of splitting text into tokens is called
+*tokenization*.
+
+For Gemini models, a token is equivalent to about 4 characters.
+100 tokens is equal to about 60-80 English words.
+
+When billing is enabled, the [cost of a call to the Gemini API](https://ai.google.dev/pricing) is
+determined in part by the number of input and output tokens, so knowing how to
+count tokens can be helpful.
+
+## Try out counting tokens in a Colab
+
+You can try out counting tokens by using a Colab.
+
+|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![](https://ai.google.dev/static/site-assets/images/docs/notebook-site-button.png)View on ai.google.dev](https://ai.google.dev/gemini-api/docs/tokens) | [![](https://www.tensorflow.org/images/colab_logo_32px.png)Try a Colab notebook](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Counting_Tokens.ipynb) | [![](https://www.tensorflow.org/images/GitHub-Mark-32px.png)View notebook on GitHub](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Counting_Tokens.ipynb) |
+
+## Context windows
+
+The models available through the Gemini API have context windows that are
+measured in tokens. The context window defines how much input you can provide
+and how much output the model can generate. You can determine the size of the
+context window by calling the [getModels endpoint](https://ai.google.dev/api/rest/v1/models/get) or
+by looking in the [models documentation](https://ai.google.dev/gemini-api/docs/models/gemini).
+
+In the following example, you can see that the `gemini-1.5-flash` model has an
+input limit of about 1,000,000 tokens and an output limit of about 8,000 tokens,
+which means a context window is 1,000,000 tokens.
+
+<br />
+
+ from google import genai
+
+ client = genai.Client()
+ model_info = client.models.get(model="gemini-2.0-flash")
+ print(f"{model_info.input_token_limit=}")
+ print(f"{model_info.output_token_limit=}")
+ # ( e.g., input_token_limit=30720, output_token_limit=2048 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L25-L31
+
+## Count tokens
+
+All input to and output from the Gemini API is tokenized, including text, image
+files, and other non-text modalities.
+
+You can count tokens in the following ways:
+
+### Count text tokens
+
+ from google import genai
+
+ client = genai.Client()
+ prompt = "The quick brown fox jumps over the lazy dog."
+
+ # Count tokens using the new client method.
+ total_tokens = client.models.count_tokens(
+ model="gemini-2.0-flash", contents=prompt
+ )
+ print("total_tokens: ", total_tokens)
+ # ( e.g., total_tokens: 10 )
+
+ response = client.models.generate_content(
+ model="gemini-2.0-flash", contents=prompt
+ )
+
+ # The usage_metadata provides detailed token counts.
+ print(response.usage_metadata)
+ # ( e.g., prompt_token_count: 11, candidates_token_count: 73, total_token_count: 84 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L36-L54
+
+### Count multi-turn (chat) tokens
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ chat = client.chats.create(
+ model="gemini-2.0-flash",
+ history=[
+ types.Content(
+ role="user", parts=[types.Part(text="Hi my name is Bob")]
+ ),
+ types.Content(role="model", parts=[types.Part(text="Hi Bob!")]),
+ ],
+ )
+ # Count tokens for the chat history.
+ print(
+ client.models.count_tokens(
+ model="gemini-2.0-flash", contents=chat.get_history()
+ )
+ )
+ # ( e.g., total_tokens: 10 )
+
+ response = chat.send_message(
+ message="In one sentence, explain how a computer works to a young child."
+ )
+ print(response.usage_metadata)
+ # ( e.g., prompt_token_count: 25, candidates_token_count: 21, total_token_count: 46 )
+
+ # You can count tokens for the combined history and a new message.
+ extra = types.UserContent(
+ parts=[
+ types.Part(
+ text="What is the meaning of life?",
+ )
+ ]
+ )
+ history = chat.get_history()
+ history.append(extra)
+ print(client.models.count_tokens(model="gemini-2.0-flash", contents=history))
+ # ( e.g., total_tokens: 56 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L59-L98
+
+### Count multimodal tokens
+
+All input to the Gemini API is tokenized, including text, image files, and other
+non-text modalities. Note the following high-level key points about tokenization
+of multimodal input during processing by the Gemini API:
+
+- With Gemini 2.0, image inputs with both dimensions \<=384 pixels are counted as
+ 258 tokens. Images larger in one or both dimensions are cropped and scaled as
+ needed into tiles of 768x768 pixels, each counted as 258 tokens. Prior to Gemini
+ 2.0, images used a fixed 258 tokens.
+
+- Video and audio files are converted to tokens at the following fixed rates:
+ video at 263 tokens per second and audio at 32 tokens per second.
+
+#### Image files
+
+| **Note:** You'll get the same token count if you use a file uploaded using the File API or you provide the file as inline data.
+
+Example that uses an uploaded image from the File API:
+
+ from google import genai
+
+ client = genai.Client()
+ prompt = "Tell me about this image"
+ your_image_file = client.files.upload(file=media / "organ.jpg")
+
+ print(
+ client.models.count_tokens(
+ model="gemini-2.0-flash", contents=[prompt, your_image_file]
+ )
+ )
+ # ( e.g., total_tokens: 263 )
+
+ response = client.models.generate_content(
+ model="gemini-2.0-flash", contents=[prompt, your_image_file]
+ )
+ print(response.usage_metadata)
+ # ( e.g., prompt_token_count: 264, candidates_token_count: 80, total_token_count: 345 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L127-L144
+
+Example that provides the image as inline data:
+
+ from google import genai
+ import PIL.Image
+
+ client = genai.Client()
+ prompt = "Tell me about this image"
+ your_image_file = PIL.Image.open(media / "organ.jpg")
+
+ # Count tokens for combined text and inline image.
+ print(
+ client.models.count_tokens(
+ model="gemini-2.0-flash", contents=[prompt, your_image_file]
+ )
+ )
+ # ( e.g., total_tokens: 263 )
+
+ response = client.models.generate_content(
+ model="gemini-2.0-flash", contents=[prompt, your_image_file]
+ )
+ print(response.usage_metadata)
+ # ( e.g., prompt_token_count: 264, candidates_token_count: 80, total_token_count: 345 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L103-L122
+
+#### Video or audio files
+
+Audio and video are each converted to tokens at the following fixed rates:
+
+- Video: 263 tokens per second
+- Audio: 32 tokens per second
+
+**Note:** You'll get the same token count if you use a file uploaded using the File API or you provide the file as inline data.
+
+ from google import genai
+ import time
+
+ client = genai.Client()
+ prompt = "Tell me about this video"
+ your_file = client.files.upload(file=media / "Big_Buck_Bunny.mp4")
+
+ # Poll until the video file is completely processed (state becomes ACTIVE).
+ while not your_file.state or your_file.state.name != "ACTIVE":
+ print("Processing video...")
+ print("File state:", your_file.state)
+ time.sleep(5)
+ your_file = client.files.get(name=your_file.name)
+
+ print(
+ client.models.count_tokens(
+ model="gemini-2.0-flash", contents=[prompt, your_file]
+ )
+ )
+ # ( e.g., total_tokens: 300 )
+
+ response = client.models.generate_content(
+ model="gemini-2.0-flash", contents=[prompt, your_file]
+ )
+ print(response.usage_metadata)
+ # ( e.g., prompt_token_count: 301, candidates_token_count: 60, total_token_count: 361 )
+ https://github.com/google-gemini/api-examples/blob/9f5adb78a77820ef2d4f2a040d698481803e8214/python/count_tokens.py#L149-L174
+
+### System instructions and tools
+
+System instructions and tools also count towards the total token count for the
+input.
+
+If you use system instructions, the `total_tokens` count increases to
+reflect the addition of `system_instruction`.
+
+If you use function calling, the `total_tokens` count increases to reflect the
+addition of `tools`.
+
+[END OF DOCUMENT: GEMINI2F0UL09YJM]
+---
+
+[START OF DOCUMENT: GEMINIUDQ3K9NM6 | Title: Troubleshooting.Md]
+
+Use this guide to help you diagnose and resolve common issues that arise when
+you call the Gemini API. You may encounter issues from either
+the Gemini API backend service or the client SDKs. Our client SDKs are
+open sourced in the following repositories:
+
+- [python-genai](https://github.com/googleapis/python-genai)
+- [js-genai](https://github.com/googleapis/js-genai)
+- [go-genai](https://github.com/googleapis/go-genai)
+
+If you encounter API key issues, verify that you have set up
+your API key correctly per the [API key setup guide](https://ai.google.dev/gemini-api/docs/api-key).
+
+## Gemini API backend service error codes
+
+The following table lists common backend error codes you may encounter, along
+with explanations for their causes and troubleshooting steps:
+
+|---------------|---------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **HTTP Code** | **Status** | **Description** | **Example** | **Solution** |
+| 400 | INVALID_ARGUMENT | The request body is malformed. | There is a typo, or a missing required field in your request. | Check the [API reference](https://ai.google.dev/api) for request format, examples, and supported versions. Using features from a newer API version with an older endpoint can cause errors. |
+| 400 | FAILED_PRECONDITION | Gemini API free tier is not available in your country. Please enable billing on your project in Google AI Studio. | You are making a request in a region where the free tier is not supported, and you have not enabled billing on your project in Google AI Studio. | To use the Gemini API, you will need to setup a paid plan using [Google AI Studio](https://aistudio.google.com/app/apikey). |
+| 403 | PERMISSION_DENIED | Your API key doesn't have the required permissions. | You are using the wrong API key; you are trying to use a tuned model without going through [proper authentication](https://ai.google.dev/docs/model-tuning/tutorial?lang=python#set_up_authentication). | Check that your API key is set and has the right access. And make sure to go through proper authentication to use tuned models. |
+| 404 | NOT_FOUND | The requested resource wasn't found. | An image, audio, or video file referenced in your request was not found. | Check if all [parameters in your request are valid](https://ai.google.dev/docs/troubleshooting#check-api) for your API version. |
+| 429 | RESOURCE_EXHAUSTED | You've exceeded the rate limit. | You are sending too many requests per minute with the free tier Gemini API. | Verify that you're within the model's [rate limit](https://ai.google.dev/gemini-api/docs/rate-limits). [Request a quota increase](https://ai.google.dev/gemini-api/docs/rate-limits#request-rate-limit-increase) if needed. |
+| 500 | INTERNAL | An unexpected error occurred on Google's side. | Your input context is too long. | Reduce your input context or temporarily switch to another model (e.g. from Gemini 1.5 Pro to Gemini 1.5 Flash) and see if it works. Or wait a bit and retry your request. If the issue persists after retrying, please report it using the **Send feedback** button in Google AI Studio. |
+| 503 | UNAVAILABLE | The service may be temporarily overloaded or down. | The service is temporarily running out of capacity. | Temporarily switch to another model (e.g. from Gemini 1.5 Pro to Gemini 1.5 Flash) and see if it works. Or wait a bit and retry your request. If the issue persists after retrying, please report it using the **Send feedback** button in Google AI Studio. |
+| 504 | DEADLINE_EXCEEDED | The service is unable to finish processing within the deadline. | Your prompt (or context) is too large to be processed in time. | Set a larger 'timeout' in your client request to avoid this error. |
+
+## Check your API calls for model parameter errors
+
+Verify that your model parameters are within the following values:
+
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Model parameter** | **Values (range)** |
+| Candidate count | 1-8 (integer) |
+| Temperature | 0.0-1.0 |
+| Max output tokens | Use `get_model` ([Python](https://ai.google.dev/api/python/google/generativeai/get_model)) to determine the maximum number of tokens for the model you are using. |
+| TopP | 0.0-1.0 |
+
+In addition to checking parameter values, make sure you're using the correct
+[API version](https://ai.google.dev/gemini-api/docs/api-versions) (e.g., `/v1` or `/v1beta`) and
+model that supports the features you need. For example, if a feature is in Beta
+release, it will only be available in the `/v1beta` API version.
+
+## Check if you have the right model
+
+Verify that you are using a supported model listed on our [models
+page](https://ai.google.dev/gemini-api/docs/models/gemini).
+
+## Higher latency or token usage with 2.5 models
+
+If you're observing higher latency or token usage with the 2.5 Flash and Pro
+models, this can be because they come with **thinking is enabled by default** in
+order to enhance quality. If you are prioritizing speed or need to minimize
+costs, you can adjust or disable thinking.
+
+Refer to [thinking page](https://ai.google.dev/gemini-api/docs/thinking#set-budget) for
+guidance and sample code.
+
+## Safety issues
+
+If you see a prompt was blocked because of a safety setting in your API call,
+review the prompt with respect to the filters you set in the API call.
+
+If you see `BlockedReason.OTHER`, the query or response may violate the [terms
+of service](https://ai.google.dev/terms) or be otherwise unsupported.
+
+## Recitation issue
+
+If you see the model stops generating output due to the RECITATION reason, this
+means the model output may resemble certain data. To fix this, try to make
+prompt / context as unique as possible and use a higher temperature.
+
+## Repetitive tokens issue
+
+If you see repeated output tokens, try the following suggestions to help
+reduce or eliminate them.
+
+| Description | Cause | Suggested workaround |
+| Repeated hyphens in Markdown tables | This can occur when the contents of the table are long as the model tries to create a visually aligned Markdown table. However, the alignment in Markdown is not necessary for correct rendering. | Add instructions in your prompt to give the model specific guidelines for generating Markdown tables. Provide examples that follow those guidelines. You can also try adjusting the temperature. For generating code or very structured output like Markdown tables, high temperature have shown to work better (\>= 0.8). The following is an example set of guidelines you can add to your prompt to prevent this issue:``` # Markdown Table Format * Separator line: Markdown tables must include a separator line below the header row. The separator line must use only 3 hyphens per column, for example: |---|---|---|. Using more hypens like ----, -----, ------ can result in errors. Always use |:---|, |---:|, or |---| in these separator strings. For example: | Date | Description | Attendees | |---|---|---| | 2024-10-26 | Annual Conference | 500 | | 2025-01-15 | Q1 Planning Session | 25 | * Alignment: Do not align columns. Always use |---|. For three columns, use |---|---|---| as the separator line. For four columns use |---|---|---|---| and so on. * Conciseness: Keep cell content brief and to the point. * Never pad column headers or other cells with lots of spaces to match with width of other content. Only a single space on each side is needed. For example, always do "| column name |" instead of "| column name                |". Extra spaces are wasteful. A markdown renderer will automatically take care displaying the content in a visually appealing form. ```|
+| Repeated tokens in Markdown tables | Similar to the repeated hyphens, this occurs when the model tries to visually align the contents of the table. The alignment in Markdown is not required for correct rendering. | - Try adding instructions like the following to your system prompt:``` FOR TABLE HEADINGS, IMMEDIATELY ADD ' |' AFTER THE TABLE HEADING. ```- Try adjusting the temperature. Higher temperatures (\>= 0.8) generally helps to eliminate repetitions or duplication in the output. |
+| Repeated newlines (`\n`) in structured output | When the model input contains unicode or escape sequences like `\u` or `\t`, it can lead to repeated newlines. | - Check for and replace forbidden escape sequences with UTF-8 characters in your prompt. For example, `\u` escape sequence in your JSON examples can cause the model to use them in its output too. - Instruct the model on allowed escapes. Add a system instruction like this:``` In quoted strings, the only allowed escape sequences are \\, \n, and \". Instead of \u escapes, use UTF-8. ```|
+| Repeated text in using structured output | When the model output has a different order for the fields than the defined structured schema, this can lead to repeating text. | - Don't specify the order of fields in your prompt. - Make all output fields required. |
+| Repetitive tool calling | This can occur if the model loses the context of previous thoughts and/or call an unavailable endpoint that it's forced to. | Instruct the model to maintain state within its thought process. Add this to the end of your system instructions:``` When thinking silently: ALWAYS start the thought with a brief (one sentence) recap of the current progress on the task. In particular, consider whether the task is already done. ```|
+| Repetitive text that's not part of structured output | This can occur if the model gets stuck on a request that it can't resolve. | - If thinking is turned on, avoid giving explicit orders for how to think through a problem in the instructions. Just ask for the final output. - Try a higher temperature \>= 0.8. - Add instructions like "Be concise", "Don't repeat yourself", or "Provide the answer once". |
+|------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+## Improve model output
+
+For higher quality model outputs, explore writing more structured prompts. The
+[prompt engineering guide](https://ai.google.dev/gemini-api/docs/prompting-strategies) page
+introduces some basic concepts, strategies, and best practices to get you
+started.
+
+## Understand token limits
+
+Read through our [Token guide](https://ai.google.dev/gemini-api/docs/tokens) to better understand how
+to count tokens and their limits.
+
+## Known issues
+
+- The API supports only a number of select languages. Submitting prompts in unsupported languages can produce unexpected or even blocked responses. See [available languages](https://ai.google.dev/gemini-api/docs/models#supported-languages) for updates.
+
+## File a bug
+
+Join the discussion on the
+[Google AI developer forum](https://discuss.ai.google.dev)
+if you have questions.
+
+[END OF DOCUMENT: GEMINIUDQ3K9NM6]
+---
+
+[START OF DOCUMENT: GEMINI19TE9YRB5P | Title: Url-Context.Md]
+
+The URL context tool lets you provide additional context to the models in the
+form of URLs. By including URLs in your request, the model will access
+the content from those pages (as long as it's not a URL type listed in the
+[limitations section](https://ai.google.dev/gemini-api/docs/url-context#limitations)) to inform
+and enhance its response.
+
+The URL context tool is useful for tasks like the following:
+
+- **Extract Data**: Pull specific info like prices, names, or key findings from multiple URLs.
+- **Compare Documents**: Analyze multiple reports, articles, or PDFs to identify differences and track trends.
+- **Synthesize \& Create Content**: Combine information from several source URLs to generate accurate summaries, blog posts, or reports.
+- **Analyze Code \& Docs**: Point to a GitHub repository or technical documentation to explain code, generate setup instructions, or answer questions.
+
+The following example shows how to compare two recipes from different websites.
+
+### Python
+
+ from google import genai
+ from google.genai.types import Tool, GenerateContentConfig
+
+ client = genai.Client()
+ model_id = "gemini-2.5-flash"
+
+ tools = [
+ {"url_context": {}},
+ ]
+
+ url1 = "https://www.foodnetwork.com/recipes/ina-garten/perfect-roast-chicken-recipe-1940592"
+ url2 = "https://www.allrecipes.com/recipe/21151/simple-whole-roast-chicken/"
+
+ response = client.models.generate_content(
+ model=model_id,
+ contents=f"Compare the ingredients and cooking times from the recipes at {url1} and {url2}",
+ config=GenerateContentConfig(
+ tools=tools,
+ )
+ )
+
+ for each in response.candidates[0].content.parts:
+ print(each.text)
+
+ # For verification, you can inspect the metadata to see which URLs the model retrieved
+ print(response.candidates[0].url_context_metadata)
+
+### Javascript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: [
+ "Compare the ingredients and cooking times from the recipes at https://www.foodnetwork.com/recipes/ina-garten/perfect-roast-chicken-recipe-1940592 and https://www.allrecipes.com/recipe/21151/simple-whole-roast-chicken/",
+ ],
+ config: {
+ tools: [{urlContext: {}}],
+ },
+ });
+ console.log(response.text);
+
+ // For verification, you can inspect the metadata to see which URLs the model retrieved
+ console.log(response.candidates[0].urlContextMetadata)
+ }
+
+ await main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H "Content-Type: application/json" \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {"text": "Compare the ingredients and cooking times from the recipes at https://www.foodnetwork.com/recipes/ina-garten/perfect-roast-chicken-recipe-1940592 and https://www.allrecipes.com/recipe/21151/simple-whole-roast-chicken/"}
+ ]
+ }
+ ],
+ "tools": [
+ {
+ "url_context": {}
+ }
+ ]
+ }' > result.json
+
+ cat result.json
+
+## How it works
+
+The URL Context tool uses a two-step retrieval process to
+balance speed, cost, and access to fresh data. When you provide a URL, the tool
+first attempts to fetch the content from an internal index cache. This acts as a
+highly optimized cache. If a URL is not available in the index (for example, if
+it's a very new page), the tool automatically falls back to do a live fetch.
+This directly accesses the URL to retrieve its content in real-time.
+
+## Combining with other tools
+
+You can combine the URL context tool with other tools to create more powerful
+workflows.
+
+### Grounding with search
+
+When both URL context and
+[Grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding) are enabled,
+the model can use its search capabilities to find
+relevant information online and then use the URL context tool to get a more
+in-depth understanding of the pages it finds. This approach is powerful for
+prompts that require both broad searching and deep analysis of specific pages.
+
+### Python
+
+ from google import genai
+ from google.genai.types import Tool, GenerateContentConfig, GoogleSearch, UrlContext
+
+ client = genai.Client()
+ model_id = "gemini-2.5-flash"
+
+ tools = [
+ {"url_context": {}},
+ {"google_search": {}}
+ ]
+
+ response = client.models.generate_content(
+ model=model_id,
+ contents="Give me three day events schedule based on <var translate="no">YOUR_URL</var>. Also let me know what needs to taken care of considering weather and commute.",
+ config=GenerateContentConfig(
+ tools=tools,
+ )
+ )
+
+ for each in response.candidates[0].content.parts:
+ print(each.text)
+ # get URLs retrieved for context
+ print(response.candidates[0].url_context_metadata)
+
+### Javascript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: [
+ "Give me three day events schedule based on <var translate="no">YOUR_URL</var>. Also let me know what needs to taken care of considering weather and commute.",
+ ],
+ config: {
+ tools: [
+ {urlContext: {}},
+ {googleSearch: {}}
+ ],
+ },
+ });
+ console.log(response.text);
+ // To get URLs retrieved for context
+ console.log(response.candidates[0].urlContextMetadata)
+ }
+
+ await main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H "Content-Type: application/json" \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {"text": "Give me three day events schedule based on <var translate="no">YOUR_URL</var>. Also let me know what needs to taken care of considering weather and commute."}
+ ]
+ }
+ ],
+ "tools": [
+ {
+ "url_context": {}
+ },
+ {
+ "google_search": {}
+ }
+ ]
+ }' > result.json
+
+ cat result.json
+
+## Understanding the response
+
+When the model uses the URL context tool, the response includes a
+`url_context_metadata` object. This object lists the URLs the model retrieved
+content from and the status of each retrieval attempt, which is useful for
+verification and debugging.
+
+The following is an example of that part of the response
+(parts of the response have been omitted for brevity):
+
+ {
+ "candidates": [
+ {
+ "content": {
+ "parts": [
+ {
+ "text": "... \n"
+ }
+ ],
+ "role": "model"
+ },
+ ...
+ "url_context_metadata": {
+ "url_metadata": [
+ {
+ "retrieved_url": "https://www.foodnetwork.com/recipes/ina-garten/perfect-roast-chicken-recipe-1940592",
+ "url_retrieval_status": "URL_RETRIEVAL_STATUS_SUCCESS"
+ },
+ {
+ "retrieved_url": "https://www.allrecipes.com/recipe/21151/simple-whole-roast-chicken/",
+ "url_retrieval_status": "URL_RETRIEVAL_STATUS_SUCCESS"
+ }
+ ]
+ }
+ }
+ }
+
+For complete detail about this object , see the
+[`UrlContextMetadata` API reference](https://ai.google.dev/api/generate-content#UrlContextMetadata).
+
+### Safety checks
+
+The system performs a content moderation check on the URL to confirm
+they meet safety standards. If the URL you provided fails this check, you will
+get an `url_retrieval_status` of `URL_RETRIEVAL_STATUS_UNSAFE`.
+
+### Token count
+
+The content retrieved from the URLs you specify in your prompt is counted
+as part of the input tokens. You can see the token count for your prompt and
+tools usage in the [`usage_metadata`](https://ai.google.dev/api/generate-content#UsageMetadata)
+object of the model output. The following is an example output:
+
+ 'usage_metadata': {
+ 'candidates_token_count': 45,
+ 'prompt_token_count': 27,
+ 'prompt_tokens_details': [{'modality': <MediaModality.TEXT: 'TEXT'>,
+ 'token_count': 27}],
+ 'thoughts_token_count': 31,
+ 'tool_use_prompt_token_count': 10309,
+ 'tool_use_prompt_tokens_details': [{'modality': <MediaModality.TEXT: 'TEXT'>,
+ 'token_count': 10309}],
+ 'total_token_count': 10412
+ }
+
+Price per token depends on the model used, see the
+[pricing](https://ai.google.dev/gemini-api/docs/pricing) page for details.
+
+## Supported models
+
+- [gemini-2.5-pro](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro)
+- [gemini-2.5-flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash)
+- [gemini-2.5-flash-lite](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-lite)
+- [gemini-live-2.5-flash-preview](https://ai.google.dev/gemini-api/docs/models#live-api)
+- [gemini-2.0-flash-live-001](https://ai.google.dev/gemini-api/docs/models#live-api-2.0)
+
+## Best Practices
+
+- **Provide specific URLs**: For the best results, provide direct URLs to the content you want the model to analyze. The model will only retrieve content from the URLs you provide, not any content from nested links.
+- **Check for accessibility**: Verify that the URLs you provide don't lead to pages that require a login or are behind a paywall.
+- **Use the complete URL**: Provide the full URL, including the protocol (e.g., https://www.google.com instead of just google.com).
+
+## Limitations
+
+- **Pricing** : Content retrieved from URLs counts as input tokens. Rate limit and pricing is the based on the model used. See the [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) and [pricing](https://ai.google.dev/gemini-api/docs/pricing) pages for details.
+- **Request limit**: The tool can process up to 20 URLs per request.
+- **URL content size**: The maximum size for content retrieved from a single URL is 34MB.
+
+### Supported and unsupported content types
+
+The tool can extract content from URLs with the following content types:
+
+- Text (text/html, application/json, text/plain, text/xml, text/css, text/javascript , text/csv, text/rtf)
+- Image (image/png, image/jpeg, image/bmp, image/webp)
+- PDF (application/pdf)
+
+The following content types are **not** supported:
+
+- Paywalled content
+- YouTube videos (See [video understanding](https://ai.google.dev/gemini-api/docs/video-understanding#youtube) to learn how to process YouTube URLs)
+- Google workspace files like Google docs or spreadsheets
+- Video and audio files
+
+## What's next
+
+- Explore the [URL context cookbook](https://colab.sandbox.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Grounding.ipynb#url-context) for more examples.
+
+[END OF DOCUMENT: GEMINI19TE9YRB5P]
+---
+

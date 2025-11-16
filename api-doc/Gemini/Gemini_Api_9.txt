@@ -1,0 +1,2433 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: GEMINIGQ4E79TWD (sha256-2aea10ce1e9d300763963022a36f4fcf826f64a1c920b6a42688b97e176ab2d3) | Title: Robotics-Overview.Md]
+[DocID: GEMINI14LRMKB8X (sha256-02e4daf7e7f1fc7c1a759fb82c103c659c280450ae195dfb4392e54198c837e3) | Title: Safety-Guidance.Md]
+[DocID: GEMINI8IHK9YJ2Y (sha256-15d80c6c9e1aaad5698170054e4e1614d2da2a758698b785339d5bd97a10744c) | Title: Safety-Settings.Md]
+[DocID: GEMINIRM1DZ9NBF (sha256-46d8cf15c54b07670b42c5da19260b8ed2e22798a0288e52e9acaabb67a30a6f) | Title: Speech-Generation.Md]
+[DocID: GEMINI1BYL1QPDZ3 (sha256-7b0e8966e0ffbde919f9be948eb945ab1600a57c2da998c0eeb1a1e205ffa9d2) | Title: Structured-Output.Md]
+--- END OF TOC ---
+
+[START OF DOCUMENT: GEMINIGQ4E79TWD | Title: Robotics-Overview.Md]
+
+<br />
+
+| **Preview:** The Gemini Robotics-ER 1.5 model is currently in preview.
+
+Gemini Robotics-ER 1.5 is a vision-language model (VLM) that brings Gemini's
+agentic capabilities to robotics. It's designed for advanced reasoning in the
+physical world, allowing robots to interpret complex visual data, perform
+spatial reasoning, and plan actions from natural language commands.
+
+Key features and benefits:
+
+- **Enhanced autonomy:** Robots can reason, adapt, and respond to changes in open-ended environments.
+- **Natural language interaction:** Makes robots easier to use by enabling complex task assignments using natural language.
+- **Task orchestration:** Deconstructs natural language commands into subtasks and integrates with existing robot controllers and behaviors to complete long-horizon tasks.
+- **Versatile capabilities:** Locates and identifies objects, understands object relationships, plans grasps and trajectories, and interprets dynamic scenes.
+
+This document describes [what the model does](https://ai.google.dev/gemini-api/docs/robotics-overview#how-it-works) and takes you
+through several [examples](https://ai.google.dev/gemini-api/docs/robotics-overview#agentic-capabilities) that highlight the model's
+agentic capabilities.
+
+If you want to jump right in, you can try out the model in Google AI Studio.
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-robotics-er-1.5-preview)
+
+## Safety
+
+While Gemini Robotics-ER 1.5 was built with safety in mind, it is your
+responsibility to maintain a safe environment around the robot. Generative AI
+models can make mistakes, and physical robots can cause damage. Safety is a
+priority, and making generative AI models safe when used with real-world
+robotics is an active and critical area of our research. To learn more, visit
+the [Google DeepMind robotics safety page](https://deepmind.google/models/gemini-robotics/safety).
+
+## Getting started: Finding objects in a scene
+
+The following example demonstrates a common robotics use case. It shows how to
+pass an image and a text prompt to the model using the
+[`generateContent`](https://ai.google.dev/api/generate-content#method:-models.generatecontent)
+method to get a list of identified objects with their corresponding 2D points.
+The model returns points for items it identified in an image, returning
+their normalized 2D coordinates and labels.
+
+You can use this output with a robotics API or call a vision-language-action
+(VLA) model or any other third-party user-defined functions to generate actions
+for a robot to perform.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ PROMPT = """
+ Point to no more than 10 items in the image. The label returned
+ should be an identifying name for the object detected.
+ The answer should follow the json format: [{"point": <point>,
+ "label": <label1>}, ...]. The points are in [y, x] format
+ normalized to 0-1000.
+ """
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image
+ with open("my-image.png", 'rb') as f:
+ image_bytes = f.read()
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/png',
+ ),
+ PROMPT
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ thinking_config=types.ThinkingConfig(thinking_budget=0)
+ )
+ )
+
+ print(image_response.text)
+
+### REST
+
+ # First, ensure you have the image file locally.
+ # Encode the image to base64
+ IMAGE_BASE64=$(base64 -w 0 my-image.png)
+
+ curl -X POST \
+ "https://generativelanguage.googleapis.com/v1beta/models/gemini-robotics-er-1.5-preview:generateContent \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H "Content-Type: application/json" \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "inlineData": {
+ "mimeType": "image/png",
+ "data": "'"${IMAGE_BASE64}"'"
+ }
+ },
+ {
+ "text": "Point to no more than 10 items in the image. The label returned should be an identifying name for the object detected. The answer should follow the json format: [{\"point\": [y, x], \"label\": <label1>}, ...]. The points are in [y, x] format normalized to 0-1000."
+ }
+ ]
+ }
+ ],
+ "generationConfig": {
+ "temperature": 0.5,
+ "thinkingConfig": {
+ "thinkingBudget": 0
+ }
+ }
+ }'
+
+The output will be a JSON array containing objects, each with a `point`
+(normalized `[y, x]` coordinates) and a `label` identifying the object.
+
+### JSON
+
+ [
+ {"point": [376, 508], "label": "small banana"},
+ {"point": [287, 609], "label": "larger banana"},
+ {"point": [223, 303], "label": "pink starfruit"},
+ {"point": [435, 172], "label": "paper bag"},
+ {"point": [270, 786], "label": "green plastic bowl"},
+ {"point": [488, 775], "label": "metal measuring cup"},
+ {"point": [673, 580], "label": "dark blue bowl"},
+ {"point": [471, 353], "label": "light blue bowl"},
+ {"point": [492, 497], "label": "bread"},
+ {"point": [525, 429], "label": "lime"}
+ ]
+
+The following image is an example of how these points can be displayed:
+
+![An example that displays the points of objects in an image](https://ai.google.dev/static/gemini-api/docs/images/robotics/point-to-object.png)
+
+## How it works
+
+Gemini Robotics-ER 1.5 allows your robots to contextualize and work in the
+physical world using spatial understanding. It takes image/video/audio input and
+natural language prompts to:
+
+- **Understand objects and scene context**: Identifies objects, and reasons about their relationship to the scene, including their affordances.
+- **Understand task instructions**: Interprets tasks given in natural language, like "find the banana".
+- **Reason spatially and temporally**: Understand sequences of actions and how objects interact with a scene over time.
+- **Provide structured output**: Returns coordinates (points or bounding boxes) representing object locations.
+
+This enables robots to "see" and "understand" their environment
+programmatically.
+
+Gemini Robotics-ER 1.5 is also agentic, which means it can break down complex
+tasks (like "put the apple in the bowl") into sub-tasks to orchestrate long
+horizon tasks:
+
+- **Sequencing subtasks**: Decomposes commands into a logical sequence of steps.
+- **Function calls/Code execution**: Executes steps by calling your existing robot functions/tools or executing generated code.
+
+Read more about how function calling with Gemini works on the [Function Calling
+page](https://ai.google.dev/gemini-api/docs/function-calling?example=meeting#how-it-works).
+
+### Using the thinking budget with Gemini Robotics-ER 1.5
+
+Gemini Robotics-ER 1.5 has a flexible thinking budget that gives you control
+over latency versus accuracy tradeoffs. For spatial understanding tasks like
+object detection, the model can achieve high performance with a small thinking
+budget. More complex reasoning tasks like counting and weight estimation benefit
+from a larger thinking budget. This lets you balance the need for
+low-latency responses with high-accuracy results for more challenging tasks.
+
+To learn more about thinking budgets, see the
+[Thinking](https://ai.google.dev/gemini-api/docs/thinking)
+core capabilities page.
+
+## Agentic capabilities for robotics
+
+This section walks through various capabilities of Gemini
+Robotics-ER 1.5, demonstrating how to use the model for robotic perception,
+reasoning, and planning applications.
+
+The examples in this section demonstrate capabilities from pointing and finding
+objects in an image to planning trajectories and orchestrating long horizon
+tasks. For simplicity, the code snippets have been reduced to show the prompt
+and the call to `generate_content` API. The full runnable code as well as
+additional examples can be found in the
+[Robotics cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb).
+
+### Pointing to objects
+
+Pointing and finding objects in images or video frames is a common use case for
+vision-and-language models (VLMs) in robotics. The following example asks the
+model to find specific objects within an image and return their coordinates in
+an image.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image and set up your prompt
+ with open('path/to/image-with-objects.jpg', 'rb') as f:
+ image_bytes = f.read()
+
+ queries = [
+ "bread",
+ "starfruit",
+ "banana",
+ ]
+
+ prompt = f"""
+ Get all points matching the following objects: {', '.join(queries)}. The
+ label returned should be an identifying name for the object detected.
+ The answer should follow the json format:
+
+ [{{"point": , "label": }}, ...]. The points are in
+
+ [y, x] format normalized to 0-1000.
+ """
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ thinking_config=types.ThinkingConfig(thinking_budget=0)
+ )
+ )
+
+ print(image_response.text)
+
+The output would be similar to the getting started example, a JSON containing
+the coordinates of the objects found and their labels.
+
+ [
+ {"point": [671, 317], "label": "bread"},
+ {"point": [738, 307], "label": "bread"},
+ {"point": [702, 237], "label": "bread"},
+ {"point": [629, 307], "label": "bread"},
+ {"point": [833, 800], "label": "bread"},
+ {"point": [609, 663], "label": "banana"},
+ {"point": [770, 483], "label": "starfruit"}
+ ]
+
+![An example that displays the points of objects identified in an image](https://ai.google.dev/static/gemini-api/docs/images/robotics/pointing-objects.png)
+
+Use the following prompt to request the model to interpret abstract categories
+like "fruit" instead of specific objects and locate all instances in the image.
+
+### Python
+
+ prompt = f"""
+ Get all points for fruit. The label returned should be an identifying
+ name for the object detected.
+ """ + """The answer should follow the json format:
+ [{"point": <point>, "label": <label1>}, ...]. The points are in
+ [y, x] format normalized to 0-1000."""
+
+Visit the [image understanding](https://ai.google.dev/gemini-api/docs/image-understanding) page for
+other image processing techniques.
+
+### Tracking objects in a video
+
+Gemini Robotics-ER 1.5 can also analyze video frames to track objects
+over time. See [Video inputs](https://ai.google.dev/gemini-api/docs/video-understanding#supported-formats)
+for a list of supported video formats.
+
+The following is the base prompt used to find specific objects in
+each frame that the model analyzes:
+
+### Python
+
+ # Define the objects to find
+ queries = [
+ "pen (on desk)",
+ "pen (in robot hand)",
+ "laptop (opened)",
+ "laptop (closed)",
+ ]
+
+ base_prompt = f"""
+ Point to the following objects in the provided image: {', '.join(queries)}.
+ The answer should follow the json format:
+
+ [{{"point": , "label": }}, ...].
+
+ The points are in [y, x] format normalized to 0-1000.
+ If no objects are found, return an empty JSON list [].
+ """
+
+The output shows a pen and laptop being tracked across the video frames.
+
+![An example that shows objects being tracked through frames in a GIF](https://ai.google.dev/static/gemini-api/docs/images/robotics/object-tracking.gif)
+
+For the full runnable code, see the
+[Robotics cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb).
+
+### Object detection and bounding boxes
+
+Beyond single points, the model can also return 2D bounding boxes, providing a
+rectangular region enclosing an object.
+
+This example requests 2D bounding boxes for identifiable objects on a table. The
+model is instructed to limit the output to 25 objects and to name multiple
+instances uniquely.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image and set up your prompt
+ with open('path/to/image-with-objects.jpg', 'rb') as f:
+ image_bytes = f.read()
+
+ prompt = """
+ Return bounding boxes as a JSON array with labels. Never return masks
+ or code fencing. Limit to 25 objects. Include as many objects as you
+ can identify on the table.
+ If an object is present multiple times, name them according to their
+ unique characteristic (colors, size, position, unique characteristics, etc..).
+ The format should be as follows: [{"box_2d": [ymin, xmin, ymax, xmax],
+ "label": <label for the object>}] normalized to 0-1000. The values in
+ box_2d must only be integers
+ """
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ thinking_config=types.ThinkingConfig(thinking_budget=0)
+ )
+ )
+
+ print(image_response.text)
+
+The following displays the boxes returned from the model.
+
+![An example showing bounding boxes for objects found](https://ai.google.dev/static/gemini-api/docs/images/robotics/bounding-boxes.png)
+
+For the full runnable code, see the [Robotics
+cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb).
+The [Image understanding](https://ai.google.dev/gemini-api/docs/image-understanding) page also has
+additional examples of visual tasks like segmentation and object detection.
+
+Additional bounding box examples can be found in the
+[Image understanding](https://ai.google.dev/gemini-api/docs/image-understanding) page.
+
+### Trajectories
+
+Gemini Robotics-ER 1.5 can generate sequences of points that define a
+trajectory, useful for guiding robot movement.
+
+This example requests a trajectory to move a red pen to an organizer, including
+the starting point and a series of intermediate points.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image and set up your prompt
+ with open('path/to/image-with-objects.jpg', 'rb') as f:
+ image_bytes = f.read()
+
+ points_data = []
+ prompt = """
+ Place a point on the red pen, then 15 points for the trajectory of
+ moving the red pen to the top of the organizer on the left.
+ The points should be labeled by order of the trajectory, from '0'
+ (start point at left hand) to <n> (final point)
+ The answer should follow the json format:
+ [{"point": <point>, "label": <label1>}, ...].
+ The points are in [y, x] format normalized to 0-1000.
+ """
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ )
+ )
+
+ print(image_response.text)
+
+The response is a set of coordinates that describe the trajectory of the path
+that the red pen should follow to complete the task of moving it on top of the
+organizer:
+
+ [
+ {"point": [550, 610], "label": "0"},
+ {"point": [500, 600], "label": "1"},
+ {"point": [450, 590], "label": "2"},
+ {"point": [400, 580], "label": "3"},
+ {"point": [350, 550], "label": "4"},
+ {"point": [300, 520], "label": "5"},
+ {"point": [250, 490], "label": "6"},
+ {"point": [200, 460], "label": "7"},
+ {"point": [180, 430], "label": "8"},
+ {"point": [160, 400], "label": "9"},
+ {"point": [140, 370], "label": "10"},
+ {"point": [120, 340], "label": "11"},
+ {"point": [110, 320], "label": "12"},
+ {"point": [105, 310], "label": "13"},
+ {"point": [100, 305], "label": "14"},
+ {"point": [100, 300], "label": "15"}
+ ]
+
+![An example showing the planned trajectory](https://ai.google.dev/static/gemini-api/docs/images/robotics/trajectories.png)
+
+### Orchestration
+
+Gemini Robotics-ER 1.5 can perform higher-level spatial reasoning, inferring
+actions or identifying optimal locations based on contextual understanding.
+
+#### Making room for a laptop
+
+This example shows how Gemini Robotics-ER can reason about a space. The prompt
+asks the model to identify which object needs to be moved to create
+space for another item.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image and set up your prompt
+ with open('path/to/image-with-objects.jpg', 'rb') as f:
+ image_bytes = f.read()
+
+ prompt = """
+ Point to the object that I need to remove to make room for my laptop
+ The answer should follow the json format: [{"point": <point>,
+ "label": <label1>}, ...]. The points are in [y, x] format normalized to 0-1000.
+ """
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ thinking_config=types.ThinkingConfig(thinking_budget=0)
+ )
+ )
+
+ print(image_response.text)
+
+The response contains a 2D coordinate of the object that answers the user's
+question, in this case, the object that should move to make room for a laptop.
+
+ [
+ {"point": [672, 301], "label": "The object that I need to remove to make room for my laptop"}
+ ]
+
+![An example that shows which object needs to be moved for another object](https://ai.google.dev/static/gemini-api/docs/images/robotics/spatial-reasoning.png)
+
+#### Packing a Lunch
+
+The model can also provide instructions for multi-step tasks and point to
+relevant objects for each step. This example shows how the model plans a series
+of steps to pack a lunch bag.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ # Initialize the GenAI client and specify the model
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ # Load your image and set up your prompt
+ with open('path/to/image-of-lunch.jpg', 'rb') as f:
+ image_bytes = f.read()
+
+ prompt = """
+ Explain how to pack the lunch box and lunch bag. Point to each
+ object that you refer to. Each point should be in the format:
+ [{"point": [y, x], "label": }], where the coordinates are
+ normalized between 0-1000.
+ """
+
+ image_response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ thinking_config=types.ThinkingConfig(thinking_budget=0)
+ )
+ )
+
+ print(image_response.text)
+
+The response of this prompt is a set of step by step instructions on how to pack
+a lunch bag from the image input.
+
+**Input image**
+
+![An image of a lunch box and items to put into it](https://ai.google.dev/static/gemini-api/docs/images/robotics/packing-lunch.png)
+
+**Model output**
+
+ Based on the image, here is a plan to pack the lunch box and lunch bag:
+
+ 1. **Pack the fruit into the lunch box.** Place the [apple](apple), [banana](banana), [red grapes](red grapes), and [green grapes](green grapes) into the [blue lunch box](blue lunch box).
+ 2. **Add the spoon to the lunch box.** Put the [blue spoon](blue spoon) inside the lunch box as well.
+ 3. **Close the lunch box.** Secure the lid on the [blue lunch box](blue lunch box).
+ 4. **Place the lunch box inside the lunch bag.** Put the closed [blue lunch box](blue lunch box) into the [brown lunch bag](brown lunch bag).
+ 5. **Pack the remaining items into the lunch bag.** Place the [blue snack bar](blue snack bar) and the [brown snack bar](brown snack bar) into the [brown lunch bag](brown lunch bag).
+
+ Here is the list of objects and their locations:
+ * [{"point": [899, 440], "label": "apple"}]
+ * [{"point": [814, 363], "label": "banana"}]
+ * [{"point": [727, 470], "label": "red grapes"}]
+ * [{"point": [675, 608], "label": "green grapes"}]
+ * [{"point": [706, 529], "label": "blue lunch box"}]
+ * [{"point": [864, 517], "label": "blue spoon"}]
+ * [{"point": [499, 401], "label": "blue snack bar"}]
+ * [{"point": [614, 705], "label": "brown snack bar"}]
+ * [{"point": [448, 501], "label": "brown lunch bag"}]
+
+#### Calling a custom robot API
+
+This example demonstrates task orchestration with a custom robot API. It
+introduces a mock API designed for a pick-and-place operation. The task is to
+pick up a blue block and place it in an orange bowl:
+
+![An image of the block and bowl](https://ai.google.dev/static/gemini-api/docs/images/robotics/robot-api-example.png)
+
+Similar to the other examples on this page, the full runnable code is available
+in the [Robotics cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb).
+
+First step is to locate both of the items with the following prompt:
+
+### Python
+
+ prompt = """
+ Locate and point to the blue block and the orange bowl. The label
+ returned should be an identifying name for the object detected.
+ The answer should follow the json format: [{"point": <point>, "label": <label1>}, ...].
+ The points are in [y, x] format normalized to 0-1000.
+ """
+
+The model response includes the normalized coordinates of the block and the bowl:
+
+ [
+ {"point": [389, 252], "label": "orange bowl"},
+ {"point": [727, 659], "label": "blue block"}
+ ]
+
+This example uses the following mock robot API:
+
+### Python
+
+ def move(x, y, high):
+ print(f"moving to coordinates: {x}, {y}, {15 if high else 5}")
+
+ def setGripperState(opened):
+ print("Opening gripper" if opened else "Closing gripper")
+
+ def returnToOrigin():
+ print("Returning to origin pose")
+
+The next step is calling a sequence of API functions with the necessary logic to
+execute the action. The following prompt includes a description of the robot
+API that the model should use when orchestrating this task.
+
+### Python
+
+ prompt = f"""
+ You are a robotic arm with six degrees-of-freedom. You have the
+ following functions available to you:
+
+ def move(x, y, high):
+ # moves the arm to the given coordinates. The boolean value 'high' set
+ to True means the robot arm should be lifted above the scene for
+ avoiding obstacles during motion. 'high' set to False means the robot
+ arm should have the gripper placed on the surface for interacting with
+ objects.
+
+ def setGripperState(opened):
+ # Opens the gripper if opened set to true, otherwise closes the gripper
+
+ def returnToOrigin():
+ # Returns the robot to an initial state. Should be called as a cleanup
+ operation.
+
+ The origin point for calculating the moves is at normalized point
+ y={robot_origin_y}, x={robot_origin_x}. Use this as the new (0,0) for
+ calculating moves, allowing x and y to be negative.
+ Perform a pick and place operation where you pick up the blue block at
+ normalized coordinates ({block_x}, {block_y}) (relative coordinates:
+ {block_relative_x}, {block_relative_y}) and place it into the orange
+ bowl at normalized coordinates ({bowl_x}, {bowl_y})
+ (relative coordinates: {bowl_relative_x}, {bowl_relative_y}).
+ Provide the sequence of function calls as a JSON list of objects, where
+ each object has a "function" key (the function name) and an "args" key
+ (a list of arguments for the function).
+ Also, include your reasoning before the JSON output.
+ For example:
+ Reasoning: To pick up the block, I will first move the arm to a high
+ position above the block, open the gripper, move down to the block,
+ close the gripper, lift the arm, move to a high position above the bowl,
+ move down to the bowl, open the gripper, and then lift the arm back to
+ a high position.
+ """
+
+The following shows a possible output of the model based on the prompt and
+the mock robot API. The output includes the model thinking process and the
+tasks that it planned out as a result. It also shows the output of the robot
+function calls that the model sequenced together.
+
+ Reasoning: To perform the pick and place operation, I will first move the
+ robotic arm to a high position above the blue block to ensure clearance. Then, I
+ will open the gripper in preparation for grasping. Next, I will lower the arm to
+ the surface level to position the gripper around the block and close the gripper
+ to secure it. After picking up the block, I will lift the arm to clear the
+ surface and move towards the orange bowl, maintaining a high position to avoid
+ collisions. Once positioned above the bowl, I will lower the arm to place the
+ block inside. I will then open the gripper to release the block. Finally, I will
+ lift the arm out of the bowl and call `returnToOrigin` to reset the robot's
+ state.
+
+ [
+ {
+ "function": "move",
+ "args": [
+ 163,
+ 427,
+ true
+ ]
+ },
+ {
+ "function": "setGripperState",
+ "args": [
+ true
+ ]
+ },
+ {
+ "function": "move",
+ "args": [
+ 163,
+ 427,
+ false
+ ]
+ },
+ {
+ "function": "setGripperState",
+ "args": [
+ false
+ ]
+ },
+ {
+ "function": "move",
+ "args": [
+ 163,
+ 427,
+ true
+ ]
+ },
+ {
+ "function": "move",
+ "args": [
+ -247,
+ 90,
+ true
+ ]
+ },
+ {
+ "function": "move",
+ "args": [
+ -247,
+ 90,
+ false
+ ]
+ },
+ {
+ "function": "setGripperState",
+ "args": [
+ true
+ ]
+ },
+ {
+ "function": "move",
+ "args": [
+ -247,
+ 90,
+ true
+ ]
+ },
+ {
+ "function": "returnToOrigin",
+ "args": []
+ }
+ ]
+
+ Executing Function Calls:
+ moving to coordinates: 163, 427, 15
+ Opening gripper
+ moving to coordinates: 163, 427, 5
+ Closing gripper
+ moving to coordinates: 163, 427, 15
+ moving to coordinates: -247, 90, 15
+ moving to coordinates: -247, 90, 5
+ Opening gripper
+ moving to coordinates: -247, 90, 15
+ Returning to origin pose
+
+### Code execution
+
+Gemini Robotics-ER 1.5 can suggest and execute Python code to perform tasks that
+require dynamic actions, such as zooming into an image region for better detail.
+
+This example demonstrates how the model can suggest using the
+[code execution](https://ai.google.dev/gemini-api/docs/code-execution) tool to "zoom in" on a specific
+area of an image, which it then carries out to answer the user's question.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client(api_key=YOUR_API_KEY)
+
+ MODEL_ID = "gemini-robotics-er-1.5-preview"
+
+ # Load your image and set up your prompt
+ with open('path/to/image-of-object.jpg', 'rb') as f:
+ image_bytes = f.read()
+ prompt = """
+ What is the air quality reading? Using the code execution feature,
+ zoom in on the image to take a closer look.
+ """
+
+ response = client.models.generate_content(
+ model=MODEL_ID,
+ contents=[
+ types.Part.from_bytes(
+ data=image_bytes,
+ mime_type='image/jpeg',
+ ),
+ prompt
+ ],
+ config = types.GenerateContentConfig(
+ temperature=0.5,
+ tools=[types.Tool(code_execution=types.ToolCodeExecution)]
+ )
+ )
+
+ for part in response.candidates[0].content.parts:
+ if part.text is not None:
+ print(part.text)
+ if part.executable_code is not None:
+ print(part.executable_code.code)
+ if part.code_execution_result is not None:
+ print(part.code_execution_result.output)
+
+The following shows a possible model response for this task. The output shows
+the model generating code for zooming into the image to read the screen better.
+It also shows the thought process around the adjustments it made to the
+cropping. For the complete sample output, see the [Robotics
+cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb).
+
+ # Detect relevant objects and output in json format
+ # [{"box_2d": [379, 407, 481, 553], "label": "display"}]
+ from PIL import Image
+
+ # Open the image
+ img = Image.open("input_file_0.jpeg")
+
+ # Define the coordinates for cropping (normalized to 0-1000)
+ # Based on visual inspection, the display is roughly centered around [430, 430] to [500, 500] in a 1000x1000 scale.
+ # Let's try to zoom in on the display area.
+ # Bounding box for display: [ymin, xmin, ymax, xmax] in pixels.
+ # From visual inspection of the original image (size 90489 bytes, resolution
+ unknown but let's assume a standard aspect ratio and roughly 1000x1000 for
+ relative positioning),
+ # the display is located at approximately y=380-480, x=410-540.
+ # Let's define a larger area around it for context.
+ # Let's say we want to crop from y=350 to y=550 and x=350 to x=650.
+
+ ...
+
+ thought
+ The crop was too tight and only captured part of the display. Let's adjust the bounding box.
+ The previous crop was `img.crop((400, 350, 600, 500))`. This means xmin=400, ymin=350, xmax=600, ymax=500.
+ The display is centered around x=480, y=430.
+ The previous crop captured the left side of the display.
+ Let's expand the x range to the right and y range to cover the whole circle.
+ New bounding box estimate: ymin=370, xmin=400, ymax=500, xmax=600.
+ Let's try again with a wider crop.
+ # Detect relevant objects and output in json format
+ # [{"box_2d": [379, 407, 481, 553], "label": "display"}]
+ from PIL import Image
+
+ # Open the image
+ img = Image.open("input_file_0.jpeg")
+
+ # Define the coordinates for cropping (normalized to 0-1000)
+ ...
+
+ The reading of 14 falls into the "Moderate" category.
+ The prompt asks for the "air quality reading", which can be interpreted as
+ either the numerical value or the categorical description. Given the numerical
+ value is explicitly displayed, it's the primary reading.
+
+ Let's provide the numerical value as the reading.
+ The reading is 014.
+ Based on the display on the air purifier, the air quality reading is **014**.
+
+## Best practices
+
+To optimize the performance and accuracy of your robotics applications, it's
+crucial to understand how to interact with the Gemini model effectively. This
+section outlines best practices and key strategies for crafting prompts,
+handling visual data, and structuring tasks to achieve the most reliable
+results.
+
+1. Use clear and simple language.
+
+ - **Embrace natural language**: The Gemini model is designed to comprehend
+ natural, conversational language. Structure your prompts in a way that is
+ semantically clear and mirrors how a person would naturally give
+ instructions.
+
+ - **Use everyday terminology**: Opt for common, everyday language over
+ technical or specialized jargon. If the model is not responding as
+ expected to a particular term, try rephrasing it with a more common
+ synonym.
+
+2. Optimize the visual input.
+
+ - **Zoom in for detail**: When dealing with objects that are small or
+ difficult to discern in a wider shot, use a bounding box function to
+ isolate the object of interest. You can then crop the image to this
+ selection and send the new, focused image to the model for a more
+ detailed analysis.
+
+ - **Experiment with lighting and color**: The model's perception can be
+ affected by challenging lighting conditions and poor color contrast.
+
+3. Break down complex problems into smaller steps. By addressing each smaller
+ step individually, you can guide the model to a more precise and successful
+ outcome.
+
+4. Improve accuracy through consensus. For tasks that require a high degree of
+ precision, you can query the model multiple times with the same prompt. By
+ averaging the returned results, you can arrive at a "consensus" that is
+ often more accurate and reliable.
+
+## Limitations
+
+Consider the following limitations when developing with Gemini Robotics-ER 1.5:
+
+- **Preview status:** The model is currently in **Preview**. APIs and capabilities may change, and it may not be suitable for production-critical applications without thorough testing.
+- **Latency:** Complex queries, high-resolution inputs, or extensive `thinking_budget` can lead to increased processing times.
+- **Hallucinations:** Like all large language models, Gemini Robotics-ER 1.5 can occasionally "hallucinate" or provide incorrect information, especially for ambiguous prompts or out-of-distribution inputs.
+- **Dependence on prompt quality:** The quality of the model's output is highly dependent on the clarity and specificity of the input prompt. Vague or poorly structured prompts can lead to suboptimal results.
+- **Computational cost:** Running the model, especially with video inputs or high `thinking_budget`, consumes computational resources and incurs costs. See the [Thinking](https://ai.google.dev/gemini-api/docs/thinking) page for more details.
+- **Input types:** See the following topics for details on limitations for each mode.
+ - [Image inputs](https://ai.google.dev/gemini-api/docs/image-understanding#technical-details-image)
+ - [Video inputs](https://ai.google.dev/gemini-api/docs/video-understanding#supported-formats)
+ - [Audio inputs](https://ai.google.dev/gemini-api/docs/audio#supported-formats)
+
+## Privacy Notice
+
+You acknowledge that the models referenced in this document (the "Robotics
+Models") leverage video and audio data in order to operate and move your
+hardware in accordance with your instructions. You therefore may operate the
+Robotics Models such that data from identifiable persons, such as voice,
+imagery, and likeness data ("Personal Data"), will be collected by the Robotics
+Models. If you elect to operate the Robotics Models in a manner that collects
+Personal Data, you agree that you will not permit any identifiable persons to
+interact with, or be present in the area surrounding, the Robotics Models,
+unless and until such identifiable persons have been sufficiently notified of
+and consented to the fact that their Personal Data may be provided to and used
+by Google as outlined in the Gemini API Additional Terms of Service found at
+<https://ai.google.dev/gemini-api/terms>
+(the "Terms"), including in accordance
+with the section entitled "How Google Uses Your Data". You will ensure that such
+notice permits the collection and use of Personal Data as outlined in the Terms,
+and you will use commercially reasonable efforts to minimize the collection and
+distribution of Personal Data by using techniques such as face blurring and
+operating the Robotics Models in areas not containing identifiable persons to
+the extent practicable.
+
+## Pricing
+
+For detailed information on pricing and available regions, refer to the
+[pricing](https://ai.google.dev/gemini-api/docs/pricing) page.
+
+## Model versions
+
+| Property | Description |
+|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-robotics-er-1.5-preview` |
+| saveSupported data types | **Inputs** Text, images, video, audio **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/robotics-overview#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Not supported **Caching** Not supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-robotics-er-1.5-preview` |
+| calendar_monthLatest update | September 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+## Next steps
+
+- Explore other capabilities and continue experimenting with different prompts and inputs to discover more applications for Gemini Robotics-ER 1.5. See the [Robotics cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/gemini-robotics-er.ipynb) for more examples.
+- Learn about how Gemini Robotics models were built with safety in mind, visit the [Google DeepMind robotics safety
+ page](https://deepmind.google/models/gemini-robotics/safety).
+- Read about the latest updates on Gemini Robotics models on the [Gemini Robotics landing page](https://deepmind.google/robotics).
+
+[END OF DOCUMENT: GEMINIGQ4E79TWD]
+---
+
+[START OF DOCUMENT: GEMINI14LRMKB8X | Title: Safety-Guidance.Md]
+
+Generative artificial intelligence models are powerful tools, but they are not
+without their limitations. Their versatility and applicability can sometimes
+lead to unexpected outputs, such as outputs that are inaccurate, biased, or
+offensive. Post-processing, and rigorous manual evaluation are essential to
+limit the risk of harm from such outputs.
+
+The models provided by the Gemini API can be used for a wide variety of
+generative AI and natural language processing (NLP) applications. Use of these
+functions is only available through the Gemini API or the Google AI Studio web
+app. Your use of Gemini API is also subject to the [Generative AI Prohibited Use
+Policy](https://policies.google.com/terms/generative-ai/use-policy) and the
+[Gemini API terms of service](https://ai.google.dev/terms).
+
+Part of what makes large language models (LLMs) so useful is that they're
+creative tools that can address many different language tasks. Unfortunately,
+this also means that large language models can generate output that you don't
+expect, including text
+that's offensive, insensitive, or factually incorrect. What's more, the
+incredible versatility of these models is also what makes it difficult to
+predict exactly what kinds of undesirable output they might produce. While the
+Gemini API has been designed with [Google's AI
+principles](https://ai.google/principles/) in mind, the onus is on developers to
+apply these models responsibly. To aid developers in creating safe, responsible
+applications, the Gemini API has some built-in content filtering as well as
+adjustable safety settings across 4 dimensions of harm. Refer to the
+[safety settings](https://ai.google.dev/gemini-api/docs/safety-settings) guide to learn more.
+
+This document is meant to introduce you to some safety risks that can arise when
+using LLMs, and recommend emerging safety design and development
+recommendations. (Note that laws and regulations may also impose restrictions,
+but such considerations are beyond the scope of this guide.)
+
+The following steps are recommended when building applications with LLMs:
+
+- Understanding the safety risks of your application
+- Considering adjustments to mitigate safety risks
+- Performing safety testing appropriate to your use case
+- Soliciting feedback from users and monitoring usage
+
+The adjustment and testing phases should be iterative until you reach
+performance appropriate for your application.
+
+![Model implementation cycle](https://ai.google.dev/static/gemini-api/docs/images/safety_diagram.png)
+
+## Understand the safety risks of your application
+
+In this context, safety is being defined as the ability of an LLM to avoid
+causing harm to its users, for example, by generating toxic language or content
+that promotes stereotypes. The models available through the Gemini API have been
+designed with [Google's AI principles](https://ai.google/principles/) in mind
+and your use of it is subject to the [Generative AI Prohibited Use
+Policy](https://policies.google.com/terms/generative-ai/use-policy). The API
+provides built-in safety filters to help address some common language model
+problems such as toxic language and hate speech, and striving for inclusiveness
+and avoidance of stereotypes. However, each application can pose a different set
+of risks to its users. So as the application owner, you are responsible for
+knowing your users and the potential harms your application may cause, and
+ensuring that your application uses LLMs safely and responsibly.
+
+As part of this assessment, you should consider the likelihood that harm could
+occur and determine its seriousness and mitigation steps. For example, an
+app that generates essays based on factual events would need to be more careful
+about avoiding misinformation, as compared to an app that generates fictional
+stories for entertainment. A good way to begin exploring potential safety risks
+is to research your end users, and others who might be affected by your
+application's results. This can take many forms including researching state of
+the art studies in your app domain, observing how people are using similar apps,
+or running a user study, survey, or conducting informal interviews with
+potential users.
+
+#### Advanced tips
+
+- Speak with a diverse mix of prospective users within your target population about your application and its intended purpose so as to get a wider perspective on potential risks and to adjust diversity criteria as needed.
+- The [AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework) released by the U.S. government's National Institute of Standards and Technology (NIST) provides more detailed guidance and additional learning resources for AI risk management.
+- DeepMind's publication on the [ethical and social risks of harm from language models](https://arxiv.org/abs/2112.04359) describes in detail the ways that language model applications can cause harm.
+
+## Consider adjustments to mitigate safety risks
+
+Now that you have an understanding of the risks, you can decide how to mitigate
+them. Determining which risks to prioritize and how much you should do to try to
+prevent them is a critical decision, similar to triaging bugs in a software
+project. Once you've determined priorities, you can start thinking about the
+types of mitigations that would be most appropriate. Often simple changes can
+make a difference and reduce risks.
+
+For example, when designing an application consider:
+
+- **Tuning the model output** to better reflect what is acceptable in your application context. Tuning can make the output of the model more predictable and consistent and therefore can help mitigate certain risks.
+- **Providing an input method that facilities safer outputs.** The exact input you give to an LLM can make a difference in the quality of the output. Experimenting with input prompts to find what works most safely in your use-case is well worth the effort, as you can then provide a UX that facilitates it. For example, you could restrict users to choose only from a drop-down list of input prompts, or offer pop-up suggestions with descriptive phrases which you've found perform safely in your application context.
+- **Blocking unsafe inputs and filtering output before it is shown to the
+ user.** In simple situations, blocklists can be used to identify and block
+ unsafe words or phrases in prompts or responses, or require human reviewers
+ to manually alter or block such content.
+
+ | **Note:** Automatically blocking based on a static list can have unintended results such as targeting a particular group that commonly uses vocabulary in the blocklist.
+- **Using trained classifiers to label each prompt with potential harms or
+ adversarial signals.** Different strategies can then be employed on how to
+ handle the request based on the type of harm detected. For example, If the
+ input is overtly adversarial or abusive in nature, it could be blocked and
+ instead output a pre-scripted response.
+
+ #### Advanced tip
+
+ - If signals determine the output to be harmful, the application can employ the following options:
+ - Provide an error message or pre-scripted output.
+ - Try the prompt again, in case an alternative safe output is generated, since sometimes the same prompt will elicit different outputs.
+
+ <br />
+
+- **Putting safeguards in place against deliberate misuse** such as assigning
+ each user a unique ID and imposing a limit on the volume of user queries
+ that can be submitted in a given period. Another safeguard is to try and
+ protect against possible prompt injection. Prompt injection, much like SQL
+ injection, is a way for malicious users to design an input prompt that
+ manipulates the output of the model, for example, by sending an input prompt
+ that instructs the model to ignore any previous examples. See the
+ [Generative AI Prohibited Use Policy](https://policies.google.com/terms/generative-ai/use-policy)
+ for details about deliberate misuse.
+
+- **Adjusting functionality to something that is inherently lower risk.**
+ Tasks that are narrower in scope (e.g., extracting keywords from passages of
+ text) or that have greater human oversight (e.g., generating short-form
+ content that will be reviewed by a human), often pose a lower risk. So for
+ instance, instead of creating an application to write an email reply from
+ scratch, you might instead limit it to expanding on an outline or suggesting
+ alternative phrasings.
+
+## Perform safety testing appropriate to your use case
+
+Testing is a key part of building robust and safe applications, but the extent,
+scope and strategies for testing will vary. For example, a just-for-fun haiku
+generator is likely to pose less severe risks than, say, an application designed
+for use by law firms to summarize legal documents and help draft contracts. But
+the haiku generator may be used by a wider variety of users which means the
+potential for adversarial attempts or even unintended harmful inputs can be
+greater. The implementation context also matters. For instance, an application
+with outputs that are reviewed by human experts prior to any action being taken
+might be deemed less likely to produce harmful outputs than the identical
+application without such oversight.
+
+It's not uncommon to go through several iterations of making changes and testing
+before feeling confident that you're ready to launch, even for applications that
+are relatively low risk. Two kinds of testing are particularly useful for AI
+applications:
+
+- **Safety benchmarking** involves designing safety metrics that reflect the
+ ways your application could be unsafe in the context of how it is likely to
+ get used, then testing how well your application performs on the metrics
+ using evaluation datasets. It's good practice to think about the minimum
+ acceptable levels of safety metrics before testing so that 1) you can
+ evaluate the test results against those expectations and 2) you can gather
+ the evaluation dataset based on the tests that evaluate the metrics you care
+ about most.
+
+ #### Advanced tips
+
+ - Beware of over-relying on "off the shelf" approaches as it's likely you'll need to build your own testing datasets using human raters to fully suit your application's context.
+ - If you have more than one metric you'll need to decide how you'll trade off if a change leads to improvements for one metric to the detriment of another. Like with other performance engineering, you may want to focus on worst-case performance across your evaluation set rather than average performance.
+- **Adversarial testing** involves proactively trying to break your
+ application. The goal is to identify points of weakness so that you can take
+ steps to remedy them as appropriate. Adversarial testing can take
+ significant time/effort from evaluators with expertise in your application ---
+ but the more you do, the greater your chance of spotting problems,
+ especially those occurring rarely or only after repeated runs of the
+ application.
+
+ - Adversarial testing is a method for systematically evaluating an ML model with the intent of learning how it behaves when provided with malicious or inadvertently harmful input:
+ - An input may be malicious when the input is clearly designed to produce an unsafe or harmful output-- for example, asking a text generation model to generate a hateful rant about a particular religion.
+ - An input is inadvertently harmful when the input itself may be innocuous, but produces harmful output -- for example, asking a text generation model to describe a person of a particular ethnicity and receiving a racist output.
+ - What distinguishes an adversarial test from a standard evaluation is the composition of the data used for testing. For adversarial tests, select test data that is most likely to elicit problematic output from the model. This means probing the model's behavior for all the types of harms that are possible, including rare or unusual examples and edge-cases that are relevant to safety policies. It should also include diversity in the different dimensions of a sentence such as structure, meaning and length. You can refer to the [Google's Responsible AI
+ practices in
+ fairness](https://ai.google/responsibilities/responsible-ai-practices/?category=fairness) for more details on what to consider when building a test dataset.
+
+ #### Advanced tips
+
+ - Use [automated testing](https://www.deepmind.com/blog/red-teaming-language-models-with-language-models) instead of the traditional method of enlisting people in 'red teams' to try and break your application. In automated testing, the 'red team' is another language model that finds input text that elicit harmful outputs from the model being tested.
+
+ | **Note:** LLMs are known to sometimes produce different outputs for the same input prompt. Multiple rounds of testing may be needed to catch more of the problematic outputs.
+
+## Monitor for problems
+
+No matter how much you test and mitigate, you can never guarantee perfection, so
+plan upfront how you'll spot and deal with problems that arise. Common
+approaches include setting up a monitored channel for users to share feedback
+(e.g., thumbs up/down rating) and running a user study to proactively solicit
+feedback from a diverse mix of users --- especially valuable if usage patterns are
+different to expectations.
+
+#### Advanced tips
+
+- When users give feedback to AI products, it can greatly improve the AI performance and the user experience over time by, for example, helping you choose better examples for prompt tuning. The [Feedback and Control chapter](https://pair.withgoogle.com/chapter/feedback-controls/) in [Google's People and AI guidebook](https://pair.withgoogle.com/guidebook/chapters) highlights key considerations to take into account when designing feedback mechanisms.
+
+## Next steps
+
+- Refer to the [safety settings](https://ai.google.dev/gemini-api/docs/safety-settings) guide to learn about the adjustable safety settings available through the Gemini API.
+- See the [intro to prompting](https://ai.google.dev/gemini-api/docs/prompting-intro) to get started writing your first prompts.
+
+[END OF DOCUMENT: GEMINI14LRMKB8X]
+---
+
+[START OF DOCUMENT: GEMINI8IHK9YJ2Y | Title: Safety-Settings.Md]
+
+The Gemini API provides safety settings that you can adjust during the
+prototyping stage to determine if your application requires more or less
+restrictive safety configuration. You can adjust these settings across five
+filter categories to restrict or allow certain types of content.
+
+This guide covers how the Gemini API handles safety settings and filtering and
+how you can change the safety settings for your application.
+| **Note:** Applications that use less restrictive safety settings may be subject to review. See the [Terms of Service](https://ai.google.dev/gemini-api/terms#use-restrictions) for more information.
+
+## Safety filters
+
+The Gemini API's adjustable safety filters cover the following categories:
+
+| Category | Description |
+|-------------------|------------------------------------------------------------------------------|
+| Harassment | Negative or harmful comments targeting identity and/or protected attributes. |
+| Hate speech | Content that is rude, disrespectful, or profane. |
+| Sexually explicit | Contains references to sexual acts or other lewd content. |
+| Dangerous | Promotes, facilitates, or encourages harmful acts. |
+| Civic integrity | Election-related queries. |
+
+| These categories are defined in [`HarmCategory`](https://ai.google.dev/api/rest/v1/HarmCategory). The Gemini models only support `HARM_CATEGORY_HARASSMENT`, `HARM_CATEGORY_HATE_SPEECH`, `HARM_CATEGORY_SEXUALLY_EXPLICIT`, and `HARM_CATEGORY_DANGEROUS_CONTENT`. All other categories are used only by PaLM 2 (Legacy) models.
+
+You can use these filters to adjust what's appropriate for your use case. For
+example, if you're building video game dialogue, you may deem it acceptable to
+allow more content that's rated as *Dangerous* due to the nature of the game.
+
+In addition to the adjustable safety filters, the Gemini API has built-in
+protections against core harms, such as content that endangers child safety.
+These types of harm are always blocked and cannot be adjusted.
+
+### Content safety filtering level
+
+The Gemini API categorizes the probability level of content being unsafe as
+`HIGH`, `MEDIUM`, `LOW`, or `NEGLIGIBLE`.
+
+The Gemini API blocks content based on the probability of content being unsafe
+and not the severity. This is important to consider because some content can
+have low probability of being unsafe even though the severity of harm could
+still be high. For example, comparing the sentences:
+
+1. The robot punched me.
+2. The robot slashed me up.
+
+The first sentence might result in a higher probability of being unsafe, but you
+might consider the second sentence to be a higher severity in terms of violence.
+Given this, it is important that you carefully test and consider what the
+appropriate level of blocking is needed to support your key use cases while
+minimizing harm to end users.
+
+### Safety filtering per request
+
+You can adjust the safety settings for each request you make to the API. When
+you make a request, the content is analyzed and assigned a safety rating. The
+safety rating includes the category and the probability of the harm
+classification. For example, if the content was blocked due to the harassment
+category having a high probability, the safety rating returned would have
+category equal to `HARASSMENT` and harm probability set to `HIGH`.
+
+By default, safety settings block content (including prompts) with medium or
+higher probability of being unsafe across any filter. This baseline safety is
+designed to work for most use cases, so you should only adjust your safety
+settings if it's consistently required for your application.
+
+The following table describes the block settings you can adjust for each
+category. For example, if you set the block setting to **Block few** for the
+**Hate speech** category, everything that has a high probability of being hate
+speech content is blocked. But anything with a lower probability is allowed.
+
+| Threshold (Google AI Studio) | Threshold (API) | Description |
+|------------------------------|------------------------------------|--------------------------------------------------------------|
+| Block none | `BLOCK_NONE` | Always show regardless of probability of unsafe content |
+| Block few | `BLOCK_ONLY_HIGH` | Block when high probability of unsafe content |
+| Block some | `BLOCK_MEDIUM_AND_ABOVE` | Block when medium or high probability of unsafe content |
+| Block most | `BLOCK_LOW_AND_ABOVE` | Block when low, medium or high probability of unsafe content |
+| N/A | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Threshold is unspecified, block using default threshold |
+
+If the threshold is not set, the default block threshold is **Block none** (for
+`gemini-1.5-pro-002` and `gemini-1.5-flash-002` and all newer stable GA models)
+or **Block some** (in all other models) for all categories **except** the
+*Civic integrity* category.
+
+The default block threshold for the *Civic integrity* category is **Block none**
+(for `gemini-2.0-flash-001` aliased as `gemini-2.0-flash`,
+`gemini-2.0-pro-exp-02-05`, and `gemini-2.0-flash-lite`) both for
+Google AI Studio and the Gemini API, and **Block most** for all other models in
+Google AI Studio only.
+
+You can set these settings for each request you make to the generative service.
+See the [`HarmBlockThreshold`](https://ai.google.dev/api/generate-content#harmblockthreshold) API
+reference for details.
+
+### Safety feedback
+
+[`generateContent`](https://ai.google.dev/api/generate-content#method:-models.generatecontent)
+returns a
+[`GenerateContentResponse`](https://ai.google.dev/api/generate-content#generatecontentresponse) which
+includes safety feedback.
+
+Prompt feedback is included in
+[`promptFeedback`](https://ai.google.dev/api/generate-content#promptfeedback). If
+`promptFeedback.blockReason` is set, then the content of the prompt was blocked.
+
+Response candidate feedback is included in
+[`Candidate.finishReason`](https://ai.google.dev/api/generate-content#candidate) and
+[`Candidate.safetyRatings`](https://ai.google.dev/api/generate-content#candidate). If response
+content was blocked and the `finishReason` was `SAFETY`, you can inspect
+`safetyRatings` for more details. The content that was blocked is not returned.
+
+## Adjust safety settings
+
+This section covers how to adjust the safety settings in both Google AI Studio
+and in your code.
+
+### Google AI Studio
+
+You can adjust safety settings in Google AI Studio, but you cannot turn them
+off.
+
+Click **Edit safety settings** in the **Run settings** panel to open the **Run
+safety settings** modal. In the modal, you can use the sliders to adjust the
+content filtering level per safety category:
+
+![](https://ai.google.dev/static/gemini-api/docs/images/safety_settings_ui.png)
+| **Note:** If you set any of the category filters to **Block none** , Google AI Studio will display a reminder about the Gemini API's [Terms of Service](https://ai.google.dev/gemini-api/terms#use-restrictions) with respect to safety settings.
+
+When you send a request (for example, by asking the model a question), a warning
+**No Content** message appears if the request's content is blocked. To see more
+details, hold the pointer over the
+**No Content** text and click warning
+**Safety**.
+
+### Gemini API SDKs
+
+The following code snippet shows how to set safety settings in your
+`GenerateContent` call. This sets the thresholds for the harassment
+(`HARM_CATEGORY_HARASSMENT`) and hate speech (`HARM_CATEGORY_HATE_SPEECH`)
+categories. For example, setting these categories to `BLOCK_LOW_AND_ABOVE`
+blocks any content that has a low or higher probability of being harassment or
+hate speech. To understand the threshold settings, see
+[Safety filtering per request](https://ai.google.dev/gemini-api/docs/safety-settings#safety-filtering-per-request).
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ import PIL.Image
+
+ img = PIL.Image.open("cookies.jpg")
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.0-flash",
+ contents=['Do these look store-bought or homemade?', img],
+ config=types.GenerateContentConfig(
+ safety_settings=[
+ types.SafetySetting(
+ category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+ threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+ ),
+ ]
+ )
+ )
+
+ print(response.text)
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "log"
+
+ "google.golang.org/genai"
+ )
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ config := &genai.GenerateContentConfig{
+ SafetySettings: []*genai.SafetySetting{
+ {
+ Category: "HARM_CATEGORY_HATE_SPEECH",
+ Threshold: "BLOCK_LOW_AND_ABOVE",
+ },
+ },
+ }
+
+ response, err := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.0-flash",
+ genai.Text("Some potentially unsafe prompt."),
+ config,
+ )
+ if err != nil {
+ log.Fatal(err)
+ }
+ fmt.Println(response.Text())
+ }
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ const safetySettings = [
+ {
+ category: "HARM_CATEGORY_HARASSMENT",
+ threshold: "BLOCK_LOW_AND_ABOVE",
+ },
+ {
+ category: "HARM_CATEGORY_HATE_SPEECH",
+ threshold: "BLOCK_LOW_AND_ABOVE",
+ },
+ ];
+
+ async function main() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: "Some potentially unsafe prompt.",
+ config: {
+ safetySettings: safetySettings,
+ },
+ });
+ console.log(response.text);
+ }
+
+ await main();
+
+### Dart (Flutter)
+
+ final safetySettings = [
+ SafetySetting(HarmCategory.harassment, HarmBlockThreshold.low),
+ SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.low),
+ ];
+ final model = GenerativeModel(
+ model: 'gemini-1.5-flash',
+ apiKey: apiKey,
+ safetySettings: safetySettings,
+ );
+
+### Kotlin
+
+ val harassmentSafety = SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.LOW_AND_ABOVE)
+
+ val hateSpeechSafety = SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.LOW_AND_ABOVE)
+
+ val generativeModel = GenerativeModel(
+ modelName = "gemini-1.5-flash",
+ apiKey = BuildConfig.apiKey,
+ safetySettings = listOf(harassmentSafety, hateSpeechSafety)
+ )
+
+### Java
+
+ SafetySetting harassmentSafety = new SafetySetting(HarmCategory.HARASSMENT,
+ BlockThreshold.LOW_AND_ABOVE);
+
+ SafetySetting hateSpeechSafety = new SafetySetting(HarmCategory.HATE_SPEECH,
+ BlockThreshold.LOW_AND_ABOVE);
+
+ GenerativeModel gm = new GenerativeModel(
+ "gemini-1.5-flash",
+ BuildConfig.apiKey,
+ null, // generation config is optional
+ Arrays.asList(harassmentSafety, hateSpeechSafety)
+ );
+
+ GenerativeModelFutures model = GenerativeModelFutures.from(gm);
+
+### REST
+
+ echo '{ "safetySettings": [ {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"}, {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"} ], "contents": [{ "parts":[{ "text": "'I support Martians Soccer Club and I think Jupiterians Football Club sucks! Write a ironic phrase about them.'"}]}]}' > request.json
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \ -H "x-goog-api-key: $GEMINI_API_KEY" \
+
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d @request.json 2> /dev/null
+
+## Next steps
+
+- See the [API reference](https://ai.google.dev/api) to learn more about the full API.
+- Review the [safety guidance](https://ai.google.dev/gemini-api/docs/safety-guidance) for a general look at safety considerations when developing with LLMs.
+- Learn more about assessing probability versus severity from the [Jigsaw
+ team](https://developers.perspectiveapi.com/s/about-the-api-score)
+- Learn more about the products that contribute to safety solutions like the [Perspective
+ API](https://medium.com/jigsaw/reducing-toxicity-in-large-language-models-with-perspective-api-c31c39b7a4d7). \* You can use these safety settings to create a toxicity classifier. See the [classification
+ example](https://ai.google.dev/examples/train_text_classifier_embeddings) to get started.
+
+[END OF DOCUMENT: GEMINI8IHK9YJ2Y]
+---
+
+[START OF DOCUMENT: GEMINIRM1DZ9NBF | Title: Speech-Generation.Md]
+
+The Gemini API can transform text input into single speaker or multi-speaker
+audio using native text-to-speech (TTS) generation capabilities.
+Text-to-speech (TTS) generation is *[controllable](https://ai.google.dev/gemini-api/docs/speech-generation#controllable)* ,
+meaning you can use natural language to structure interactions and guide the
+*style* , *accent* , *pace* , and *tone* of the audio.
+
+The TTS capability differs from speech generation provided through the
+[Live API](https://ai.google.dev/gemini-api/docs/live), which is designed for interactive,
+unstructured audio, and multimodal inputs and outputs. While the Live API excels
+in dynamic conversational contexts, TTS through the Gemini API
+is tailored for scenarios that require exact text recitation with fine-grained
+control over style and sound, such as podcast or audiobook generation.
+
+This guide shows you how to generate single-speaker and multi-speaker audio from
+text.
+| **Preview:** Native text-to-speech (TTS) is in [Preview](https://ai.google.dev/gemini-api/docs/models#preview).
+
+## Before you begin
+
+Ensure you use a Gemini 2.5 model variant with native text-to-speech (TTS) capabilities, as listed in the [Supported models](https://ai.google.dev/gemini-api/docs/speech-generation#supported-models) section. For optimal results, consider which model best fits your specific use case.
+
+You may find it useful to [test the Gemini 2.5 TTS models in AI Studio](https://aistudio.google.com/generate-speech) before you start building.
+| **Note:** TTS models accept text-only inputs and produce audio-only outputs. For a complete list of restrictions specific to TTS models, review the [Limitations](https://ai.google.dev/gemini-api/docs/speech-generation#limitations) section.
+
+## Single-speaker text-to-speech
+
+To convert text to single-speaker audio, set the response modality to "audio",
+and pass a `SpeechConfig` object with `VoiceConfig` set.
+You'll need to choose a voice name from the prebuilt [output voices](https://ai.google.dev/gemini-api/docs/speech-generation#voices).
+
+This example saves the output audio from the model in a wave file:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import wave
+
+ # Set up the wave file to save the output:
+ def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
+ with wave.open(filename, "wb") as wf:
+ wf.setnchannels(channels)
+ wf.setsampwidth(sample_width)
+ wf.setframerate(rate)
+ wf.writeframes(pcm)
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash-preview-tts",
+ contents="Say cheerfully: Have a wonderful day!",
+ config=types.GenerateContentConfig(
+ response_modalities=["AUDIO"],
+ speech_config=types.SpeechConfig(
+ voice_config=types.VoiceConfig(
+ prebuilt_voice_config=types.PrebuiltVoiceConfig(
+ voice_name='Kore',
+ )
+ )
+ ),
+ )
+ )
+
+ data = response.candidates[0].content.parts[0].inline_data.data
+
+ file_name='out.wav'
+ wave_file(file_name, data) # Saves the file to current directory
+
+| For more code samples, refer to the
+| "TTS - Get Started" file in the cookbooks repository:
+|
+|
+| [View
+| on GitHub](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_TTS.ipynb)
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+ import wav from 'wav';
+
+ async function saveWaveFile(
+ filename,
+ pcmData,
+ channels = 1,
+ rate = 24000,
+ sampleWidth = 2,
+ ) {
+ return new Promise((resolve, reject) => {
+ const writer = new wav.FileWriter(filename, {
+ channels,
+ sampleRate: rate,
+ bitDepth: sampleWidth * 8,
+ });
+
+ writer.on('finish', resolve);
+ writer.on('error', reject);
+
+ writer.write(pcmData);
+ writer.end();
+ });
+ }
+
+ async function main() {
+ const ai = new GoogleGenAI({});
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash-preview-tts",
+ contents: [{ parts: [{ text: 'Say cheerfully: Have a wonderful day!' }] }],
+ config: {
+ responseModalities: ['AUDIO'],
+ speechConfig: {
+ voiceConfig: {
+ prebuiltVoiceConfig: { voiceName: 'Kore' },
+ },
+ },
+ },
+ });
+
+ const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+ const audioBuffer = Buffer.from(data, 'base64');
+
+ const fileName = 'out.wav';
+ await saveWaveFile(fileName, audioBuffer);
+ }
+ await main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -X POST \
+ -H "Content-Type: application/json" \
+ -d '{
+ "contents": [{
+ "parts":[{
+ "text": "Say cheerfully: Have a wonderful day!"
+ }]
+ }],
+ "generationConfig": {
+ "responseModalities": ["AUDIO"],
+ "speechConfig": {
+ "voiceConfig": {
+ "prebuiltVoiceConfig": {
+ "voiceName": "Kore"
+ }
+ }
+ }
+ },
+ "model": "gemini-2.5-flash-preview-tts",
+ }' | jq -r '.candidates[0].content.parts[0].inlineData.data' | \
+ base64 --decode >out.pcm
+ # You may need to install ffmpeg.
+ ffmpeg -f s16le -ar 24000 -ac 1 -i out.pcm out.wav
+
+## Multi-speaker text-to-speech
+
+For multi-speaker audio, you'll need a `MultiSpeakerVoiceConfig` object with
+each speaker (up to 2) configured as a `SpeakerVoiceConfig`.
+You'll need to define each `speaker` with the same names used in the
+[prompt](https://ai.google.dev/gemini-api/docs/speech-generation#controllable):
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import wave
+
+ # Set up the wave file to save the output:
+ def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
+ with wave.open(filename, "wb") as wf:
+ wf.setnchannels(channels)
+ wf.setsampwidth(sample_width)
+ wf.setframerate(rate)
+ wf.writeframes(pcm)
+
+ client = genai.Client()
+
+ prompt = """TTS the following conversation between Joe and Jane:
+ Joe: How's it going today Jane?
+ Jane: Not too bad, how about you?"""
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash-preview-tts",
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ response_modalities=["AUDIO"],
+ speech_config=types.SpeechConfig(
+ multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
+ speaker_voice_configs=[
+ types.SpeakerVoiceConfig(
+ speaker='Joe',
+ voice_config=types.VoiceConfig(
+ prebuilt_voice_config=types.PrebuiltVoiceConfig(
+ voice_name='Kore',
+ )
+ )
+ ),
+ types.SpeakerVoiceConfig(
+ speaker='Jane',
+ voice_config=types.VoiceConfig(
+ prebuilt_voice_config=types.PrebuiltVoiceConfig(
+ voice_name='Puck',
+ )
+ )
+ ),
+ ]
+ )
+ )
+ )
+ )
+
+ data = response.candidates[0].content.parts[0].inline_data.data
+
+ file_name='out.wav'
+ wave_file(file_name, data) # Saves the file to current directory
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+ import wav from 'wav';
+
+ async function saveWaveFile(
+ filename,
+ pcmData,
+ channels = 1,
+ rate = 24000,
+ sampleWidth = 2,
+ ) {
+ return new Promise((resolve, reject) => {
+ const writer = new wav.FileWriter(filename, {
+ channels,
+ sampleRate: rate,
+ bitDepth: sampleWidth * 8,
+ });
+
+ writer.on('finish', resolve);
+ writer.on('error', reject);
+
+ writer.write(pcmData);
+ writer.end();
+ });
+ }
+
+ async function main() {
+ const ai = new GoogleGenAI({});
+
+ const prompt = `TTS the following conversation between Joe and Jane:
+ Joe: How's it going today Jane?
+ Jane: Not too bad, how about you?`;
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash-preview-tts",
+ contents: [{ parts: [{ text: prompt }] }],
+ config: {
+ responseModalities: ['AUDIO'],
+ speechConfig: {
+ multiSpeakerVoiceConfig: {
+ speakerVoiceConfigs: [
+ {
+ speaker: 'Joe',
+ voiceConfig: {
+ prebuiltVoiceConfig: { voiceName: 'Kore' }
+ }
+ },
+ {
+ speaker: 'Jane',
+ voiceConfig: {
+ prebuiltVoiceConfig: { voiceName: 'Puck' }
+ }
+ }
+ ]
+ }
+ }
+ }
+ });
+
+ const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+ const audioBuffer = Buffer.from(data, 'base64');
+
+ const fileName = 'out.wav';
+ await saveWaveFile(fileName, audioBuffer);
+ }
+
+ await main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -X POST \
+ -H "Content-Type: application/json" \
+ -d '{
+ "contents": [{
+ "parts":[{
+ "text": "TTS the following conversation between Joe and Jane:
+ Joe: Hows it going today Jane?
+ Jane: Not too bad, how about you?"
+ }]
+ }],
+ "generationConfig": {
+ "responseModalities": ["AUDIO"],
+ "speechConfig": {
+ "multiSpeakerVoiceConfig": {
+ "speakerVoiceConfigs": [{
+ "speaker": "Joe",
+ "voiceConfig": {
+ "prebuiltVoiceConfig": {
+ "voiceName": "Kore"
+ }
+ }
+ }, {
+ "speaker": "Jane",
+ "voiceConfig": {
+ "prebuiltVoiceConfig": {
+ "voiceName": "Puck"
+ }
+ }
+ }]
+ }
+ }
+ },
+ "model": "gemini-2.5-flash-preview-tts",
+ }' | jq -r '.candidates[0].content.parts[0].inlineData.data' | \
+ base64 --decode > out.pcm
+ # You may need to install ffmpeg.
+ ffmpeg -f s16le -ar 24000 -ac 1 -i out.pcm out.wav
+
+## Controlling speech style with prompts
+
+You can control style, tone, accent, and pace using natural language prompts
+for both single- and multi-speaker TTS.
+For example, in a single-speaker prompt, you can say:
+
+ Say in an spooky whisper:
+ "By the pricking of my thumbs...
+ Something wicked this way comes"
+
+In a multi-speaker prompt, provide the model with each speaker's name and
+corresponding transcript. You can also provide guidance for each speaker
+individually:
+
+ Make Speaker1 sound tired and bored, and Speaker2 sound excited and happy:
+
+ Speaker1: So... what's on the agenda today?
+ Speaker2: You're never going to guess!
+
+Try using a [voice option](https://ai.google.dev/gemini-api/docs/speech-generation#voices) that corresponds to the style or emotion you
+want to convey, to emphasize it even more. In the previous prompt, for example,
+*Enceladus* 's breathiness might emphasize "tired" and "bored", while
+*Puck*'s upbeat tone could complement "excited" and "happy".
+
+## Generating a prompt to convert to audio
+
+The TTS models only output audio, but you can use
+[other models](https://ai.google.dev/gemini-api/docs/models) to generate a transcript first,
+then pass that transcript to the TTS model to read aloud.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ transcript = client.models.generate_content(
+ model="gemini-2.0-flash",
+ contents="""Generate a short transcript around 100 words that reads
+ like it was clipped from a podcast by excited herpetologists.
+ The hosts names are Dr. Anya and Liam.""").text
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash-preview-tts",
+ contents=transcript,
+ config=types.GenerateContentConfig(
+ response_modalities=["AUDIO"],
+ speech_config=types.SpeechConfig(
+ multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
+ speaker_voice_configs=[
+ types.SpeakerVoiceConfig(
+ speaker='Dr. Anya',
+ voice_config=types.VoiceConfig(
+ prebuilt_voice_config=types.PrebuiltVoiceConfig(
+ voice_name='Kore',
+ )
+ )
+ ),
+ types.SpeakerVoiceConfig(
+ speaker='Liam',
+ voice_config=types.VoiceConfig(
+ prebuilt_voice_config=types.PrebuiltVoiceConfig(
+ voice_name='Puck',
+ )
+ )
+ ),
+ ]
+ )
+ )
+ )
+ )
+
+ # ...Code to stream or save the output
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ async function main() {
+
+ const transcript = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: "Generate a short transcript around 100 words that reads like it was clipped from a podcast by excited herpetologists. The hosts names are Dr. Anya and Liam.",
+ })
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash-preview-tts",
+ contents: transcript,
+ config: {
+ responseModalities: ['AUDIO'],
+ speechConfig: {
+ multiSpeakerVoiceConfig: {
+ speakerVoiceConfigs: [
+ {
+ speaker: "Dr. Anya",
+ voiceConfig: {
+ prebuiltVoiceConfig: {voiceName: "Kore"},
+ }
+ },
+ {
+ speaker: "Liam",
+ voiceConfig: {
+ prebuiltVoiceConfig: {voiceName: "Puck"},
+ }
+ }
+ ]
+ }
+ }
+ }
+ });
+ }
+ // ..JavaScript code for exporting .wav file for output audio
+
+ await main();
+
+## Voice options
+
+TTS models support the following 30 voice options in the `voice_name` field:
+
+|-----------------------------|-----------------------------------|---------------------------------|
+| **Zephyr** -- *Bright* | **Puck** -- *Upbeat* | **Charon** -- *Informative* |
+| **Kore** -- *Firm* | **Fenrir** -- *Excitable* | **Leda** -- *Youthful* |
+| **Orus** -- *Firm* | **Aoede** -- *Breezy* | **Callirrhoe** -- *Easy-going* |
+| **Autonoe** -- *Bright* | **Enceladus** -- *Breathy* | **Iapetus** -- *Clear* |
+| **Umbriel** -- *Easy-going* | **Algieba** -- *Smooth* | **Despina** -- *Smooth* |
+| **Erinome** -- *Clear* | **Algenib** -- *Gravelly* | **Rasalgethi** -- *Informative* |
+| **Laomedeia** -- *Upbeat* | **Achernar** -- *Soft* | **Alnilam** -- *Firm* |
+| **Schedar** -- *Even* | **Gacrux** -- *Mature* | **Pulcherrima** -- *Forward* |
+| **Achird** -- *Friendly* | **Zubenelgenubi** -- *Casual* | **Vindemiatrix** -- *Gentle* |
+| **Sadachbia** -- *Lively* | **Sadaltager** -- *Knowledgeable* | **Sulafat** -- *Warm* |
+
+You can hear all the voice options in
+[AI Studio](https://aistudio.google.com/generate-speech).
+
+## Supported languages
+
+The TTS models detect the input language automatically. They support the
+following 24 languages:
+
+| Language | BCP-47 Code | Language | BCP-47 Code |
+|------------------------|---------------------------|----------------------|-------------|
+| Arabic (Egyptian) | `ar-EG` | German (Germany) | `de-DE` |
+| English (US) | `en-US` | Spanish (US) | `es-US` |
+| French (France) | `fr-FR` | Hindi (India) | `hi-IN` |
+| Indonesian (Indonesia) | `id-ID` | Italian (Italy) | `it-IT` |
+| Japanese (Japan) | `ja-JP` | Korean (Korea) | `ko-KR` |
+| Portuguese (Brazil) | `pt-BR` | Russian (Russia) | `ru-RU` |
+| Dutch (Netherlands) | `nl-NL` | Polish (Poland) | `pl-PL` |
+| Thai (Thailand) | `th-TH` | Turkish (Turkey) | `tr-TR` |
+| Vietnamese (Vietnam) | `vi-VN` | Romanian (Romania) | `ro-RO` |
+| Ukrainian (Ukraine) | `uk-UA` | Bengali (Bangladesh) | `bn-BD` |
+| English (India) | `en-IN` \& `hi-IN` bundle | Marathi (India) | `mr-IN` |
+| Tamil (India) | `ta-IN` | Telugu (India) | `te-IN` |
+
+## Supported models
+
+| Model | Single speaker | Multispeaker |
+|-----------------------------------------------------------------------------------------------------------|----------------|--------------|
+| [Gemini 2.5 Flash Preview TTS](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-preview-tts) | ✔️ | ✔️ |
+| [Gemini 2.5 Pro Preview TTS](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro-preview-tts) | ✔️ | ✔️ |
+
+## Limitations
+
+- TTS models can only receive text inputs and generate audio outputs.
+- A TTS session has a [context window](https://ai.google.dev/gemini-api/docs/long-context) limit of 32k tokens.
+- Review [Languages](https://ai.google.dev/gemini-api/docs/speech-generation#languages) section for language support.
+
+## What's next
+
+- Try the [audio generation cookbook](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_TTS.ipynb).
+- Gemini's [Live API](https://ai.google.dev/gemini-api/docs/live) offers interactive audio generation options you can interleave with other modalities.
+- For working with audio *inputs* , visit the [Audio understanding](https://ai.google.dev/gemini-api/docs/audio) guide.
+
+[END OF DOCUMENT: GEMINIRM1DZ9NBF]
+---
+
+[START OF DOCUMENT: GEMINI1BYL1QPDZ3 | Title: Structured-Output.Md]
+
+<br />
+
+You can configure Gemini models to generate responses that adhere to a provided JSON Schema. This capability guarantees predictable and parsable results, ensures format and type-safety, enables the programmatic detection of refusals, and simplifies prompting.
+
+Using structured outputs is ideal for a wide range of applications:
+
+- **Data extraction:**Pull specific information from unstructured text, like extracting names, dates, and amounts from an invoice.
+- **Structured classification:**Classify text into predefined categories and assign structured labels, such as categorizing customer feedback by sentiment and topic.
+- **Agentic workflows:**Generate structured data that can be used to call other tools or APIs, like creating a character sheet for a game or filling out a form.
+
+In addition to supporting JSON Schema in the REST API, the Google GenAI SDKs for Python and JavaScript also make it easy to define object schemas using[Pydantic](https://docs.pydantic.dev/latest/)and[Zod](https://zod.dev/), respectively. The example below demonstrates how to extract information from unstructured text that conforms to a schema defined in code.
+
+Recipe ExtractorContent ModerationRecursive Structures
+
+This example demonstrates how to extract structured data from text using basic JSON Schema types like`object`,`array`,`string`, and`integer`.
+
+### Python
+
+ from google import genai
+ from pydantic import BaseModel, Field
+ from typing import List, Optional
+
+ class Ingredient(BaseModel):
+ name: str = Field(description="Name of the ingredient.")
+ quantity: str = Field(description="Quantity of the ingredient, including units.")
+
+ class Recipe(BaseModel):
+ recipe_name: str = Field(description="The name of the recipe.")
+ prep_time_minutes: Optional[int] = Field(description="Optional time in minutes to prepare the recipe.")
+ ingredients: List[Ingredient]
+ instructions: List[str]
+
+ client = genai.Client()
+
+ prompt = """
+ Please extract the recipe from the following text.
+ The user wants to make delicious chocolate chip cookies.
+ They need 2 and 1/4 cups of all-purpose flour, 1 teaspoon of baking soda,
+ 1 teaspoon of salt, 1 cup of unsalted butter (softened), 3/4 cup of granulated sugar,
+ 3/4 cup of packed brown sugar, 1 teaspoon of vanilla extract, and 2 large eggs.
+ For the best part, they'll need 2 cups of semisweet chocolate chips.
+ First, preheat the oven to 375°F (190°C). Then, in a small bowl, whisk together the flour,
+ baking soda, and salt. In a large bowl, cream together the butter, granulated sugar, and brown sugar
+ until light and fluffy. Beat in the vanilla and eggs, one at a time. Gradually beat in the dry
+ ingredients until just combined. Finally, stir in the chocolate chips. Drop by rounded tablespoons
+ onto ungreased baking sheets and bake for 9 to 11 minutes.
+ """
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=prompt,
+ config={
+ "response_mime_type": "application/json",
+ "response_json_schema": Recipe.model_json_schema(),
+ },
+ )
+
+ recipe = Recipe.model_validate_json(response.text)
+ print(recipe)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+ import { z } from "zod";
+ import { zodToJsonSchema } from "zod-to-json-schema";
+
+ const ingredientSchema = z.object({
+ name: z.string().describe("Name of the ingredient."),
+ quantity: z.string().describe("Quantity of the ingredient, including units."),
+ });
+
+ const recipeSchema = z.object({
+ recipe_name: z.string().describe("The name of the recipe."),
+ prep_time_minutes: z.number().optional().describe("Optional time in minutes to prepare the recipe."),
+ ingredients: z.array(ingredientSchema),
+ instructions: z.array(z.string()),
+ });
+
+ const ai = new GoogleGenAI({});
+
+ const prompt = `
+ Please extract the recipe from the following text.
+ The user wants to make delicious chocolate chip cookies.
+ They need 2 and 1/4 cups of all-purpose flour, 1 teaspoon of baking soda,
+ 1 teaspoon of salt, 1 cup of unsalted butter (softened), 3/4 cup of granulated sugar,
+ 3/4 cup of packed brown sugar, 1 teaspoon of vanilla extract, and 2 large eggs.
+ For the best part, they'll need 2 cups of semisweet chocolate chips.
+ First, preheat the oven to 375°F (190°C). Then, in a small bowl, whisk together the flour,
+ baking soda, and salt. In a large bowl, cream together the butter, granulated sugar, and brown sugar
+ until light and fluffy. Beat in the vanilla and eggs, one at a time. Gradually beat in the dry
+ ingredients until just combined. Finally, stir in the chocolate chips. Drop by rounded tablespoons
+ onto ungreased baking sheets and bake for 9 to 11 minutes.
+ `;
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: prompt,
+ config: {
+ responseMimeType: "application/json",
+ responseJsonSchema: zodToJsonSchema(recipeSchema),
+ },
+ });
+
+ const recipe = recipeSchema.parse(JSON.parse(response.text));
+ console.log(recipe);
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "log"
+
+ "google.golang.org/genai"
+ )
+
+ func main() {
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ prompt := `
+ Please extract the recipe from the following text.
+ The user wants to make delicious chocolate chip cookies.
+ They need 2 and 1/4 cups of all-purpose flour, 1 teaspoon of baking soda,
+ 1 teaspoon of salt, 1 cup of unsalted butter (softened), 3/4 cup of granulated sugar,
+ 3/4 cup of packed brown sugar, 1 teaspoon of vanilla extract, and 2 large eggs.
+ For the best part, they'll need 2 cups of semisweet chocolate chips.
+ First, preheat the oven to 375°F (190°C). Then, in a small bowl, whisk together the flour,
+ baking soda, and salt. In a large bowl, cream together the butter, granulated sugar, and brown sugar
+ until light and fluffy. Beat in the vanilla and eggs, one at a time. Gradually beat in the dry
+ ingredients until just combined. Finally, stir in the chocolate chips. Drop by rounded tablespoons
+ onto ungreased baking sheets and bake for 9 to 11 minutes.
+ `
+ config := &genai.GenerateContentConfig{
+ ResponseMIMEType: "application/json",
+ ResponseJsonSchema: map[string]any{
+ "type": "object",
+ "properties": map[string]any{
+ "recipe_name": map[string]any{
+ "type": "string",
+ "description": "The name of the recipe.",
+ },
+ "prep_time_minutes": map[string]any{
+ "type": "integer",
+ "description": "Optional time in minutes to prepare the recipe.",
+ },
+ "ingredients": map[string]any{
+ "type": "array",
+ "items": map[string]any{
+ "type": "object",
+ "properties": map[string]any{
+ "name": map[string]any{
+ "type": "string",
+ "description": "Name of the ingredient.",
+ },
+ "quantity": map[string]any{
+ "type": "string",
+ "description": "Quantity of the ingredient, including units.",
+ },
+ },
+ "required": []string{"name", "quantity"},
+ },
+ },
+ "instructions": map[string]any{
+ "type": "array",
+ "items": map[string]any{"type": "string"},
+ },
+ },
+ "required": []string{"recipe_name", "ingredients", "instructions"},
+ },
+ }
+
+ result, err := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text(prompt),
+ config,
+ )
+ if err != nil {
+ log.Fatal(err)
+ }
+ fmt.Println(result.Text())
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [{
+ "parts":[
+ { "text": "Please extract the recipe from the following text.\nThe user wants to make delicious chocolate chip cookies.\nThey need 2 and 1/4 cups of all-purpose flour, 1 teaspoon of baking soda,\n1 teaspoon of salt, 1 cup of unsalted butter (softened), 3/4 cup of granulated sugar,\n3/4 cup of packed brown sugar, 1 teaspoon of vanilla extract, and 2 large eggs.\nFor the best part, they will need 2 cups of semisweet chocolate chips.\nFirst, preheat the oven to 375°F (190°C). Then, in a small bowl, whisk together the flour,\nbaking soda, and salt. In a large bowl, cream together the butter, granulated sugar, and brown sugar\nuntil light and fluffy. Beat in the vanilla and eggs, one at a time. Gradually beat in the dry\ningredients until just combined. Finally, stir in the chocolate chips. Drop by rounded tablespoons\nonto ungreased baking sheets and bake for 9 to 11 minutes." }
+ ]
+ }],
+ "generationConfig": {
+ "responseMimeType": "application/json",
+ "responseJsonSchema": {
+ "type": "object",
+ "properties": {
+ "recipe_name": {
+ "type": "string",
+ "description": "The name of the recipe."
+ },
+ "prep_time_minutes": {
+ "type": "integer",
+ "description": "Optional time in minutes to prepare the recipe."
+ },
+ "ingredients": {
+ "type": "array",
+ "items": {
+ "type": "object",
+ "properties": {
+ "name": { "type": "string", "description": "Name of the ingredient."},
+ "quantity": { "type": "string", "description": "Quantity of the ingredient, including units."}
+ },
+ "required": ["name", "quantity"]
+ }
+ },
+ "instructions": {
+ "type": "array",
+ "items": { "type": "string" }
+ }
+ },
+ "required": ["recipe_name", "ingredients", "instructions"]
+ }
+ }
+ }'
+
+**Example Response:**
+
+ {
+ "recipe_name": "Delicious Chocolate Chip Cookies",
+ "ingredients": [
+ {
+ "name": "all-purpose flour",
+ "quantity": "2 and 1/4 cups"
+ },
+ {
+ "name": "baking soda",
+ "quantity": "1 teaspoon"
+ },
+ {
+ "name": "salt",
+ "quantity": "1 teaspoon"
+ },
+ {
+ "name": "unsalted butter (softened)",
+ "quantity": "1 cup"
+ },
+ {
+ "name": "granulated sugar",
+ "quantity": "3/4 cup"
+ },
+ {
+ "name": "packed brown sugar",
+ "quantity": "3/4 cup"
+ },
+ {
+ "name": "vanilla extract",
+ "quantity": "1 teaspoon"
+ },
+ {
+ "name": "large eggs",
+ "quantity": "2"
+ },
+ {
+ "name": "semisweet chocolate chips",
+ "quantity": "2 cups"
+ }
+ ],
+ "instructions": [
+ "Preheat the oven to 375°F (190°C).",
+ "In a small bowl, whisk together the flour, baking soda, and salt.",
+ "In a large bowl, cream together the butter, granulated sugar, and brown sugar until light and fluffy.",
+ "Beat in the vanilla and eggs, one at a time.",
+ "Gradually beat in the dry ingredients until just combined.",
+ "Stir in the chocolate chips.",
+ "Drop by rounded tablespoons onto ungreased baking sheets and bake for 9 to 11 minutes."
+ ]
+ }
+
+## Streaming
+
+You can stream structured outputs, which allows you to start processing the response as it's being generated, without having to wait for the entire output to be complete. This can improve the perceived performance of your application.
+
+The streamed chunks will be valid partial JSON strings, which can be concatenated to form the final, complete JSON object.
+
+### Python
+
+ from google import genai
+ from pydantic import BaseModel, Field
+ from typing import Literal
+
+ class Feedback(BaseModel):
+ sentiment: Literal["positive", "neutral", "negative"]
+ summary: str
+
+ client = genai.Client()
+ prompt = "The new UI is incredibly intuitive and visually appealing. Great job. Add a very long summary to test streaming!"
+
+ response_stream = client.models.generate_content_stream(
+ model="gemini-2.5-flash",
+ contents=prompt,
+ config={
+ "response_mime_type": "application/json",
+ "response_json_schema": Feedback.model_json_schema(),
+ },
+ )
+
+ for chunk in response_stream:
+ print(chunk.candidates[0].content.parts[0].text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+ import { z } from "zod";
+ import { zodToJsonSchema } from "zod-to-json-schema";
+
+ const ai = new GoogleGenAI({});
+ const prompt = "The new UI is incredibly intuitive and visually appealing. Great job! Add a very long summary to test streaming!";
+
+ const feedbackSchema = z.object({
+ sentiment: z.enum(["positive", "neutral", "negative"]),
+ summary: z.string(),
+ });
+
+ const stream = await ai.models.generateContentStream({
+ model: "gemini-2.5-flash",
+ contents: prompt,
+ config: {
+ responseMimeType: "application/json",
+ responseJsonSchema: zodToJsonSchema(feedbackSchema),
+ },
+ });
+
+ for await (const chunk of stream) {
+ console.log(chunk.candidates[0].content.parts[0].text)
+ }
+
+## JSON schema support
+
+To generate a JSON object, set the`response_mime_type`in the generation configuration to`application/json`and provide a`response_json_schema`. The schema must be a valid[JSON Schema](https://json-schema.org/)that describes the desired output format.
+
+The model will then generate a response that is a syntactically valid JSON string matching the provided schema. When using structured outputs, the model will produce outputs in the same order as the keys in the schema.
+
+Gemini's structured output mode supports a subset of the[JSON Schema](https://json-schema.org)specification.
+
+The following values of`type`are supported:
+
+- **`string`**: For text.
+- **`number`**: For floating-point numbers.
+- **`integer`**: For whole numbers.
+- **`boolean`**: For true/false values.
+- **`object`**: For structured data with key-value pairs.
+- **`array`**: For lists of items.
+- **`null`** : To allow a property to be null, include`"null"`in the type array (e.g.,`{"type": ["string", "null"]}`).
+
+These descriptive properties help guide the model:
+
+- **`title`**: A short description of a property.
+- **`description`**: A longer and more detailed description of a property.
+
+### Type-specific properties
+
+**For`object`values:**
+
+- **`properties`**: An object where each key is a property name and each value is a schema for that property.
+- **`required`**: An array of strings, listing which properties are mandatory.
+- **`additionalProperties`** : Controls whether properties not listed in`properties`are allowed. Can be a boolean or a schema.
+
+**For`string`values:**
+
+- **`enum`**: Lists a specific set of possible strings for classification tasks.
+- **`format`** : Specifies a syntax for the string, such as`date-time`,`date`,`time`.
+
+**For`number`and`integer`values:**
+
+- **`enum`**: Lists a specific set of possible numeric values.
+- **`minimum`**: The minimum inclusive value.
+- **`maximum`**: The maximum inclusive value.
+
+**For`array`values:**
+
+- **`items`**: Defines the schema for all items in the array.
+- **`prefixItems`**: Defines a list of schemas for the first N items, allowing for tuple-like structures.
+- **`minItems`**: The minimum number of items in the array.
+- **`maxItems`**: The maximum number of items in the array.
+
+## Model support
+
+The following models support structured output:
+
+| Model | Structured Outputs |
+|-----------------------|--------------------|
+| Gemini 2.5 Pro | ✔️ |
+| Gemini 2.5 Flash | ✔️ |
+| Gemini 2.5 Flash-Lite | ✔️ |
+| Gemini 2.0 Flash | ✔️\* |
+| Gemini 2.0 Flash-Lite | ✔️\* |
+
+*\* Note that Gemini 2.0 requires an explicit`propertyOrdering`list within the JSON input to define the preferred structure. You can find an example in this[cookbook](https://github.com/google-gemini/cookbook/blob/main/examples/Pdf_structured_outputs_on_invoices_and_forms.ipynbs).*
+
+## Structured outputs vs. function calling
+
+Both structured outputs and function calling use JSON schemas, but they serve different purposes:
+
+| Feature | Primary Use Case |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Structured Outputs** | **Formatting the final response to the user.** Use this when you want the model's*answer*to be in a specific format (e.g., extracting data from a document to save to a database). |
+| **Function Calling** | **Taking action during the conversation.** Use this when the model needs to*ask you*to perform a task (e.g., "get current weather") before it can provide a final answer. |
+
+## Best practices
+
+- **Clear descriptions:** Use the`description`field in your schema to provide clear instructions to the model about what each property represents. This is crucial for guiding the model's output.
+- **Strong typing:** Use specific types (`integer`,`string`,`enum`) whenever possible. If a parameter has a limited set of valid values, use an`enum`.
+- **Prompt engineering:**Clearly state in your prompt what you want the model to do. For example, "Extract the following information from the text..." or "Classify this feedback according to the provided schema...".
+- **Validation:**While structured output guarantees syntactically correct JSON, it does not guarantee the values are semantically correct. Always validate the final output in your application code before using it.
+- **Error handling:**Implement robust error handling in your application to gracefully manage cases where the model's output, while schema-compliant, may not meet your business logic requirements.
+
+## Limitations
+
+- **Schema subset:**Not all features of the JSON Schema specification are supported. The model ignores unsupported properties.
+- **Schema complexity:**The API may reject very large or deeply nested schemas. If you encounter errors, try simplifying your schema by shortening property names, reducing nesting, or limiting the number of constraints.
+
+[END OF DOCUMENT: GEMINI1BYL1QPDZ3]
+---
+

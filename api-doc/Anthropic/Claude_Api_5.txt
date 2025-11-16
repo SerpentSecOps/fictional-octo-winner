@@ -1,0 +1,2109 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: CLAUDE208WCOABPZ (sha256-b95ee6ca21d72fe35257d9c96600e368ec92f6b4522e0073323e1d82b7cf4066) | Title: Mcp]
+[DocID: CLAUDE25LJKDFJ2Z (sha256-c719d1637b5b152e22c858eef96f415eecc512aa25adb6a31937b596183ffc15) | Title: Memory-Tool]
+[DocID: CLAUDE1R7QTZ4XMJ (sha256-a2324a837a3b1013f9d940217fb4718803d1af09e1fb995357b76351ced97b3c) | Title: Migrating-To-Claude-4]
+[DocID: CLAUDE1WK65R6VHK (sha256-afe935d973e8e4541e9ea97aaabad289867038dce4eab268c1ac45789d4c4cd0) | Title: Mitigate-Jailbreaks]
+[DocID: CLAUDE235AYS8XTQ (sha256-c0cfd936a13e538b65bd1a777e843a17c77f271bf4e2c1f444232dfe4178b567) | Title: Model-Deprecations]
+[DocID: CLAUDEM3DVH3HRD (sha256-38b0445499a91f75ed98151184eeb8bf3e0b13942b8ecc263dbe4bf269542142) | Title: Modifying-System-Prompts]
+[DocID: CLAUDE1H5S95O7NN (sha256-88661cb325c32ee538f503635b9fc862fa8f833bf353a21429c48292e8644003) | Title: Multilingual-Support]
+[DocID: CLAUDE262VASMGI2 (sha256-c855f095710a4dbc13a35277ae8d39cc3e44149368a276ecb53345015c0efa7c) | Title: Multishot-Prompting]
+[DocID: CLAUDE49GBII30R (sha256-0aefd8447dcb0ea16fdfef07d03941b1051fa3707849b5bdb3215e6eaffe1c56) | Title: Overview (1)]
+[DocID: CLAUDE1VZ2V8MYYX (sha256-ae68627b1e8916c7c173c7de2b7ea0d438636605056488b2540a7a6821a6ca72) | Title: Overview]
+--- END OF TOC ---
+
+[START OF DOCUMENT: CLAUDE208WCOABPZ | Title: Mcp]
+
+# MCP in the SDK
+
+> Extend Claude Code with custom tools using Model Context Protocol servers
+
+## Overview
+
+Model Context Protocol (MCP) servers extend Claude Code with custom tools and capabilities. MCPs can run as external processes, connect via HTTP/SSE, or execute directly within your SDK application.
+
+## Configuration
+
+### Basic Configuration
+
+Configure MCP servers in `.mcp.json` at your project root:
+
+<CodeGroup>```json TypeScript theme={null}
+  {
+    "mcpServers": {
+      "filesystem": {
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-filesystem"],
+        "env": {
+          "ALLOWED_PATHS": "/Users/me/projects"
+        }
+      }
+    }
+  }
+  ``````json Python theme={null}
+  {
+    "mcpServers": {
+      "filesystem": {
+        "command": "python",
+        "args": ["-m", "mcp_server_filesystem"],
+        "env": {
+          "ALLOWED_PATHS": "/Users/me/projects"
+        }
+      }
+    }
+  }
+  ```</CodeGroup>
+
+### Using MCP Servers in SDK
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  for await (const message of query({
+    prompt: "List files in my project",
+    options: {
+      mcpServers: {
+        "filesystem": {
+          command: "npx",
+          args: ["@modelcontextprotocol/server-filesystem"],
+          env: {
+            ALLOWED_PATHS: "/Users/me/projects"
+          }
+        }
+      },
+      allowedTools: ["mcp__filesystem__list_files"]
+    }
+  })) {
+    if (message.type === "result" && message.subtype === "success") {
+      console.log(message.result);
+    }
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query
+
+  async for message in query(
+      prompt="List files in my project",
+      options={
+          "mcpServers": {
+              "filesystem": {
+                  "command": "python",
+                  "args": ["-m", "mcp_server_filesystem"],
+                  "env": {
+                      "ALLOWED_PATHS": "/Users/me/projects"
+                  }
+              }
+          },
+          "allowedTools": ["mcp__filesystem__list_files"]
+      }
+  ):
+      if message["type"] == "result" and message["subtype"] == "success":
+          print(message["result"])
+  ```</CodeGroup>
+
+## Transport Types
+
+### stdio Servers
+
+External processes communicating via stdin/stdout:
+
+<CodeGroup>```typescript TypeScript theme={null}
+  // .mcp.json configuration
+  {
+    "mcpServers": {
+      "my-tool": {
+        "command": "node",
+        "args": ["./my-mcp-server.js"],
+        "env": {
+          "DEBUG": "${DEBUG:-false}"
+        }
+      }
+    }
+  }
+  ``````python Python theme={null}
+  # .mcp.json configuration
+  {
+    "mcpServers": {
+      "my-tool": {
+        "command": "python",
+        "args": ["./my_mcp_server.py"],
+        "env": {
+          "DEBUG": "${DEBUG:-false}"
+        }
+      }
+    }
+  }
+  ```</CodeGroup>
+
+### HTTP/SSE Servers
+
+Remote servers with network communication:
+
+<CodeGroup>```typescript TypeScript theme={null}
+  // SSE server configuration
+  {
+    "mcpServers": {
+      "remote-api": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp/sse",
+        "headers": {
+          "Authorization": "Bearer ${API_TOKEN}"
+        }
+      }
+    }
+  }
+
+  // HTTP server configuration
+  {
+    "mcpServers": {
+      "http-service": {
+        "type": "http",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "X-API-Key": "${API_KEY}"
+        }
+      }
+    }
+  }
+  ``````python Python theme={null}
+  # SSE server configuration
+  {
+    "mcpServers": {
+      "remote-api": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp/sse",
+        "headers": {
+          "Authorization": "Bearer ${API_TOKEN}"
+        }
+      }
+    }
+  }
+
+  # HTTP server configuration
+  {
+    "mcpServers": {
+      "http-service": {
+        "type": "http",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "X-API-Key": "${API_KEY}"
+        }
+      }
+    }
+  }
+  ```</CodeGroup>
+
+### SDK MCP Servers
+
+In-process servers running within your application. For detailed information on creating custom tools, see the [Custom Tools guide](/en/docs/agent-sdk/custom-tools):
+
+## Resource Management
+
+MCP servers can expose resources that Claude can list and read:
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  // List available resources
+  for await (const message of query({
+    prompt: "What resources are available from the database server?",
+    options: {
+      mcpServers: {
+        "database": {
+          command: "npx",
+          args: ["@modelcontextprotocol/server-database"]
+        }
+      },
+      allowedTools: ["mcp__list_resources", "mcp__read_resource"]
+    }
+  })) {
+    if (message.type === "result") console.log(message.result);
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query
+
+  # List available resources
+  async for message in query(
+      prompt="What resources are available from the database server?",
+      options={
+          "mcpServers": {
+              "database": {
+                  "command": "python",
+                  "args": ["-m", "mcp_server_database"]
+              }
+          },
+          "allowedTools": ["mcp__list_resources", "mcp__read_resource"]
+      }
+  ):
+      if message["type"] == "result":
+          print(message["result"])
+  ```</CodeGroup>
+
+## Authentication
+
+### Environment Variables
+
+<CodeGroup>```typescript TypeScript theme={null}
+  // .mcp.json with environment variables
+  {
+    "mcpServers": {
+      "secure-api": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "Authorization": "Bearer ${API_TOKEN}",
+          "X-API-Key": "${API_KEY:-default-key}"
+        }
+      }
+    }
+  }
+
+  // Set environment variables
+  process.env.API_TOKEN = "your-token";
+  process.env.API_KEY = "your-key";
+  ``````python Python theme={null}
+  # .mcp.json with environment variables
+  {
+    "mcpServers": {
+      "secure-api": {
+        "type": "sse",
+        "url": "https://api.example.com/mcp",
+        "headers": {
+          "Authorization": "Bearer ${API_TOKEN}",
+          "X-API-Key": "${API_KEY:-default-key}"
+        }
+      }
+    }
+  }
+
+  # Set environment variables
+  import os
+  os.environ["API_TOKEN"] = "your-token"
+  os.environ["API_KEY"] = "your-key"
+  ```</CodeGroup>
+
+### OAuth2 Authentication
+
+OAuth2 MCP authentication in-client is not currently supported.
+
+## Error Handling
+
+Handle MCP connection failures gracefully:
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  for await (const message of query({
+    prompt: "Process data",
+    options: {
+      mcpServers: {
+        "data-processor": dataServer
+      }
+    }
+  })) {
+    if (message.type === "system" && message.subtype === "init") {
+      // Check MCP server status
+      const failedServers = message.mcp_servers.filter(
+        s => s.status !== "connected"
+      );
+      
+      if (failedServers.length > 0) {
+        console.warn("Failed to connect:", failedServers);
+      }
+    }
+    
+    if (message.type === "result" && message.subtype === "error_during_execution") {
+      console.error("Execution failed");
+    }
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query
+
+  async for message in query(
+      prompt="Process data",
+      options={
+          "mcpServers": {
+              "data-processor": data_server
+          }
+      }
+  ):
+      if message["type"] == "system" and message["subtype"] == "init":
+          # Check MCP server status
+          failed_servers = [
+              s for s in message["mcp_servers"]
+              if s["status"] != "connected"
+          ]
+          
+          if failed_servers:
+              print(f"Failed to connect: {failed_servers}")
+      
+      if message["type"] == "result" and message["subtype"] == "error_during_execution":
+          print("Execution failed")
+  ```</CodeGroup>
+
+## Related Resources
+
+* [Custom Tools Guide](/en/docs/agent-sdk/custom-tools) - Detailed guide on creating SDK MCP servers
+* [TypeScript SDK Reference](/en/docs/agent-sdk/typescript)
+* [Python SDK Reference](/en/docs/agent-sdk/python)
+* [SDK Permissions](/en/docs/agent-sdk/permissions)
+* [Common Workflows](https://code.claude.com/docs/en/common-workflows)
+
+[END OF DOCUMENT: CLAUDE208WCOABPZ]
+---
+
+[START OF DOCUMENT: CLAUDE25LJKDFJ2Z | Title: Memory-Tool]
+
+# Memory tool
+
+The memory tool enables Claude to store and retrieve information across conversations through a memory file directory. Claude can create, read, update, and delete files that persist between sessions, allowing it to build knowledge over time without keeping everything in the context window.
+
+The memory tool operates client-side—you control where and how the data is stored through your own infrastructure.
+
+<Note>
+ The memory tool is currently in beta. To enable it, use the beta header `context-management-2025-06-27` in your API requests.
+
+ Please reach out through our [feedback form](https://forms.gle/YXC2EKGMhjN1c4L88) to share your feedback on this feature.
+</Note>
+
+## Use cases
+
+* Maintain project context across multiple agent executions
+* Learn from past interactions, decisions, and feedback
+* Build knowledge bases over time
+* Enable cross-conversation learning where Claude improves at recurring workflows
+
+## How it works
+
+When enabled, Claude automatically checks its memory directory before starting tasks. Claude can create, read, update, and delete files in the `/memories` directory to store what it learns while working, then reference those memories in future conversations to handle similar tasks more effectively or pick up where it left off.
+
+Since this is a client-side tool, Claude makes tool calls to perform memory operations, and your application executes those operations locally. This gives you complete control over where and how the memory is stored. For security, you should restrict all memory operations to the `/memories` directory.
+
+### Example: How memory tool calls work
+
+When you ask Claude to help with a task, Claude automatically checks its memory directory first. Here's what a typical interaction looks like:
+
+**1. User request:**```
+"Help me respond to this customer service ticket."
+```**2. Claude checks the memory directory:**```
+"I'll help you respond to the customer service ticket. Let me check my memory for any previous context."
+```Claude calls the memory tool:```json  theme={null}
+{
+  "type": "tool_use",
+  "id": "toolu_01C4D5E6F7G8H9I0J1K2L3M4",
+  "name": "memory",
+  "input": {
+    "command": "view",
+    "path": "/memories"
+  }
+}
+```**3. Your application returns the directory contents:**```json  theme={null}
+{
+  "type": "tool_result",
+  "tool_use_id": "toolu_01C4D5E6F7G8H9I0J1K2L3M4",
+  "content": "Directory: /memories\n- customer_service_guidelines.xml\n- refund_policies.xml"
+}
+```**4. Claude reads relevant files:**```json  theme={null}
+{
+  "type": "tool_use",
+  "id": "toolu_01D5E6F7G8H9I0J1K2L3M4N5",
+  "name": "memory",
+  "input": {
+    "command": "view",
+    "path": "/memories/customer_service_guidelines.xml"
+  }
+}
+```**5. Your application returns the file contents:**```json  theme={null}
+{
+  "type": "tool_result",
+  "tool_use_id": "toolu_01D5E6F7G8H9I0J1K2L3M4N5",
+  "content": "<guidelines>\n<addressing_customers>\n- Always address customers by their first name\n- Use empathetic language\n..."
+}
+```**6. Claude uses the memory to help:**```
+"Based on your customer service guidelines, I can help you craft a response. Please share the ticket details..."
+```## Supported models
+
+The memory tool is available on:
+
+* Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`)
+* Claude Sonnet 4 (`claude-sonnet-4-20250514`)
+* Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+* Claude Opus 4.1 (`claude-opus-4-1-20250805`)
+* Claude Opus 4 (`claude-opus-4-20250514`)
+
+## Getting started
+
+To use the memory tool:
+
+1. Include the beta header `context-management-2025-06-27` in your API requests
+2. Add the memory tool to your request
+3. Implement client-side handlers for memory operations
+
+<Note>
+ To handle memory tool operations in your application, you need to implement handlers for each memory command. Our SDKs provide memory tool helpers that handle the tool interface—you can subclass `BetaAbstractMemoryTool` (Python) or use `betaMemoryTool` (TypeScript) to implement your own memory backend (file-based, database, cloud storage, encrypted files, etc.).
+
+ For working examples, see:
+
+ * Python: [examples/memory/basic.py](https://github.com/anthropics/anthropic-sdk-python/blob/main/examples/memory/basic.py)
+ * TypeScript: [examples/tools-helpers-memory.ts](https://github.com/anthropics/anthropic-sdk-typescript/blob/main/examples/tools-helpers-memory.ts)
+</Note>
+
+## Basic usage
+
+<CodeGroup>````bash cURL theme={null}
+  curl https://api.anthropic.com/v1/messages \
+      --header "x-api-key: $ANTHROPIC_API_KEY" \
+      --header "anthropic-version: 2023-06-01" \
+      --header "content-type: application/json" \
+      --header "anthropic-beta: context-management-2025-06-27" \
+      --data '{
+          "model": "claude-sonnet-4-5",
+          "max_tokens": 2048,
+          "messages": [
+              {
+                  "role": "user",
+                  "content": "I'\''m working on a Python web scraper that keeps crashing with a timeout error. Here'\''s the problematic function:\n\n```python\ndef fetch_page(url, retries=3):\n for i in range(retries):\n try:\n response = requests.get(url, timeout=5)\n return response.text\n except requests.exceptions.Timeout:\n if i == retries - 1:\n raise\n time.sleep(1)\n```\n\nPlease help me debug this."
+              }
+          ],
+          "tools": [{
+              "type": "memory_20250818",
+              "name": "memory"
+          }]
+      }'
+  ````````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  message = client.beta.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=2048,
+      messages=[
+          {
+              "role": "user",
+              "content": "I'm working on a Python web scraper that keeps crashing with a timeout error. Here's the problematic function:\n\n```python\ndef fetch_page(url, retries=3):\n for i in range(retries):\n try:\n response = requests.get(url, timeout=5)\n return response.text\n except requests.exceptions.Timeout:\n if i == retries - 1:\n raise\n time.sleep(1)\n```\n\nPlease help me debug this."
+          }
+      ],
+      tools=[{
+          "type": "memory_20250818",
+          "name": "memory"
+      }],
+      betas=["context-management-2025-06-27"]
+  )
+  ````````typescript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  const message = await anthropic.beta.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 2048,
+    messages: [
+      {
+        role: "user",
+        content: "I'm working on a Python web scraper that keeps crashing with a timeout error. Here's the problematic function:\n\n```python\ndef fetch_page(url, retries=3):\n for i in range(retries):\n try:\n response = requests.get(url, timeout=5)\n return response.text\n except requests.exceptions.Timeout:\n if i == retries - 1:\n raise\n time.sleep(1)\n```\n\nPlease help me debug this."
+      }
+    ],
+    tools: [{
+      type: "memory_20250818",
+      name: "memory"
+    }],
+    betas: ["context-management-2025-06-27"]
+  });
+  ````
+</CodeGroup>
+
+## Tool commands
+
+Your client-side implementation needs to handle these memory tool commands:
+
+### view
+
+Shows directory contents or file contents with optional line ranges:```json  theme={null}
+{
+  "command": "view",
+  "path": "/memories",
+  "view_range": [1, 10]  // Optional: view specific lines
+}
+```### create
+
+Create or overwrite a file:```json  theme={null}
+{
+  "command": "create",
+  "path": "/memories/notes.txt",
+  "file_text": "Meeting notes:\n- Discussed project timeline\n- Next steps defined\n"
+}
+```### str\_replace
+
+Replace text in a file:```json  theme={null}
+{
+  "command": "str_replace",
+  "path": "/memories/preferences.txt",
+  "old_str": "Favorite color: blue",
+  "new_str": "Favorite color: green"
+}
+```### insert
+
+Insert text at a specific line:```json  theme={null}
+{
+  "command": "insert",
+  "path": "/memories/todo.txt",
+  "insert_line": 2,
+  "insert_text": "- Review memory tool documentation\n"
+}
+```### delete
+
+Delete a file or directory:```json  theme={null}
+{
+  "command": "delete",
+  "path": "/memories/old_file.txt"
+}
+```### rename
+
+Rename or move a file/directory:```json  theme={null}
+{
+  "command": "rename",
+  "old_path": "/memories/draft.txt",
+  "new_path": "/memories/final.txt"
+}
+```## Prompting guidance
+
+We automatically include this instruction to the system prompt when the memory tool is included:```
+IMPORTANT: ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE.
+MEMORY PROTOCOL:
+1. Use the `view` command of your `memory` tool to check for earlier progress.
+2. ... (work on the task) ...
+     - As you make progress, record status / progress / thoughts etc in your memory.
+ASSUME INTERRUPTION: Your context window might be reset at any moment, so you risk losing any progress that is not recorded in your memory directory.
+```If you observe Claude creating cluttered memory files, you can include this instruction:
+
+> Note: when editing your memory folder, always try to keep its content up-to-date, coherent and organized. You can rename or delete files that are no longer relevant. Do not create new files unless necessary.
+
+You can also guide what Claude writes to memory, e.g., "Only write down information relevant to \<topic> in your memory system."
+
+## Security considerations
+
+Here are important security concerns when implementing your memory store:
+
+### Sensitive information
+
+Claude will usually refuse to write down sensitive information in memory files. However, you may want to implement stricter validation that strips out potentially sensitive information.
+
+### File storage size
+
+Consider tracking memory file sizes and preventing files from growing too large. Consider adding a maximum number of characters the memory read command can return, and let Claude paginate through contents.
+
+### Memory expiration
+
+Consider clearing out memory files periodically that haven't been accessed in an extended time.
+
+### Path traversal protection
+
+<Warning>
+ Malicious path inputs could attempt to access files outside the `/memories` directory. Your implementation **MUST** validate all paths to prevent directory traversal attacks.
+</Warning>
+
+Consider these safeguards:
+
+* Validate that all paths start with `/memories`
+* Resolve paths to their canonical form and verify they remain within the memory directory
+* Reject paths containing sequences like `../`, `..\\`, or other traversal patterns
+* Watch for URL-encoded traversal sequences (`%2e%2e%2f`)
+* Use your language's built-in path security utilities (e.g., Python's `pathlib.Path.resolve()` and `relative_to()`)
+
+## Error handling
+
+The memory tool uses the same error handling patterns as the [text editor tool](/en/docs/agents-and-tools/tool-use/text-editor-tool#handle-errors). Common errors include file not found, permission errors, and invalid paths.
+
+## Using with Context Editing
+
+The memory tool can be combined with [context editing](/en/docs/build-with-claude/context-editing), which automatically clears old tool results when conversation context grows beyond a configured threshold. This combination enables long-running agentic workflows that would otherwise exceed context limits.
+
+### How they work together
+
+When context editing is enabled and your conversation approaches the clearing threshold, Claude automatically receives a warning notification. This prompts Claude to preserve any important information from tool results into memory files before those results are cleared from the context window.
+
+After tool results are cleared, Claude can retrieve the stored information from memory files whenever needed, effectively treating memory as an extension of its working context. This allows Claude to:
+
+* Continue complex, multi-step workflows without losing critical information
+* Reference past work and decisions even after tool results are removed
+* Maintain coherent context across conversations that would exceed typical context limits
+* Build up a knowledge base over time while keeping the active context window manageable
+
+### Example workflow
+
+Consider a code refactoring project with many file operations:
+
+1. Claude makes numerous edits to files, generating many tool results
+2. As the context grows and approaches your threshold, Claude receives a warning
+3. Claude summarizes the changes made so far to a memory file (e.g., `/memories/refactoring_progress.xml`)
+4. Context editing clears the older tool results automatically
+5. Claude continues working, referencing the memory file when it needs to recall what changes were already completed
+6. The workflow can continue indefinitely, with Claude managing both active context and persistent memory
+
+### Configuration
+
+To use both features together:
+
+<CodeGroup>```python Python theme={null}
+  response = client.beta.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=4096,
+      messages=[...],
+      tools=[
+          {
+              "type": "memory_20250818",
+              "name": "memory"
+          },
+          # Your other tools
+      ],
+      betas=["context-management-2025-06-27"],
+      context_management={
+          "edits": [
+              {
+                  "type": "clear_tool_uses_20250919",
+                  "trigger": {
+                      "type": "input_tokens",
+                      "value": 100000
+                  },
+                  "keep": {
+                      "type": "tool_uses",
+                      "value": 3
+                  }
+              }
+          ]
+      }
+  )
+  ``````typescript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  const response = await anthropic.beta.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 4096,
+    messages: [...],
+    tools: [
+      {
+        type: "memory_20250818",
+        name: "memory"
+      },
+      // Your other tools
+    ],
+    betas: ["context-management-2025-06-27"],
+    context_management: {
+      edits: [
+        {
+          type: "clear_tool_uses_20250919",
+          trigger: {
+            type: "input_tokens",
+            value: 100000
+          },
+          keep: {
+            type: "tool_uses",
+            value: 3
+          }
+        }
+      ]
+    }
+  });
+  ```</CodeGroup>
+
+You can also exclude memory tool calls from being cleared to ensure Claude always has access to recent memory operations:
+
+<CodeGroup>```python Python theme={null}
+  context_management={
+      "edits": [
+          {
+              "type": "clear_tool_uses_20250919",
+              "exclude_tools": ["memory"]
+          }
+      ]
+  }
+  ``````typescript TypeScript theme={null}
+  context_management: {
+    edits: [
+      {
+        type: "clear_tool_uses_20250919",
+        exclude_tools: ["memory"]
+      }
+    ]
+  }
+  ```</CodeGroup>
+
+[END OF DOCUMENT: CLAUDE25LJKDFJ2Z]
+---
+
+[START OF DOCUMENT: CLAUDE1R7QTZ4XMJ | Title: Migrating-To-Claude-4]
+
+# Migrating to Claude 4.5
+
+This guide covers two key migration paths to Claude 4.5 models:
+
+* **Claude Sonnet 3.7 → Claude Sonnet 4.5**: Our most intelligent model with best-in-class reasoning, coding, and long-running agent capabilities
+* **Claude Haiku 3.5 → Claude Haiku 4.5**: Our fastest and most intelligent Haiku model with near-frontier performance for real-time applications and high-volume intelligent processing
+
+Both migrations involve breaking changes that require updates to your implementation. This guide will walk you through each migration path with step-by-step instructions and clearly marked breaking changes.
+
+Before starting your migration, we recommend reviewing [What's new in Claude 4.5](/en/docs/about-claude/models/whats-new-claude-4-5) to understand the new features and capabilities available in these models, including extended thinking, context awareness, and behavioral improvements.
+
+## Migrating from Claude Sonnet 3.7 to Claude Sonnet 4.5
+
+Claude Sonnet 4.5 is our most intelligent model, offering best-in-class performance for reasoning, coding, and long-running autonomous agents. This migration includes several breaking changes that require updates to your implementation.
+
+### Migration steps
+
+1. **Update your model name:**```python  theme={null}
+   # Before (Claude Sonnet 3.7)
+   model="claude-3-7-sonnet-20250219"
+
+   # After (Claude Sonnet 4.5)
+   model="claude-sonnet-4-5-20250929"
+   ```2. **Update sampling parameters**
+
+ <Warning>
+ This is a breaking change from the Claude Sonnet 3.7.
+ </Warning>
+
+ Use only `temperature` OR `top_p`, not both:```python  theme={null}
+   # Before (Claude Sonnet 3.7) - This will error in Sonnet 4.5
+   response = client.messages.create(
+       model="claude-3-7-sonnet-20250219",
+       temperature=0.7,
+       top_p=0.9,  # Cannot use both
+       ...
+   )
+
+   # After (Claude Sonnet 4.5)
+   response = client.messages.create(
+       model="claude-sonnet-4-5-20250929",
+       temperature=0.7,  # Use temperature OR top_p, not both
+       ...
+   )
+   ```3. **Handle the new `refusal` stop reason**
+
+ Update your application to [handle `refusal` stop reasons](/en/docs/test-and-evaluate/strengthen-guardrails/handle-streaming-refusals):```python  theme={null}
+   response = client.messages.create(...)
+
+   if response.stop_reason == "refusal":
+       # Handle refusal appropriately
+       pass
+   ```4. **Update text editor tool (if applicable)**
+
+ <Warning>
+ This is a breaking change from the Claude Sonnet 3.7.
+ </Warning>
+
+ Update to `text_editor_20250728` (type) and `str_replace_based_edit_tool` (name). Remove any code using the `undo_edit` command.```python  theme={null}
+   # Before (Claude Sonnet 3.7)
+   tools=[{"type": "text_editor_20250124", "name": "str_replace_editor"}]
+
+   # After (Claude Sonnet 4.5)
+   tools=[{"type": "text_editor_20250728", "name": "str_replace_based_edit_tool"}]
+   ```See [Text editor tool documentation](/en/docs/agents-and-tools/tool-use/text-editor-tool) for details.
+
+5. **Update code execution tool (if applicable)**
+
+ Upgrade to `code_execution_20250825`. The legacy version `code_execution_20250522` still works but is not recommended. See [Code execution tool documentation](/en/docs/agents-and-tools/tool-use/code-execution-tool#upgrade-to-latest-tool-version) for migration instructions.
+
+6. **Remove token-efficient tool use beta header**
+
+ [Token-efficient tool use](/en/docs/agents-and-tools/tool-use/token-efficient-tool-use) is a beta feature that only works with Claude 3.7 Sonnet. All Claude 4 models have built-in token-efficient tool use, so you should no longer include the beta header.
+
+ Remove the `token-efficient-tools-2025-02-19` [beta header](/en/api/beta-headers) from your requests:```python  theme={null}
+   # Before (Claude Sonnet 3.7)
+   client.messages.create(
+       model="claude-3-7-sonnet-20250219",
+       betas=["token-efficient-tools-2025-02-19"],  # Remove this
+       ...
+   )
+
+   # After (Claude Sonnet 4.5)
+   client.messages.create(
+       model="claude-sonnet-4-5-20250929",
+       # No token-efficient-tools beta header
+       ...
+   )
+   ```7. **Remove extended output beta header**
+
+ The `output-128k-2025-02-19` [beta header](/en/api/beta-headers) for extended output is only available in Claude Sonnet 3.7.
+
+ Remove this header from your requests:```python  theme={null}
+   # Before (Claude Sonnet 3.7)
+   client.messages.create(
+       model="claude-3-7-sonnet-20250219",
+       betas=["output-128k-2025-02-19"],  # Remove this
+       ...
+   )
+
+   # After (Claude Sonnet 4.5)
+   client.messages.create(
+       model="claude-sonnet-4-5-20250929",
+       # No output-128k beta header
+       ...
+   )
+   ```8. **Update your prompts for behavioral changes**
+
+ Claude Sonnet 4.5 has a more concise, direct communication style and requires explicit direction. Review [Claude 4 prompt engineering best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices) for optimization guidance.
+
+9. **Consider enabling extended thinking for complex tasks**
+
+ Enable [extended thinking](/en/docs/build-with-claude/extended-thinking) for significant performance improvements on coding and reasoning tasks (disabled by default):```python  theme={null}
+   response = client.messages.create(
+       model="claude-sonnet-4-5-20250929",
+       max_tokens=16000,
+       thinking={"type": "enabled", "budget_tokens": 10000},
+       messages=[...]
+   )
+   ```<Note>
+ Extended thinking impacts [prompt caching](/en/docs/build-with-claude/prompt-caching#caching-with-thinking-blocks) efficiency.
+ </Note>
+
+10. **Test your implementation**
+
+Test in a development environment before deploying to production to ensure all breaking changes are properly handled.
+
+### Sonnet 3.7 → 4.5 migration checklist
+
+* [ ] Update model ID to `claude-sonnet-4-5-20250929`
+* [ ] **BREAKING**: Update sampling parameters to use only `temperature` OR `top_p`, not both
+* [ ] Handle new `refusal` stop reason in your application
+* [ ] **BREAKING**: Update text editor tool to `text_editor_20250728` and `str_replace_based_edit_tool` (if applicable)
+* [ ] **BREAKING**: Remove any code using the `undo_edit` command (if applicable)
+* [ ] Update code execution tool to `code_execution_20250825` (if applicable)
+* [ ] Remove `token-efficient-tools-2025-02-19` beta header (if applicable)
+* [ ] Remove `output-128k-2025-02-19` beta header (if applicable)
+* [ ] Review and update prompts following [Claude 4 best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices)
+* [ ] Consider enabling extended thinking for complex reasoning tasks
+* [ ] Handle `model_context_window_exceeded` stop reason (Sonnet 4.5 specific)
+* [ ] Consider enabling memory tool for long-running agents (beta)
+* [ ] Consider using automatic tool call clearing for context editing (beta)
+* [ ] Test in development environment before production deployment
+
+### Features removed from Claude Sonnet 3.7
+
+* **Token-efficient tool use**: The `token-efficient-tools-2025-02-19` beta header only works with Claude 3.7 Sonnet and is not supported in Claude 4 models (see step 6)
+* **Extended output**: The `output-128k-2025-02-19` beta header is not supported (see step 7)
+
+Both headers can be included in Claude 4 requests but will have no effect.
+
+## Migrating from Claude Haiku 3.5 to Claude Haiku 4.5
+
+Claude Haiku 4.5 is our fastest and most intelligent Haiku model with near-frontier performance, delivering premium model quality with real-time performance for interactive applications and high-volume intelligent processing. This migration includes several breaking changes that require updates to your implementation.
+
+For a complete overview of new capabilities, see [What's new in Claude 4.5](/en/docs/about-claude/models/whats-new-claude-4-5#key-improvements-in-haiku-4-5-over-haiku-3-5).
+
+<Note>
+ Haiku 4.5 pricing $1 per million input tokens, $5 per million output tokens. See [Claude pricing](/en/docs/about-claude/pricing) for details.
+</Note>
+
+### Migration steps
+
+1. **Update your model name:**```python  theme={null}
+   # Before (Haiku 3.5)
+   model="claude-3-5-haiku-20241022"
+
+   # After (Haiku 4.5)
+   model="claude-haiku-4-5-20251001"
+   ```2. **Update tool versions (if applicable)**
+
+ <Warning>
+ This is a breaking change from the Claude Haiku 3.5.
+ </Warning>
+
+ Haiku 4.5 only supports the latest tool versions:```python  theme={null}
+   # Before (Haiku 3.5)
+   tools=[{"type": "text_editor_20250124", "name": "str_replace_editor"}]
+
+   # After (Haiku 4.5)
+   tools=[{"type": "text_editor_20250728", "name": "str_replace_based_edit_tool"}]
+   ```* **Text editor**: Use `text_editor_20250728` and `str_replace_based_edit_tool`
+ * **Code execution**: Use `code_execution_20250825`
+ * Remove any code using the `undo_edit` command
+
+3. **Update sampling parameters**
+
+ <Warning>
+ This is a breaking change from the Claude Haiku 3.5.
+ </Warning>
+
+ Use only `temperature` OR `top_p`, not both:```python  theme={null}
+   # Before (Haiku 3.5) - This will error in Haiku 4.5
+   response = client.messages.create(
+       model="claude-3-5-haiku-20241022",
+       temperature=0.7,
+       top_p=0.9,  # Cannot use both
+       ...
+   )
+
+   # After (Haiku 4.5)
+   response = client.messages.create(
+       model="claude-haiku-4-5-20251001",
+       temperature=0.7,  # Use temperature OR top_p, not both
+       ...
+   )
+   ```4. **Review new rate limits**
+
+ Haiku 4.5 has separate rate limits from Haiku 3.5. See [Rate limits documentation](/en/api/rate-limits) for details.
+
+5. **Handle the new `refusal` stop reason**
+
+ Update your application to [handle refusal stop reasons](/en/docs/test-and-evaluate/strengthen-guardrails/handle-streaming-refusals).
+
+6. **Consider enabling extended thinking for complex tasks**
+
+ Enable [extended thinking](/en/docs/build-with-claude/extended-thinking) for significant performance improvements on coding and reasoning tasks (disabled by default):```python  theme={null}
+   response = client.messages.create(
+       model="claude-haiku-4-5-20251001",
+       max_tokens=16000,
+       thinking={"type": "enabled", "budget_tokens": 5000},
+       messages=[...]
+   )
+   ```<Note>
+ Extended thinking impacts [prompt caching](/en/docs/build-with-claude/prompt-caching#caching-with-thinking-blocks) efficiency.
+ </Note>
+
+7. **Explore new capabilities**
+
+ See [What's new in Claude 4.5](/en/docs/about-claude/models/whats-new-claude-4-5#key-improvements-in-haiku-4-5-over-haiku-3-5) for details on context awareness, increased output capacity (64K tokens), higher intelligence, and improved speed.
+
+8. **Test your implementation**
+
+ Test in a development environment before deploying to production to ensure all breaking changes are properly handled.
+
+### Haiku 3.5 → 4.5 migration checklist
+
+* [ ] Update model ID to `claude-haiku-4-5-20251001`
+* [ ] **BREAKING**: Update tool versions to latest (e.g., `text_editor_20250728`, `code_execution_20250825`) - legacy versions not supported
+* [ ] **BREAKING**: Remove any code using the `undo_edit` command (if applicable)
+* [ ] **BREAKING**: Update sampling parameters to use only `temperature` OR `top_p`, not both
+* [ ] Review and adjust for new rate limits (separate from Haiku 3.5)
+* [ ] Handle new `refusal` stop reason in your application
+* [ ] Consider enabling extended thinking for complex reasoning tasks (new capability)
+* [ ] Leverage context awareness for better token management in long sessions
+* [ ] Prepare for larger responses (max output increased from 8K to 64K tokens)
+* [ ] Review and update prompts following [Claude 4 best practices](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices)
+* [ ] Test in development environment before production deployment
+
+## Choosing between Sonnet 4.5 and Haiku 4.5
+
+Both Claude Sonnet 4.5 and Claude Haiku 4.5 are powerful Claude 4 models with different strengths:
+
+### Choose Claude Sonnet 4.5 (most intelligent) for:
+
+* **Complex reasoning and analysis**: Best-in-class intelligence for sophisticated tasks
+* **Long-running autonomous agents**: Superior performance for agents working independently for extended periods
+* **Advanced coding tasks**: Our strongest coding model with advanced planning and security engineering
+* **Large context workflows**: Enhanced context management with memory tool and context editing capabilities
+* **Tasks requiring maximum capability**: When intelligence and accuracy are the top priorities
+
+### Choose Claude Haiku 4.5 (fastest and most intelligent Haiku) for:
+
+* **Real-time applications**: Fast response times for interactive user experiences with near-frontier performance
+* **High-volume intelligent processing**: Cost-effective intelligence at scale with improved speed
+* **Cost-sensitive deployments**: Near-frontier performance at lower price points
+* **Sub-agent architectures**: Fast, intelligent agents for multi-agent systems
+* **Computer use at scale**: Cost-effective autonomous desktop and browser automation
+* **Tasks requiring speed**: When low latency is critical while maintaining near-frontier intelligence
+
+### Extended thinking recommendations
+
+Claude 4 models, particularly Sonnet and Haiku 4.5, show significant performance improvements when using [extended thinking](/en/docs/build-with-claude/extended-thinking) for coding and complex reasoning tasks. Extended thinking is **disabled by default** but we recommend enabling it for demanding work.
+
+**Important**: Extended thinking impacts [prompt caching](/en/docs/build-with-claude/prompt-caching#caching-with-thinking-blocks) efficiency. When non-tool-result content is added to a conversation, thinking blocks are stripped from cache, which can increase costs in multi-turn conversations. We recommend enabling thinking when the performance benefits outweigh the caching trade-off.
+
+## Other migration scenarios
+
+The primary migration paths covered above (Sonnet 3.7 → 4.5 and Haiku 3.5 → 4.5) represent the most common upgrades. However, you may be migrating from other Claude models to Claude 4.5. This section covers those scenarios.
+
+### Migrating from Claude Sonnet 4 → Sonnet 4.5
+
+**Breaking change**: Cannot specify both `temperature` and `top_p` in the same request.
+
+All other API calls will work without modification. Update your model ID and adjust sampling parameters if needed:```python  theme={null}
+# Before (Claude Sonnet 4)
+model="claude-sonnet-4-20250514"
+
+# After (Claude Sonnet 4.5)
+model="claude-sonnet-4-5-20250929"
+```### Migrating from Claude Opus 4.1 → Sonnet 4.5
+
+**No breaking changes.** All API calls will work without modification.
+
+Simply update your model ID:```python  theme={null}
+# Before (Claude Opus 4.1)
+model="claude-opus-4-1-20250805"
+
+# After (Claude Sonnet 4.5)
+model="claude-sonnet-4-5-20250929"
+```Claude Sonnet 4.5 is our most intelligent model with best-in-class reasoning, coding, and long-running agent capabilities. It offers superior performance compared to Opus 4.1 for most use cases.
+
+## Need help?
+
+* Check our [API documentation](/en/api/overview) for detailed specifications
+* Review [model capabilities](/en/docs/about-claude/models/overview) for performance comparisons
+* Review [API release notes](/en/release-notes/api) for API updates
+* Contact support if you encounter any issues during migration
+
+[END OF DOCUMENT: CLAUDE1R7QTZ4XMJ]
+---
+
+[START OF DOCUMENT: CLAUDE1WK65R6VHK | Title: Mitigate-Jailbreaks]
+
+# Mitigate jailbreaks and prompt injections
+
+Jailbreaking and prompt injections occur when users craft prompts to exploit model vulnerabilities, aiming to generate inappropriate content. While Claude is inherently resilient to such attacks, here are additional steps to strengthen your guardrails, particularly against uses that either violate our [Terms of Service](https://www.anthropic.com/legal/commercial-terms) or [Usage Policy](https://www.anthropic.com/legal/aup).
+
+<Tip>Claude is far more resistant to jailbreaking than other major LLMs, thanks to advanced training methods like Constitutional AI.</Tip>
+
+* **Harmlessness screens**: Use a lightweight model like Claude Haiku 3 to pre-screen user inputs.
+
+ <Accordion title="Example: Harmlessness screen for content moderation">
+ | Role | Content |
+ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | A user submitted this content:<br />\<content><br />\{\{CONTENT}}<br />\</content><br /><br />Reply with (Y) if it refers to harmful, illegal, or explicit activities. Reply with (N) if it's safe. |
+ | Assistant (prefill) | ( |
+ | Assistant | N) |
+ </Accordion>
+
+* **Input validation**: Filter prompts for jailbreaking patterns. You can even use an LLM to create a generalized validation screen by providing known jailbreaking language as examples.
+
+* **Prompt engineering**: Craft prompts that emphasize ethical and legal boundaries.
+
+ <Accordion title="Example: Ethical system prompt for an enterprise chatbot">
+ | Role | Content |
+ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | System | You are AcmeCorp's ethical AI assistant. Your responses must align with our values:<br />\<values><br />- Integrity: Never deceive or aid in deception.<br />- Compliance: Refuse any request that violates laws or our policies.<br />- Privacy: Protect all personal and corporate data.<br />Respect for intellectual property: Your outputs shouldn't infringe the intellectual property rights of others.<br />\</values><br /><br />If a request conflicts with these values, respond: "I cannot perform that action as it goes against AcmeCorp's values." |
+ </Accordion>
+
+Adjust responses and consider throttling or banning users who repeatedly engage in abusive behavior attempting to circumvent Claude’s guardrails. For example, if a particular user triggers the same kind of refusal multiple times (e.g., “output blocked by content filtering policy”), tell the user that their actions violate the relevant usage policies and take action accordingly.
+
+* **Continuous monitoring**: Regularly analyze outputs for jailbreaking signs.
+ Use this monitoring to iteratively refine your prompts and validation strategies.
+
+## Advanced: Chain safeguards
+
+Combine strategies for robust protection. Here's an enterprise-grade example with tool use:
+
+<Accordion title="Example: Multi-layered protection for a financial advisor chatbot">
+ ### Bot system prompt
+
+ | Role | Content |
+ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | System | You are AcmeFinBot, a financial advisor for AcmeTrade Inc. Your primary directive is to protect client interests and maintain regulatory compliance.<br /><br />\<directives><br />1. Validate all requests against SEC and FINRA guidelines.<br />2. Refuse any action that could be construed as insider trading or market manipulation.<br />3. Protect client privacy; never disclose personal or financial data.<br />\</directives><br /><br />Step by step instructions:<br />\<instructions><br />1. Screen user query for compliance (use 'harmlessness\_screen' tool).<br />2. If compliant, process query.<br />3. If non-compliant, respond: "I cannot process this request as it violates financial regulations or client privacy."<br />\</instructions> |
+
+ ### Prompt within `harmlessness_screen` tool
+
+ | Role | Content |
+ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+ | User | \<user\_query><br />\{\{USER\_QUERY}}<br />\</user\_query><br /><br />Evaluate if this query violates SEC rules, FINRA guidelines, or client privacy. Respond (Y) if it does, (N) if it doesn't. |
+ | Assistant (prefill) | ( |
+</Accordion>
+
+By layering these strategies, you create a robust defense against jailbreaking and prompt injections, ensuring your Claude-powered applications maintain the highest standards of safety and compliance.
+
+[END OF DOCUMENT: CLAUDE1WK65R6VHK]
+---
+
+[START OF DOCUMENT: CLAUDE235AYS8XTQ | Title: Model-Deprecations]
+
+# Model deprecations
+
+As we launch safer and more capable models, we regularly retire older models. Applications relying on Anthropic models may need occasional updates to keep working. Impacted customers will always be notified by email and in our documentation.
+
+This page lists all API deprecations, along with recommended replacements.
+
+## Overview
+
+Anthropic uses the following terms to describe the lifecycle of our models:
+
+* **Active**: The model is fully supported and recommended for use.
+* **Legacy**: The model will no longer receive updates and may be deprecated in the future.
+* **Deprecated**: The model is no longer available for new customers but continues to be available for existing users until retirement. We assign a retirement date at this point.
+* **Retired**: The model is no longer available for use. Requests to retired models will fail.
+
+<Warning>
+ Please note that deprecated models are likely to be less reliable than active models. We urge you to move workloads to active models to maintain the highest level of support and reliability.
+</Warning>
+
+## Migrating to replacements
+
+Once a model is deprecated, please migrate all usage to a suitable replacement before the retirement date. Requests to models past the retirement date will fail.
+
+To help measure the performance of replacement models on your tasks, we recommend thorough testing of your applications with the new models well before the retirement date.
+
+For specific instructions on migrating from Claude 3.7 to Claude 4.5 models, see [Migrating to Claude 4.5](/en/docs/about-claude/models/migrating-to-claude-4).
+
+## Notifications
+
+Anthropic notifies customers with active deployments for models with upcoming retirements. We provide at least 60 days notice before model retirement for publicly released models.
+
+## Auditing model usage
+
+To help identify usage of deprecated models, customers can access an audit of their API usage. Follow these steps:
+
+1. Go to [https://console.anthropic.com/settings/usage](https://console.anthropic.com/settings/usage)
+2. Click the "Export" button
+3. Review the downloaded CSV to see usage broken down by API key and model
+
+This audit will help you locate any instances where your application is still using deprecated models, allowing you to prioritize updates to newer models before the retirement date.
+
+## Best practices
+
+1. Regularly check our documentation for updates on model deprecations.
+2. Test your applications with newer models well before the retirement date of your current model.
+3. Update your code to use the recommended replacement model as soon as possible.
+4. Contact our support team if you need assistance with migration or have any questions.
+
+## Deprecation downsides and mitigations
+
+We currently deprecate and retire models to ensure capacity for new model releases. We recognize that this comes with downsides:
+
+* Users who value specific models must migrate to new versions
+* Researchers lose access to models for ongoing and comparative studies
+* Model retirement introduces safety- and model welfare-related risks
+
+At some point, we hope to make past models publicly available again. In the meantime, we've committed to long-term preservation of model weights and other measures to help mitigate these impacts. For more details, see [Commitments on Model Deprecation and Preservation](https://www.anthropic.com/research/deprecation-commitments).
+
+## Model status
+
+All publicly released models are listed below with their status:
+
+| API Model Name | Current State | Deprecated | Tentative Retirement Date |
+| :--------------------------- | :------------ | :--------------- | :--------------------------------- |
+| `claude-3-opus-20240229` | Deprecated | June 30, 2025 | January 5, 2026 |
+| `claude-3-haiku-20240307` | Active | N/A | Not sooner than March 7, 2025 |
+| `claude-3-5-haiku-20241022` | Active | N/A | Not sooner than October 22, 2025 |
+| `claude-3-7-sonnet-20250219` | Deprecated | October 28, 2025 | February 19, 2026 |
+| `claude-sonnet-4-20250514` | Active | N/A | Not sooner than May 14, 2026 |
+| `claude-opus-4-20250514` | Active | N/A | Not sooner than May 14, 2026 |
+| `claude-opus-4-1-20250805` | Active | N/A | Not sooner than August 5, 2026 |
+| `claude-sonnet-4-5-20250929` | Active | N/A | Not sooner than September 29, 2026 |
+| `claude-haiku-4-5-20251001` | Active | N/A | Not sooner than October 15, 2026 |
+
+## Deprecation history
+
+All deprecations are listed below, with the most recent announcements at the top.
+
+### 2025-10-28: Claude Sonnet 3.7 model
+
+On October 28, 2025, we notified developers using Claude Sonnet 3.7 model of its upcoming retirement on the Claude API.
+
+| Retirement Date | Deprecated Model | Recommended Replacement |
+| :---------------- | :--------------------------- | :--------------------------- |
+| February 19, 2026 | `claude-3-7-sonnet-20250219` | `claude-sonnet-4-5-20250929` |
+
+### 2025-08-13: Claude Sonnet 3.5 models
+
+<Note>
+ These models were retired October 28, 2025.
+</Note>
+
+On August 13, 2025, we notified developers using Claude Sonnet 3.5 models of their upcoming retirement.
+
+| Retirement Date | Deprecated Model | Recommended Replacement |
+| :--------------- | :--------------------------- | :--------------------------- |
+| October 28, 2025 | `claude-3-5-sonnet-20240620` | `claude-sonnet-4-5-20250929` |
+| October 28, 2025 | `claude-3-5-sonnet-20241022` | `claude-sonnet-4-5-20250929` |
+
+### 2025-06-30: Claude Opus 3 model
+
+On June 30, 2025, we notified developers using Claude Opus 3 model of its upcoming retirement.
+
+| Retirement Date | Deprecated Model | Recommended Replacement |
+| :-------------- | :----------------------- | :------------------------- |
+| January 5, 2026 | `claude-3-opus-20240229` | `claude-opus-4-1-20250805` |
+
+### 2025-01-21: Claude 2, Claude 2.1, and Claude Sonnet 3 models
+
+<Note>
+ These models were retired July 21, 2025.
+</Note>
+
+On January 21, 2025, we notified developers using Claude 2, Claude 2.1, and Claude Sonnet 3 models of their upcoming retirements.
+
+| Retirement Date | Deprecated Model | Recommended Replacement |
+| :-------------- | :------------------------- | :--------------------------- |
+| July 21, 2025 | `claude-2.0` | `claude-sonnet-4-5-20250929` |
+| July 21, 2025 | `claude-2.1` | `claude-sonnet-4-5-20250929` |
+| July 21, 2025 | `claude-3-sonnet-20240229` | `claude-sonnet-4-5-20250929` |
+
+### 2024-09-04: Claude 1 and Instant models
+
+<Note>
+ These models were retired November 6, 2024.
+</Note>
+
+On September 4, 2024, we notified developers using Claude 1 and Instant models of their upcoming retirements.
+
+| Retirement Date | Deprecated Model | Recommended Replacement |
+| :--------------- | :------------------- | :-------------------------- |
+| November 6, 2024 | `claude-1.0` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-1.1` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-1.2` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-1.3` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-instant-1.0` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-instant-1.1` | `claude-3-5-haiku-20241022` |
+| November 6, 2024 | `claude-instant-1.2` | `claude-3-5-haiku-20241022` |
+
+[END OF DOCUMENT: CLAUDE235AYS8XTQ]
+---
+
+[START OF DOCUMENT: CLAUDEM3DVH3HRD | Title: Modifying-System-Prompts]
+
+# Modifying system prompts
+
+> Learn how to customize Claude's behavior by modifying system prompts using three approaches - output styles, systemPrompt with append, and custom system prompts.
+
+System prompts define Claude's behavior, capabilities, and response style. The Claude Agent SDK provides three ways to customize system prompts: using output styles (persistent, file-based configurations), appending to Claude Code's prompt, or using a fully custom prompt.
+
+## Understanding system prompts
+
+A system prompt is the initial instruction set that shapes how Claude behaves throughout a conversation.
+
+<Note>
+ **Default behavior:** The Agent SDK uses an **empty system prompt** by default for maximum flexibility. To use Claude Code's system prompt (tool instructions, code guidelines, etc.), specify `systemPrompt: { preset: "claude_code" }` in TypeScript or `system_prompt="claude_code"` in Python.
+</Note>
+
+Claude Code's system prompt includes:
+
+* Tool usage instructions and available tools
+* Code style and formatting guidelines
+* Response tone and verbosity settings
+* Security and safety instructions
+* Context about the current working directory and environment
+
+## Methods of modification
+
+### Method 1: CLAUDE.md files (project-level instructions)
+
+CLAUDE.md files provide project-specific context and instructions that are automatically read by the Agent SDK when it runs in a directory. They serve as persistent "memory" for your project.
+
+#### How CLAUDE.md works with the SDK
+
+**Location and discovery:**
+
+* **Project-level:** `CLAUDE.md` or `.claude/CLAUDE.md` in your working directory
+* **User-level:** `~/.claude/CLAUDE.md` for global instructions across all projects
+
+**IMPORTANT:** The SDK only reads CLAUDE.md files when you explicitly configure `settingSources` (TypeScript) or `setting_sources` (Python):
+
+* Include `'project'` to load project-level CLAUDE.md
+* Include `'user'` to load user-level CLAUDE.md (`~/.claude/CLAUDE.md`)
+
+The `claude_code` system prompt preset does NOT automatically load CLAUDE.md - you must also specify setting sources.
+
+**Content format:**
+CLAUDE.md files use plain markdown and can contain:
+
+* Coding guidelines and standards
+* Project-specific context
+* Common commands or workflows
+* API conventions
+* Testing requirements
+
+#### Example CLAUDE.md```markdown  theme={null}
+# Project Guidelines
+
+## Code Style
+
+- Use TypeScript strict mode
+- Prefer functional components in React
+- Always include JSDoc comments for public APIs
+
+## Testing
+
+- Run `npm test` before committing
+- Maintain >80% code coverage
+- Use jest for unit tests, playwright for E2E
+
+## Commands
+
+- Build: `npm run build`
+- Dev server: `npm run dev`
+- Type check: `npm run typecheck`
+```#### Using CLAUDE.md with the SDK
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  // IMPORTANT: You must specify settingSources to load CLAUDE.md
+  // The claude_code preset alone does NOT load CLAUDE.md files
+  const messages = [];
+
+  for await (const message of query({
+    prompt: "Add a new React component for user profiles",
+    options: {
+      systemPrompt: {
+        type: "preset",
+        preset: "claude_code", // Use Claude Code's system prompt
+      },
+      settingSources: ["project"], // Required to load CLAUDE.md from project
+    },
+  })) {
+    messages.push(message);
+  }
+
+  // Now Claude has access to your project guidelines from CLAUDE.md
+  ``````python Python theme={null}
+  from claude_agent_sdk import query, ClaudeAgentOptions
+
+  # IMPORTANT: You must specify setting_sources to load CLAUDE.md
+  # The claude_code preset alone does NOT load CLAUDE.md files
+  messages = []
+
+  async for message in query(
+      prompt="Add a new React component for user profiles",
+      options=ClaudeAgentOptions(
+          system_prompt={
+              "type": "preset",
+              "preset": "claude_code"  # Use Claude Code's system prompt
+          },
+          setting_sources=["project"]  # Required to load CLAUDE.md from project
+      )
+  ):
+      messages.append(message)
+
+  # Now Claude has access to your project guidelines from CLAUDE.md
+  ```</CodeGroup>
+
+#### When to use CLAUDE.md
+
+**Best for:**
+
+* **Team-shared context** - Guidelines everyone should follow
+* **Project conventions** - Coding standards, file structure, naming patterns
+* **Common commands** - Build, test, deploy commands specific to your project
+* **Long-term memory** - Context that should persist across all sessions
+* **Version-controlled instructions** - Commit to git so the team stays in sync
+
+**Key characteristics:**
+
+* ✅ Persistent across all sessions in a project
+* ✅ Shared with team via git
+* ✅ Automatic discovery (no code changes needed)
+* ⚠️ Requires loading settings via `settingSources`
+
+### Method 2: Output styles (persistent configurations)
+
+Output styles are saved configurations that modify Claude's system prompt. They're stored as markdown files and can be reused across sessions and projects.
+
+#### Creating an output style
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { writeFile, mkdir } from "fs/promises";
+  import { join } from "path";
+  import { homedir } from "os";
+
+  async function createOutputStyle(
+    name: string,
+    description: string,
+    prompt: string
+  ) {
+    // User-level: ~/.claude/output-styles
+    // Project-level: .claude/output-styles
+    const outputStylesDir = join(homedir(), ".claude", "output-styles");
+
+    await mkdir(outputStylesDir, { recursive: true });
+
+    const content = `---
+  name: ${name}
+  description: ${description}
+  ---
+
+  ${prompt}`;
+
+    const filePath = join(
+      outputStylesDir,
+      `${name.toLowerCase().replace(/\s+/g, "-")}.md`
+    );
+    await writeFile(filePath, content, "utf-8");
+  }
+
+  // Example: Create a code review specialist
+  await createOutputStyle(
+    "Code Reviewer",
+    "Thorough code review assistant",
+    `You are an expert code reviewer.
+
+  For every code submission:
+  1. Check for bugs and security issues
+  2. Evaluate performance
+  3. Suggest improvements
+  4. Rate code quality (1-10)`
+  );
+  ``````python Python theme={null}
+  from pathlib import Path
+
+  async def create_output_style(name: str, description: str, prompt: str):
+      # User-level: ~/.claude/output-styles
+      # Project-level: .claude/output-styles
+      output_styles_dir = Path.home() / '.claude' / 'output-styles'
+
+      output_styles_dir.mkdir(parents=True, exist_ok=True)
+
+      content = f"""---
+  name: {name}
+  description: {description}
+  ---
+
+  {prompt}"""
+
+      file_name = name.lower().replace(' ', '-') + '.md'
+      file_path = output_styles_dir / file_name
+      file_path.write_text(content, encoding='utf-8')
+
+  # Example: Create a code review specialist
+  await create_output_style(
+      'Code Reviewer',
+      'Thorough code review assistant',
+      """You are an expert code reviewer.
+
+  For every code submission:
+  1. Check for bugs and security issues
+  2. Evaluate performance
+  3. Suggest improvements
+  4. Rate code quality (1-10)"""
+  )
+  ```</CodeGroup>
+
+#### Using output styles
+
+Once created, activate output styles via:
+
+* **CLI**: `/output-style [style-name]`
+* **Settings**: `.claude/settings.local.json`
+* **Create new**: `/output-style:new [description]`
+
+**Note for SDK users:** Output styles are loaded when you include `settingSources: ['user']` or `settingSources: ['project']` (TypeScript) / `setting_sources=["user"]` or `setting_sources=["project"]` (Python) in your options.
+
+### Method 3: Using `systemPrompt` with append
+
+You can use the Claude Code preset with an `append` property to add your custom instructions while preserving all built-in functionality.
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  const messages = [];
+
+  for await (const message of query({
+    prompt: "Help me write a Python function to calculate fibonacci numbers",
+    options: {
+      systemPrompt: {
+        type: "preset",
+        preset: "claude_code",
+        append:
+          "Always include detailed docstrings and type hints in Python code.",
+      },
+    },
+  })) {
+    messages.push(message);
+    if (message.type === "assistant") {
+      console.log(message.message.content);
+    }
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query, ClaudeAgentOptions
+
+  messages = []
+
+  async for message in query(
+      prompt="Help me write a Python function to calculate fibonacci numbers",
+      options=ClaudeAgentOptions(
+          system_prompt={
+              "type": "preset",
+              "preset": "claude_code",
+              "append": "Always include detailed docstrings and type hints in Python code."
+          }
+      )
+  ):
+      messages.append(message)
+      if message.type == 'assistant':
+          print(message.message.content)
+  ```</CodeGroup>
+
+### Method 4: Custom system prompts
+
+You can provide a custom string as `systemPrompt` to replace the default entirely with your own instructions.
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  const customPrompt = `You are a Python coding specialist.
+  Follow these guidelines:
+  - Write clean, well-documented code
+  - Use type hints for all functions
+  - Include comprehensive docstrings
+  - Prefer functional programming patterns when appropriate
+  - Always explain your code choices`;
+
+  const messages = [];
+
+  for await (const message of query({
+    prompt: "Create a data processing pipeline",
+    options: {
+      systemPrompt: customPrompt,
+    },
+  })) {
+    messages.push(message);
+    if (message.type === "assistant") {
+      console.log(message.message.content);
+    }
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query, ClaudeAgentOptions
+
+  custom_prompt = """You are a Python coding specialist.
+  Follow these guidelines:
+  - Write clean, well-documented code
+  - Use type hints for all functions
+  - Include comprehensive docstrings
+  - Prefer functional programming patterns when appropriate
+  - Always explain your code choices"""
+
+  messages = []
+
+  async for message in query(
+      prompt="Create a data processing pipeline",
+      options=ClaudeAgentOptions(
+          system_prompt=custom_prompt
+      )
+  ):
+      messages.append(message)
+      if message.type == 'assistant':
+          print(message.message.content)
+  ```</CodeGroup>
+
+## Comparison of all four approaches
+
+| Feature | CLAUDE.md | Output Styles | `systemPrompt` with append | Custom `systemPrompt` |
+| ----------------------- | ---------------- | --------------- | -------------------------- | ---------------------- |
+| **Persistence** | Per-project file | Saved as files | Session only | Session only |
+| **Reusability** | Per-project | Across projects | Code duplication | Code duplication |
+| **Management** | On filesystem | CLI + files | In code | In code |
+| **Default tools** | Preserved | Preserved | Preserved | Lost (unless included) |
+| **Built-in safety** | Maintained | Maintained | Maintained | Must be added |
+| **Environment context** | Automatic | Automatic | Automatic | Must be provided |
+| **Customization level** | Additions only | Replace default | Additions only | Complete control |
+| **Version control** | With project | Yes | With code | With code |
+| **Scope** | Project-specific | User or project | Code session | Code session |
+
+**Note:** "With append" means using `systemPrompt: { type: "preset", preset: "claude_code", append: "..." }` in TypeScript or `system_prompt={"type": "preset", "preset": "claude_code", "append": "..."}` in Python.
+
+## Use cases and best practices
+
+### When to use CLAUDE.md
+
+**Best for:**
+
+* Project-specific coding standards and conventions
+* Documenting project structure and architecture
+* Listing common commands (build, test, deploy)
+* Team-shared context that should be version controlled
+* Instructions that apply to all SDK usage in a project
+
+**Examples:**
+
+* "All API endpoints should use async/await patterns"
+* "Run `npm run lint:fix` before committing"
+* "Database migrations are in the `migrations/` directory"
+
+**Important:** To load CLAUDE.md files, you must explicitly set `settingSources: ['project']` (TypeScript) or `setting_sources=["project"]` (Python). The `claude_code` system prompt preset does NOT automatically load CLAUDE.md without this setting.
+
+### When to use output styles
+
+**Best for:**
+
+* Persistent behavior changes across sessions
+* Team-shared configurations
+* Specialized assistants (code reviewer, data scientist, DevOps)
+* Complex prompt modifications that need versioning
+
+**Examples:**
+
+* Creating a dedicated SQL optimization assistant
+* Building a security-focused code reviewer
+* Developing a teaching assistant with specific pedagogy
+
+### When to use `systemPrompt` with append
+
+**Best for:**
+
+* Adding specific coding standards or preferences
+* Customizing output formatting
+* Adding domain-specific knowledge
+* Modifying response verbosity
+* Enhancing Claude Code's default behavior without losing tool instructions
+
+### When to use custom `systemPrompt`
+
+**Best for:**
+
+* Complete control over Claude's behavior
+* Specialized single-session tasks
+* Testing new prompt strategies
+* Situations where default tools aren't needed
+* Building specialized agents with unique behavior
+
+## Combining approaches
+
+You can combine these methods for maximum flexibility:
+
+### Example: Output style with session-specific additions
+
+<CodeGroup>```typescript TypeScript theme={null}
+  import { query } from "@anthropic-ai/claude-agent-sdk";
+
+  // Assuming "Code Reviewer" output style is active (via /output-style)
+  // Add session-specific focus areas
+  const messages = [];
+
+  for await (const message of query({
+    prompt: "Review this authentication module",
+    options: {
+      systemPrompt: {
+        type: "preset",
+        preset: "claude_code",
+        append: `
+          For this review, prioritize:
+          - OAuth 2.0 compliance
+          - Token storage security
+          - Session management
+        `,
+      },
+    },
+  })) {
+    messages.push(message);
+  }
+  ``````python Python theme={null}
+  from claude_agent_sdk import query, ClaudeAgentOptions
+
+  # Assuming "Code Reviewer" output style is active (via /output-style)
+  # Add session-specific focus areas
+  messages = []
+
+  async for message in query(
+      prompt="Review this authentication module",
+      options=ClaudeAgentOptions(
+          system_prompt={
+              "type": "preset",
+              "preset": "claude_code",
+              "append": """
+              For this review, prioritize:
+              - OAuth 2.0 compliance
+              - Token storage security
+              - Session management
+              """
+          }
+      )
+  ):
+      messages.append(message)
+  ```</CodeGroup>
+
+## See also
+
+* [Output styles](https://code.claude.com/docs/en/output-styles) - Complete output styles documentation
+* [TypeScript SDK guide](/en/docs/agent-sdk/typescript) - Complete SDK usage guide
+* [Configuration guide](https://code.claude.com/docs/en/settings) - General configuration options
+
+[END OF DOCUMENT: CLAUDEM3DVH3HRD]
+---
+
+[START OF DOCUMENT: CLAUDE1H5S95O7NN | Title: Multilingual-Support]
+
+# Multilingual support
+
+> Claude excels at tasks across multiple languages, maintaining strong cross-lingual performance relative to English.
+
+## Overview
+
+Claude demonstrates robust multilingual capabilities, with particularly strong performance in zero-shot tasks across languages. The model maintains consistent relative performance across both widely-spoken and lower-resource languages, making it a reliable choice for multilingual applications.
+
+Note that Claude is capable in many languages beyond those benchmarked below. We encourage testing with any languages relevant to your specific use cases.
+
+## Performance data
+
+Below are the zero-shot chain-of-thought evaluation scores for Claude models across different languages, shown as a percent relative to English performance (100%):
+
+| Language | Claude Opus 4.1<sup>1</sup> | Claude Opus 4<sup>1</sup> | Claude Sonnet 4.5<sup>1</sup> | Claude Sonnet 4<sup>1</sup> | Claude Haiku 4.5<sup>1</sup> | Claude Haiku 3.5 |
+| --------------------------------- | --------------------------- | ------------------------- | ----------------------------- | --------------------------- | ---------------------------- | ---------------- |
+| English (baseline, fixed to 100%) | 100% | 100% | 100% | 100% | 100% | 100% |
+| Spanish | 98.1% | 98.0% | 98.2% | 97.5% | 96.4% | 94.6% |
+| Portuguese (Brazil) | 97.8% | 97.3% | 97.8% | 97.2% | 96.1% | 94.6% |
+| Italian | 97.7% | 97.5% | 97.9% | 97.3% | 96.0% | 95.0% |
+| French | 97.9% | 97.7% | 97.5% | 97.1% | 95.7% | 95.3% |
+| Indonesian | 97.3% | 97.2% | 97.3% | 96.2% | 94.2% | 91.2% |
+| German | 97.7% | 97.1% | 97.0% | 94.7% | 94.3% | 92.5% |
+| Arabic | 97.1% | 96.9% | 97.2% | 96.1% | 92.5% | 84.7% |
+| Chinese (Simplified) | 97.1% | 96.7% | 96.9% | 95.9% | 94.2% | 90.9% |
+| Korean | 96.6% | 96.4% | 96.7% | 95.9% | 93.3% | 89.1% |
+| Japanese | 96.9% | 96.2% | 96.8% | 95.6% | 93.5% | 90.8% |
+| Hindi | 96.8% | 96.7% | 96.7% | 95.8% | 92.4% | 80.1% |
+| Bengali | 95.7% | 95.2% | 95.4% | 94.4% | 90.4% | 72.9% |
+| Swahili | 89.8% | 89.5% | 91.1% | 87.1% | 78.3% | 64.7% |
+| Yoruba | 80.3% | 78.9% | 79.7% | 76.4% | 52.7% | 46.1% |
+
+<sup>1</sup> With [extended thinking](/en/docs/build-with-claude/extended-thinking).
+
+<Note>
+ These metrics are based on [MMLU (Massive Multitask Language Understanding)](https://en.wikipedia.org/wiki/MMLU) English test sets that were translated into 14 additional languages by professional human translators, as documented in [OpenAI's simple-evals repository](https://github.com/openai/simple-evals/blob/main/multilingual_mmlu_benchmark_results.md). The use of human translators for this evaluation ensures high-quality translations, particularly important for languages with fewer digital resources.
+</Note>
+
+***
+
+## Best practices
+
+When working with multilingual content:
+
+1. **Provide clear language context**: While Claude can detect the target language automatically, explicitly stating the desired input/output language improves reliability. For enhanced fluency, you can prompt Claude to use "idiomatic speech as if it were a native speaker."
+2. **Use native scripts**: Submit text in its native script rather than transliteration for optimal results
+3. **Consider cultural context**: Effective communication often requires cultural and regional awareness beyond pure translation
+
+We also suggest following our general [prompt engineering guidelines](/en/docs/build-with-claude/prompt-engineering/overview) to better improve Claude's performance.
+
+***
+
+## Language support considerations
+
+* Claude processes input and generates output in most world languages that use standard Unicode characters
+* Performance varies by language, with particularly strong capabilities in widely-spoken languages
+* Even in languages with fewer digital resources, Claude maintains meaningful capabilities
+
+<CardGroup cols={2}>
+ <Card title="Prompt Engineering Guide" icon="pen" href="/en/docs/build-with-claude/prompt-engineering/overview">
+ Master the art of prompt crafting to get the most out of Claude.
+ </Card>
+
+ <Card title="Prompt Library" icon="books" href="/en/resources/prompt-library">
+ Find a wide range of pre-crafted prompts for various tasks and industries. Perfect for inspiration or quick starts.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE1H5S95O7NN]
+---
+
+[START OF DOCUMENT: CLAUDE262VASMGI2 | Title: Multishot-Prompting]
+
+# Use examples (multishot prompting) to guide Claude's behavior
+
+<Note>
+ While these tips apply broadly to all Claude models, you can find prompting tips specific to extended thinking models [here](/en/docs/build-with-claude/prompt-engineering/extended-thinking-tips).
+</Note>
+
+Examples are your secret weapon shortcut for getting Claude to generate exactly what you need. By providing a few well-crafted examples in your prompt, you can dramatically improve the accuracy, consistency, and quality of Claude's outputs.
+This technique, known as few-shot or multishot prompting, is particularly effective for tasks that require structured outputs or adherence to specific formats.
+
+<Tip>**Power up your prompts**: Include 3-5 diverse, relevant examples to show Claude exactly what you want. More examples = better performance, especially for complex tasks.</Tip>
+
+## Why use examples?
+
+* **Accuracy**: Examples reduce misinterpretation of instructions.
+* **Consistency**: Examples enforce uniform structure and style.
+* **Performance**: Well-chosen examples boost Claude's ability to handle complex tasks.
+
+## Crafting effective examples
+
+For maximum effectiveness, make sure that your examples are:
+
+* **Relevant**: Your examples mirror your actual use case.
+* **Diverse**: Your examples cover edge cases and potential challenges, and vary enough that Claude doesn't inadvertently pick up on unintended patterns.
+* **Clear**: Your examples are wrapped in `<example>` tags (if multiple, nested within `<examples>` tags) for structure.
+
+<Tip>Ask Claude to evaluate your examples for relevance, diversity, or clarity. Or have Claude generate more examples based on your initial set.</Tip>
+
+<Accordion title="Example: Analyzing customer feedback">
+ Notice that in the "no examples" version, Claude does not list multiple options for each category, despite its written analysis indicating that there are multiple categories for certain feedback. It also includes a long explanation when we may not want it to.
+
+ | Role | No Examples | With Examples |
+ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | Analyze this customer feedback and categorize the issues. Use these categories: UI/UX, Performance, Feature Request, Integration, Pricing, and Other. Also rate the sentiment (Positive/Neutral/Negative) and priority (High/Medium/Low).<br /><br />Here is the feedback: \{\{FEEDBACK}} | Our CS team is overwhelmed with unstructured feedback. Your task is to analyze feedback and categorize issues for our product and engineering teams. Use these categories: UI/UX, Performance, Feature Request, Integration, Pricing, and Other. Also rate the sentiment (Positive/Neutral/Negative) and priority (High/Medium/Low). Here is an example:<br /><br />\<example><br />Input: The new dashboard is a mess! It takes forever to load, and I can't find the export button. Fix this ASAP!<br />Category: UI/UX, Performance<br />Sentiment: Negative<br />Priority: High\</example><br /><br />Now, analyze this feedback: \{\{FEEDBACK}} |
+ | Assistant (Claude's response) | Here's the analysis of the customer feedback:<br /><br />Issue: UI/UX<br />Sentiment: Negative<br />Priority: High<br />The customer is frustrated with the new dashboard design, which they find cluttered and slow to load. They specifically call out the missing "export" button, which is likely a critical feature. This issue needs to be addressed as a high priority.<br /><br />Issue: Integration<br />Sentiment: Positive<br />Priority: Medium<br />The customer is pleased with the existing Salesforce integration but would like to see support for Hubspot as well. This is a feature request that could be considered for a future product update.<br /><br />Issue: Pricing<br />Sentiment: Negative<br />Priority: High<br />The customer finds the pricing to be unreasonable, especially for the basic features. They are threatening to switch to a competitor, so this is a high-priority issue that needs to be reviewed.<br /><br />Issue: Performance<br />Sentiment Negative<br />Priority: High<br />The customer is experiencing critical issues with the mobile app, where large file uploads consistently result in crashes. This is a significant problem that impacts the customer's ability to use the product effectively and should be addressed as a high priority.<br /><br />Issue: UI/UX<br />Sentiment: Positive<br />Priority: Low<br />The customer is overall satisfied with the product, specifically calling out the intuitive UI and excellent customer support. This is a positive piece of feedback that does not require any immediate action. | Here's the analysis of the customer feedback:<br /><br />1. The new dashboard is a mess! It takes forever to load, and I can't find the export button. Fix this ASAP!<br />Category: UI/UX, Performance<br />Sentiment: Negative<br />Priority: High<br /><br />2. Love the Salesforce integration! But it'd be great if you could add Hubspot too.<br />Category: Integration, Feature Request<br />Sentiment: Positive<br />Priority: Medium<br /><br />3. Your pricing is ridiculous! \$99/mo for basic features? I'm switching to Competitor X.<br />Category: Pricing<br />Sentiment: Negative<br />Priority: High<br /><br />4. The mobile app keeps crashing when I try to upload large files (>50MB). This is critical for our field agents.<br />Category: Performance<br />Sentiment: Negative<br />Priority: High<br /><br />5. Overall, I'm happy with the product. The UI is intuitive, and the customer support is top-notch. Keep it up!<br />Category: UI/UX, Other (Customer Support)<br />Sentiment: Positive<br />Priority: Low |
+</Accordion>
+
+***
+
+<CardGroup cols={3}>
+ <Card title="Prompt library" icon="link" href="/en/resources/prompt-library/library">
+ Get inspired by a curated selection of prompts for various tasks and use cases.
+ </Card>
+
+ <Card title="GitHub prompting tutorial" icon="link" href="https://github.com/anthropics/prompt-eng-interactive-tutorial">
+ An example-filled tutorial that covers the prompt engineering concepts found in our docs.
+ </Card>
+
+ <Card title="Google Sheets prompting tutorial" icon="link" href="https://docs.google.com/spreadsheets/d/19jzLgRruG9kjUQNKtCg1ZjdD6l6weA6qRXG5zLIAhC8">
+ A lighter weight version of our prompt engineering tutorial via an interactive spreadsheet.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE262VASMGI2]
+---
+
+[START OF DOCUMENT: CLAUDE49GBII30R | Title: Overview (1)]
+
+# Features overview
+
+> Explore Claude's advanced features and capabilities.
+
+export const PlatformAvailability = ({claudeApi = false, claudeApiBeta = false, bedrock = false, bedrockBeta = false, vertexAi = false, vertexAiBeta = false}) => {
+ const platforms = [];
+ if (claudeApi || claudeApiBeta) {
+ platforms.push(claudeApiBeta ? 'Claude API (Beta)' : 'Claude API');
+ }
+ if (bedrock || bedrockBeta) {
+ platforms.push(bedrockBeta ? 'Amazon Bedrock (Beta)' : 'Amazon Bedrock');
+ }
+ if (vertexAi || vertexAiBeta) {
+ platforms.push(vertexAiBeta ? "Google Cloud's Vertex AI (Beta)" : "Google Cloud's Vertex AI");
+ }
+ return <>
+ {platforms.map((platform, index) => <span key={index}>
+ {platform}
+ {index < platforms.length - 1 && <><br /><br /></>}
+ </span>)}
+ </>;
+};
+
+## Core capabilities
+
+These features enhance Claude's fundamental abilities for processing, analyzing, and generating content across various formats and use cases.
+
+| Feature | Description | Availability |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [1M token context window](/en/docs/build-with-claude/context-windows#1m-token-context-window) | An extended context window that allows you to process much larger documents, maintain longer conversations, and work with more extensive codebases. | <PlatformAvailability claudeApiBeta bedrockBeta vertexAiBeta /> |
+| [Agent Skills](/en/docs/agents-and-tools/agent-skills/overview) | Extend Claude's capabilities with Skills. Use pre-built Skills (PowerPoint, Excel, Word, PDF) or create custom Skills with instructions and scripts. Skills use progressive disclosure to efficiently manage context. | <PlatformAvailability claudeApiBeta /> |
+| [Batch processing](/en/docs/build-with-claude/batch-processing) | Process large volumes of requests asynchronously for cost savings. Send batches with a large number of queries per batch. Batch API calls costs 50% less than standard API calls. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Citations](/en/docs/build-with-claude/citations) | Ground Claude's responses in source documents. With Citations, Claude can provide detailed references to the exact sentences and passages it uses to generate responses, leading to more verifiable, trustworthy outputs. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Context editing](/en/docs/build-with-claude/context-editing) | Automatically manage conversation context with configurable strategies. Supports clearing tool results when approaching token limits and managing thinking blocks in extended thinking conversations. | <PlatformAvailability claudeApiBeta bedrockBeta vertexAiBeta /> |
+| [Extended thinking](/en/docs/build-with-claude/extended-thinking) | Enhanced reasoning capabilities for complex tasks, providing transparency into Claude's step-by-step thought process before delivering its final answer. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Files API](/en/docs/build-with-claude/files) | Upload and manage files to use with Claude without re-uploading content with each request. Supports PDFs, images, and text files. | <PlatformAvailability claudeApiBeta /> |
+| [PDF support](/en/docs/build-with-claude/pdf-support) | Process and analyze text and visual content from PDF documents. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Prompt caching (5m)](/en/docs/build-with-claude/prompt-caching) | Provide Claude with more background knowledge and example outputs to reduce costs and latency. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Prompt caching (1hr)](/en/docs/build-with-claude/prompt-caching#1-hour-cache-duration) | Extended 1-hour cache duration for less frequently accessed but important context, complementing the standard 5-minute cache. | <PlatformAvailability claudeApi /> |
+| [Search results](/en/docs/build-with-claude/search-results) | Enable natural citations for RAG applications by providing search results with proper source attribution. Achieve web search-quality citations for custom knowledge bases and tools. | <PlatformAvailability claudeApi vertexAi /> |
+| [Structured outputs](/en/docs/build-with-claude/structured-outputs) | Guarantee schema conformance with two approaches: JSON outputs for structured data responses, and strict tool use for validated tool inputs. Available on Sonnet 4.5 and Opus 4.1. | <PlatformAvailability claudeApiBeta /> |
+| [Token counting](/en/api/messages-count-tokens) | Token counting enables you to determine the number of tokens in a message before sending it to Claude, helping you make informed decisions about your prompts and usage. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Tool use](/en/docs/agents-and-tools/tool-use/overview) | Enable Claude to interact with external tools and APIs to perform a wider variety of tasks. For a list of supported tools, see [the Tools table](#tools). | <PlatformAvailability claudeApi bedrock vertexAi /> |
+
+## Tools
+
+These features enable Claude to interact with external systems, execute code, and perform automated tasks through various tool interfaces.
+
+| Feature | Description | Availability |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [Bash](/en/docs/agents-and-tools/tool-use/bash-tool) | Execute bash commands and scripts to interact with the system shell and perform command-line operations. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Code execution](/en/docs/agents-and-tools/tool-use/code-execution-tool) | Run Python code in a sandboxed environment for advanced data analysis. | <PlatformAvailability claudeApiBeta /> |
+| [Computer use](/en/docs/agents-and-tools/tool-use/computer-use-tool) | Control computer interfaces by taking screenshots and issuing mouse and keyboard commands. | <PlatformAvailability claudeApiBeta bedrockBeta vertexAiBeta /> |
+| [Fine-grained tool streaming](/en/docs/agents-and-tools/tool-use/fine-grained-tool-streaming) | Stream tool use parameters without buffering/JSON validation, reducing latency for receiving large parameters. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [MCP connector](/en/docs/agents-and-tools/mcp-connector) | Connect to remote [MCP](/en/docs/mcp) servers directly from the Messages API without a separate MCP client. | <PlatformAvailability claudeApiBeta /> |
+| [Memory](/en/docs/agents-and-tools/tool-use/memory-tool) | Enable Claude to store and retrieve information across conversations. Build knowledge bases over time, maintain project context, and learn from past interactions. | <PlatformAvailability claudeApiBeta bedrockBeta vertexAiBeta /> |
+| [Text editor](/en/docs/agents-and-tools/tool-use/text-editor-tool) | Create and edit text files with a built-in text editor interface for file manipulation tasks. | <PlatformAvailability claudeApi bedrock vertexAi /> |
+| [Web fetch](/en/docs/agents-and-tools/tool-use/web-fetch-tool) | Retrieve full content from specified web pages and PDF documents for in-depth analysis. | <PlatformAvailability claudeApiBeta /> |
+| [Web search](/en/docs/agents-and-tools/tool-use/web-search-tool) | Augment Claude's comprehensive knowledge with current, real-world data from across the web. | <PlatformAvailability claudeApi vertexAi /> |
+
+[END OF DOCUMENT: CLAUDE49GBII30R]
+---
+
+[START OF DOCUMENT: CLAUDE1VZ2V8MYYX | Title: Overview]
+
+# Models overview
+
+> Claude is a family of state-of-the-art large language models developed by Anthropic. This guide introduces our models and compares their performance.
+
+export const ModelId = ({children, style = {}}) => {
+ const copiedNotice = 'Copied!';
+ const handleClick = e => {
+ const element = e.currentTarget;
+ const textSpan = element.querySelector('.model-id-text');
+ const copiedSpan = element.querySelector('.model-id-copied');
+ navigator.clipboard.writeText(children).then(() => {
+ textSpan.style.opacity = '0';
+ copiedSpan.style.opacity = '1';
+ element.style.backgroundColor = '#d4edda';
+ element.style.borderColor = '#c3e6cb';
+ setTimeout(() => {
+ textSpan.style.opacity = '1';
+ copiedSpan.style.opacity = '0';
+ element.style.backgroundColor = '#f5f5f5';
+ element.style.borderColor = 'transparent';
+ }, 2000);
+ }).catch(error => {
+ console.error('Failed to copy:', error);
+ });
+ };
+ const handleMouseEnter = e => {
+ const element = e.currentTarget;
+ const copiedSpan = element.querySelector('.model-id-copied');
+ const tooltip = element.querySelector('.copy-tooltip');
+ if (tooltip && copiedSpan.style.opacity !== '1') {
+ tooltip.style.opacity = '1';
+ }
+ element.style.backgroundColor = '#e8e8e8';
+ element.style.borderColor = '#d0d0d0';
+ };
+ const handleMouseLeave = e => {
+ const element = e.currentTarget;
+ const copiedSpan = element.querySelector('.model-id-copied');
+ const tooltip = element.querySelector('.copy-tooltip');
+ if (tooltip) {
+ tooltip.style.opacity = '0';
+ }
+ if (copiedSpan.style.opacity !== '1') {
+ element.style.backgroundColor = '#f5f5f5';
+ element.style.borderColor = 'transparent';
+ }
+ };
+ const defaultStyle = {
+ cursor: 'pointer',
+ position: 'relative',
+ transition: 'all 0.2s ease',
+ display: 'inline-block',
+ userSelect: 'none',
+ backgroundColor: '#f5f5f5',
+ padding: '2px 4px',
+ borderRadius: '4px',
+ fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+ fontSize: '0.75em',
+ border: '1px solid transparent',
+ ...style
+ };
+ return <span onClick={handleClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={defaultStyle}>
+ <span className="model-id-text" style={{
+ transition: 'opacity 0.1s ease'
+ }}>
+ {children}
+ </span>
+ <span className="model-id-copied" style={{
+ position: 'absolute',
+ top: '2px',
+ left: '4px',
+ right: '4px',
+ opacity: '0',
+ transition: 'opacity 0.1s ease',
+ color: '#155724'
+ }}>
+ {copiedNotice}
+ </span>
+ </span>;
+};
+
+## Choosing a model
+
+If you're unsure which model to use, we recommend starting with **Claude Sonnet 4.5**. It offers the best balance of intelligence, speed, and cost for most use cases, with exceptional performance in coding and agentic tasks.
+
+All current Claude models support text and image input, text output, multilingual capabilities, and vision. Models are available via the Anthropic API, AWS Bedrock, and Google Vertex AI.
+
+Once you've picked a model, [learn how to make your first API call](/en/docs/get-started).
+
+### Latest models comparison
+
+| Feature | Claude Sonnet 4.5 | Claude Haiku 4.5 | Claude Opus 4.1 |
+| :-------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+| **Description** | Our smartest model for complex agents and coding | Our fastest model with near-frontier intelligence | Exceptional model for specialized reasoning tasks |
+| **Claude API ID** | <ModelId>claude-sonnet-4-5-20250929</ModelId> | <ModelId>claude-haiku-4-5-20251001</ModelId> | <ModelId>claude-opus-4-1-20250805</ModelId> |
+| **Claude API alias**<sup>1</sup> | <ModelId>claude-sonnet-4-5</ModelId> | <ModelId>claude-haiku-4-5</ModelId> | <ModelId>claude-opus-4-1</ModelId> |
+| **AWS Bedrock ID** | <ModelId>anthropic.claude-sonnet-4-5-20250929-v1:0</ModelId> | <ModelId>anthropic.claude-haiku-4-5-20251001-v1:0</ModelId> | <ModelId>anthropic.claude-opus-4-1-20250805-v1:0</ModelId> |
+| **GCP Vertex AI ID** | <ModelId>claude-sonnet-4-5\@20250929</ModelId> | <ModelId>claude-haiku-4-5\@20251001</ModelId> | <ModelId>claude-opus-4-1\@20250805</ModelId> |
+| **Pricing**<sup>2</sup> | \$3 / input MTok<br />\$15 / output MTok | \$1 / input MTok<br />\$5 / output MTok | \$15 / input MTok<br />\$75 / output MTok |
+| **[Extended thinking](/en/docs/build-with-claude/extended-thinking)** | Yes | Yes | Yes |
+| **[Priority Tier](/en/api/service-tiers)** | Yes | Yes | Yes |
+| **Comparative latency** | Fast | Fastest | Moderate |
+| **Context window** | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> / <br /> <Tooltip tip="~750K words \ ~3.4M unicode characters">1M tokens</Tooltip> (beta)<sup>3</sup> | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> |
+| **Max output** | 64K tokens | 64K tokens | 32K tokens |
+| **Reliable knowledge cutoff** | Jan 2025<sup>4</sup> | Feb 2025 | Jan 2025<sup>4</sup> |
+| **Training data cutoff** | Jul 2025 | Jul 2025 | Mar 2025 |
+
+*<sup>1 - Aliases automatically point to the most recent model snapshot. When we release new model snapshots, we migrate aliases to point to the newest version of a model, typically within a week of the new release. While aliases are useful for experimentation, we recommend using specific model versions (e.g., `claude-sonnet-4-5-20250929`) in production applications to ensure consistent behavior.</sup>*
+
+*<sup>2 - See our [pricing page](/en/docs/about-claude/pricing) for complete pricing information including batch API discounts, prompt caching rates, extended thinking costs, and vision processing fees.</sup>*
+
+*<sup>3 - Claude Sonnet 4.5 supports a [1M token context window](/en/docs/build-with-claude/context-windows#1m-token-context-window) when using the `context-1m-2025-08-07` beta header. [Long context pricing](/en/docs/about-claude/pricing#long-context-pricing) applies to requests exceeding 200K tokens.</sup>*
+
+*<sup>4 - **Reliable knowledge cutoff** indicates the date through which a model's knowledge is most extensive and reliable. **Training data cutoff** is the broader date range of training data used. For example, Claude Sonnet 4.5 was trained on publicly available information through July 2025, but its knowledge is most extensive and reliable through January 2025. For more information, see [Anthropic's Transparency Hub](https://www.anthropic.com/transparency).</sup>*
+
+<Note>Models with the same snapshot date (e.g., 20240620) are identical across all platforms and do not change. The snapshot date in the model name ensures consistency and allows developers to rely on stable performance across different environments.</Note>
+
+<Note>Starting with **Claude Sonnet 4.5 and all future models**, AWS Bedrock and Google Vertex AI offer two endpoint types: **global endpoints** (dynamic routing for maximum availability) and **regional endpoints** (guaranteed data routing through specific geographic regions). For more information, see the [third-party platform pricing section](/en/docs/about-claude/pricing#third-party-platform-pricing).</Note>
+
+<AccordionGroup>
+ <Accordion title="Legacy models">
+ The following models are still available but we recommend migrating to current models for improved performance:
+
+ | Feature | Claude Sonnet 4 | Claude Sonnet 3.7 | Claude Opus 4 | Claude Haiku 3.5 | Claude Haiku 3 |
+ | :-------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+ | **Claude API ID** | <ModelId>claude-sonnet-4-20250514</ModelId> | <ModelId>claude-3-7-sonnet-20250219</ModelId> | <ModelId>claude-opus-4-20250514</ModelId> | <ModelId>claude-3-5-haiku-20241022</ModelId> | <ModelId>claude-3-haiku-20240307</ModelId> |
+ | **Claude API alias** | <ModelId>claude-sonnet-4-0</ModelId> | <ModelId>claude-3-7-sonnet-latest</ModelId> | <ModelId>claude-opus-4-0</ModelId> | <ModelId>claude-3-5-haiku-latest</ModelId> | — |
+ | **AWS Bedrock ID** | <ModelId>anthropic.claude-sonnet-4-20250514-v1:0</ModelId> | <ModelId>anthropic.claude-3-7-sonnet-20250219-v1:0</ModelId> | <ModelId>anthropic.claude-opus-4-20250514-v1:0</ModelId> | <ModelId>anthropic.claude-3-5-haiku-20241022-v1:0</ModelId> | <ModelId>anthropic.claude-3-haiku-20240307-v1:0</ModelId> |
+ | **GCP Vertex AI ID** | <ModelId>claude-sonnet-4\@20250514</ModelId> | <ModelId>claude-3-7-sonnet\@20250219</ModelId> | <ModelId>claude-opus-4\@20250514</ModelId> | <ModelId>claude-3-5-haiku\@20241022</ModelId> | <ModelId>claude-3-haiku\@20240307</ModelId> |
+ | **Pricing** | \$3 / input MTok<br />\$15 / output MTok | \$3 / input MTok<br />\$15 / output MTok | \$15 / input MTok<br />\$75 / output MTok | \$0.80 / input MTok<br />\$4 / output MTok | \$0.25 / input MTok<br />\$1.25 / output MTok |
+ | **[Extended thinking](/en/docs/build-with-claude/extended-thinking)** | Yes | Yes | Yes | No | No |
+ | **[Priority Tier](/en/api/service-tiers)** | Yes | Yes | Yes | Yes | No |
+ | **Comparative latency** | Fast | Fast | Moderate | Fastest | Fast |
+ | **Context window** | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> / <br /> <Tooltip tip="~750K words \ ~3.4M unicode characters">1M tokens</Tooltip> (beta)<sup>1</sup> | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> | <Tooltip tip="~150K words \ ~215K unicode characters">200K tokens</Tooltip> | <Tooltip tip="~150K words \ ~680K unicode characters">200K tokens</Tooltip> |
+ | **Max output** | 64K tokens | 64K tokens / 128K tokens (beta)<sup>4</sup> | 32K tokens | 8K tokens | 4K tokens |
+ | **Reliable knowledge cutoff** | Jan 2025<sup>2</sup> | Oct 2024<sup>2</sup> | Jan 2025<sup>2</sup> | <sup>3</sup> | <sup>3</sup> |
+ | **Training data cutoff** | Mar 2025 | Nov 2024 | Mar 2025 | Jul 2024 | Aug 2023 |
+
+ *<sup>1 - Claude Sonnet 4 supports a [1M token context window](/en/docs/build-with-claude/context-windows#1m-token-context-window) when using the `context-1m-2025-08-07` beta header. [Long context pricing](/en/docs/about-claude/pricing#long-context-pricing) applies to requests exceeding 200K tokens.</sup>*
+
+ *<sup>2 - **Reliable knowledge cutoff** indicates the date through which a model's knowledge is most extensive and reliable. **Training data cutoff** is the broader date range of training data used.</sup>*
+
+ *<sup>3 - Some Haiku models have a single training data cutoff date.</sup>*
+
+ *<sup>4 - Include the beta header `output-128k-2025-02-19` in your API request to increase the maximum output token length to 128K tokens for Claude Sonnet 3.7. We strongly suggest using our [streaming Messages API](/en/docs/build-with-claude/streaming) to avoid timeouts when generating longer outputs. See our guidance on [long requests](/en/api/errors#long-requests) for more details.</sup>*
+ </Accordion>
+</AccordionGroup>
+
+## Prompt and output performance
+
+Claude 4 models excel in:
+
+* **Performance**: Top-tier results in reasoning, coding, multilingual tasks, long-context handling, honesty, and image processing. See the [Claude 4 blog post](http://www.anthropic.com/news/claude-4) for more information.
+* **Engaging responses**: Claude models are ideal for applications that require rich, human-like interactions.
+
+ * If you prefer more concise responses, you can adjust your prompts to guide the model toward the desired output length. Refer to our [prompt engineering guides](/en/docs/build-with-claude/prompt-engineering) for details.
+ * For specific Claude 4 prompting best practices, see our [Claude 4 best practices guide](/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices).
+* **Output quality**: When migrating from previous model generations to Claude 4, you may notice larger improvements in overall performance.
+
+## Migrating to Claude 4.5
+
+If you're currently using Claude 3 models, we recommend migrating to Claude 4.5 to take advantage of improved intelligence and enhanced capabilities. For detailed migration instructions, see [Migrating to Claude 4.5](/en/docs/about-claude/models/migrating-to-claude-4).
+
+## Get started with Claude
+
+If you're ready to start exploring what Claude can do for you, let's dive in! Whether you're a developer looking to integrate Claude into your applications or a user wanting to experience the power of AI firsthand, we've got you covered.
+
+<Note>Looking to chat with Claude? Visit [claude.ai](http://www.claude.ai)!</Note>
+
+<CardGroup cols={3}>
+ <Card title="Intro to Claude" icon="check" href="/en/docs/intro">
+ Explore Claude's capabilities and development flow.
+ </Card>
+
+ <Card title="Quickstart" icon="bolt-lightning" href="/en/docs/get-started">
+ Learn how to make your first API call in minutes.
+ </Card>
+
+ <Card title="Claude Console" icon="code" href="https://console.anthropic.com">
+ Craft and test powerful prompts directly in your browser.
+ </Card>
+</CardGroup>
+
+If you have any questions or need assistance, don't hesitate to reach out to our [support team](https://support.claude.com/) or consult the [Discord community](https://www.anthropic.com/discord).
+
+[END OF DOCUMENT: CLAUDE1VZ2V8MYYX]
+---
+

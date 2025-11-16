@@ -1,0 +1,3539 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: GEMINI2R9GYN0X53 (sha256-feb00cbc26c7fd60cb48af2b8b5617f0e80f37b36618f8a415963d670777ede9) | Title: Migrate.Md]
+[DocID: GEMINIKC0KFN9AS (sha256-342c0d24cdd41c8a64a0fde7883bb830ebb2e7ac65d638de449ed88d353b0235) | Title: Model-Tuning.Md]
+[DocID: GEMINI29MP6QALJB (sha256-d1724694cd87c82aa1dc2bded76753e0263429ede33754e6c8fbce5b0d2d6f30) | Title: Models.Md]
+[DocID: GEMINIIY8S004EO (sha256-309feef906501b4ef2ea6070eae6a58edb929377817c0603c125739e46a08662) | Title: Music-Generation.Md]
+[DocID: GEMINI1OXOF70MLJ (sha256-9c58ee8f3567d72e325d5d5be1e117179fb34ef23c25f31f1842677b1bf02a49) | Title: Openai.Md]
+--- END OF TOC ---
+
+[START OF DOCUMENT: GEMINI2R9GYN0X53 | Title: Migrate.Md]
+
+Starting with the Gemini 2.0 release in late 2024, we introduced a new set of
+libraries called the [Google GenAI SDK](https://ai.google.dev/gemini-api/docs/libraries). It offers
+an improved developer experience through
+an [updated client architecture](https://ai.google.dev/gemini-api/docs/migrate#client), and
+[simplifies the transition](https://ai.google.dev/gemini-api/docs/migrate-to-cloud) between developer
+and enterprise workflows.
+
+The Google GenAI SDK is now in [General Availability (GA)](https://ai.google.dev/gemini-api/docs/libraries#new-libraries) across all supported
+platforms. If you're using one of our [legacy libraries](https://ai.google.dev/gemini-api/docs/libraries#previous-sdks), we strongly recommend you to
+migrate.
+
+This guide provides before-and-after examples of migrated code to help you get
+started.
+| **Note:** The Go examples omit imports and other boilerplate code to improve readability.
+
+## Installation
+
+**Before**
+
+### Python
+
+ pip install -U -q "google-generativeai"
+
+### JavaScript
+
+ npm install @google/generative-ai
+
+### Go
+
+ go get github.com/google/generative-ai-go
+
+**After**
+
+### Python
+
+ pip install -U -q "google-genai"
+
+### JavaScript
+
+ npm install @google/genai
+
+### Go
+
+ go get google.golang.org/genai
+
+## API access
+
+The old SDK implicitly handled the API client behind the scenes using a variety
+of ad hoc methods. This made it hard to manage the client and credentials.
+Now, you interact through a central `Client` object. This `Client` object acts
+as a single entry point for various API services (e.g., `models`, `chats`,
+`files`, `tunings`), promoting consistency and simplifying credential and
+configuration management across different API calls.
+
+**Before (Less Centralized API Access)**
+
+### Python
+
+The old SDK didn't explicitly use a top-level client object for most API
+calls. You would directly instantiate and interact with `GenerativeModel`
+objects.
+
+ import google.generativeai as genai
+
+ # Directly create and use model objects
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content(...)
+ chat = model.start_chat(...)
+
+### JavaScript
+
+While `GoogleGenerativeAI` was a central point for models and chat, other
+functionalities like file and cache management often required importing and
+instantiating entirely separate client classes.
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+ import { GoogleAIFileManager, GoogleAICacheManager } from "@google/generative-ai/server"; // For files/caching
+
+ const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
+ const fileManager = new GoogleAIFileManager("YOUR_API_KEY");
+ const cacheManager = new GoogleAICacheManager("YOUR_API_KEY");
+
+ // Get a model instance, then call methods on it
+ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+ const result = await model.generateContent(...);
+ const chat = model.startChat(...);
+
+ // Call methods on separate client objects for other services
+ const uploadedFile = await fileManager.uploadFile(...);
+ const cache = await cacheManager.create(...);
+
+### Go
+
+The `genai.NewClient` function created a client, but generative model
+operations were typically called on a separate `GenerativeModel` instance
+obtained from this client. Other services might have been accessed via
+distinct packages or patterns.
+
+ import (
+ "github.com/google/generative-ai-go/genai"
+ "github.com/google/generative-ai-go/genai/fileman" // For files
+ "google.golang.org/api/option"
+ )
+
+ client, err := genai.NewClient(ctx, option.WithAPIKey("YOUR_API_KEY"))
+ fileClient, err := fileman.NewClient(ctx, option.WithAPIKey("YOUR_API_KEY"))
+
+ // Get a model instance, then call methods on it
+ model := client.GenerativeModel("gemini-1.5-flash")
+ resp, err := model.GenerateContent(...)
+ cs := model.StartChat()
+
+ // Call methods on separate client objects for other services
+ uploadedFile, err := fileClient.UploadFile(...)
+
+**After (Centralized Client Object)**
+
+### Python
+
+ from google import genai
+
+ # Create a single client object
+ client = genai.Client()
+
+ # Access API methods through services on the client object
+ response = client.models.generate_content(...)
+ chat = client.chats.create(...)
+ my_file = client.files.upload(...)
+ tuning_job = client.tunings.tune(...)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ // Create a single client object
+ const ai = new GoogleGenAI({apiKey: "YOUR_API_KEY"});
+
+ // Access API methods through services on the client object
+ const response = await ai.models.generateContent(...);
+ const chat = ai.chats.create(...);
+ const uploadedFile = await ai.files.upload(...);
+ const cache = await ai.caches.create(...);
+
+### Go
+
+ import "google.golang.org/genai"
+
+ // Create a single client object
+ client, err := genai.NewClient(ctx, nil)
+
+ // Access API methods through services on the client object
+ result, err := client.Models.GenerateContent(...)
+ chat, err := client.Chats.Create(...)
+ uploadedFile, err := client.Files.Upload(...)
+ tuningJob, err := client.Tunings.Tune(...)
+
+## Authentication
+
+Both legacy and new libraries authenticate using API keys. You can
+[create](https://aistudio.google.com/app/apikey) your API key in Google AI
+Studio.
+
+**Before**
+
+### Python
+
+The old SDK handled the API client object implicitly.
+
+ import google.generativeai as genai
+
+ genai.configure(api_key=...)
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+
+### Go
+
+Import the Google libraries:
+
+ import (
+ "github.com/google/generative-ai-go/genai"
+ "google.golang.org/api/option"
+ )
+
+Create the client:
+
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+
+**After**
+
+### Python
+
+With Google GenAI SDK, you create an API client first, which is used to call
+the API.
+The new SDK will pick up your API key from either one of the
+`GEMINI_API_KEY` or `GOOGLE_API_KEY` environment variables, if you don't
+pass one to the client.
+
+ export GEMINI_API_KEY="YOUR_API_KEY"
+
+ from google import genai
+
+ client = genai.Client() # Set the API key using the GEMINI_API_KEY env var.
+ # Alternatively, you could set the API key explicitly:
+ # client = genai.Client(api_key="your_api_key")
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({apiKey: "GEMINI_API_KEY"});
+
+### Go
+
+Import the GenAI library:
+
+ import "google.golang.org/genai"
+
+Create the client:
+
+ client, err := genai.NewClient(ctx, &genai.ClientConfig{
+ Backend: genai.BackendGeminiAPI,
+ })
+
+## Generate content
+
+### Text
+
+**Before**
+
+### Python
+
+Previously, there were no client objects, you accessed APIs directly through
+`GenerativeModel` objects.
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content(
+ 'Tell me a story in 300 words'
+ )
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+ const prompt = "Tell me a story in 300 words";
+
+ const result = await model.generateContent(prompt);
+ console.log(result.response.text());
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ defer client.Close()
+
+ model := client.GenerativeModel("gemini-1.5-flash")
+ resp, err := model.GenerateContent(ctx, genai.Text("Tell me a story in 300 words."))
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ printResponse(resp) // utility for printing response parts
+
+**After**
+
+### Python
+
+The new Google GenAI SDK provides access to all the API methods through the
+`Client` object. Except for a few stateful special cases (`chat` and
+live-api `session`s), these are all stateless functions. For utility and
+uniformity, objects returned are `pydantic` classes.
+
+ from google import genai
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='Tell me a story in 300 words.'
+ )
+ print(response.text)
+
+ print(response.model_dump_json(
+ exclude_none=True, indent=4))
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: "Tell me a story in 300 words.",
+ });
+ console.log(response.text);
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ result, err := client.Models.GenerateContent(ctx, "gemini-2.0-flash", genai.Text("Tell me a story in 300 words."), nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+ debugPrint(result) // utility for printing result
+
+### Image
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content([
+ 'Tell me a story based on this image',
+ Image.open(image_path)
+ ])
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+ function fileToGenerativePart(path, mimeType) {
+ return {
+ inlineData: {
+ data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+ mimeType,
+ },
+ };
+ }
+
+ const prompt = "Tell me a story based on this image";
+
+ const imagePart = fileToGenerativePart(
+ `path/to/organ.jpg`,
+ "image/jpeg",
+ );
+
+ const result = await model.generateContent([prompt, imagePart]);
+ console.log(result.response.text());
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ defer client.Close()
+
+ model := client.GenerativeModel("gemini-1.5-flash")
+
+ imgData, err := os.ReadFile("path/to/organ.jpg")
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ resp, err := model.GenerateContent(ctx,
+ genai.Text("Tell me about this instrument"),
+ genai.ImageData("jpeg", imgData))
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ printResponse(resp) // utility for printing response
+
+**After**
+
+### Python
+
+Many of the same convenience features exist in the new SDK. For
+example, `PIL.Image` objects are automatically converted.
+
+ from google import genai
+ from PIL import Image
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents=[
+ 'Tell me a story based on this image',
+ Image.open(image_path)
+ ]
+ )
+ print(response.text)
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+
+ const organ = await ai.files.upload({
+ file: "path/to/organ.jpg",
+ });
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: [
+ createUserContent([
+ "Tell me a story based on this image",
+ createPartFromUri(organ.uri, organ.mimeType)
+ ]),
+ ],
+ });
+ console.log(response.text);
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ imgData, err := os.ReadFile("path/to/organ.jpg")
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ parts := []*genai.Part{
+ {Text: "Tell me a story based on this image"},
+ {InlineData: &genai.Blob{Data: imgData, MIMEType: "image/jpeg"}},
+ }
+ contents := []*genai.Content{
+ {Parts: parts},
+ }
+
+ result, err := client.Models.GenerateContent(ctx, "gemini-2.0-flash", contents, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+ debugPrint(result) // utility for printing result
+
+### Streaming
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ response = model.generate_content(
+ "Write a cute story about cats.",
+ stream=True)
+ for chunk in response:
+ print(chunk.text)
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+ const prompt = "Write a story about a magic backpack.";
+
+ const result = await model.generateContentStream(prompt);
+
+ // Print text as it comes in.
+ for await (const chunk of result.stream) {
+ const chunkText = chunk.text();
+ process.stdout.write(chunkText);
+ }
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ defer client.Close()
+
+ model := client.GenerativeModel("gemini-1.5-flash")
+ iter := model.GenerateContentStream(ctx, genai.Text("Write a story about a magic backpack."))
+ for {
+ resp, err := iter.Next()
+ if err == iterator.Done {
+ break
+ }
+ if err != nil {
+ log.Fatal(err)
+ }
+ printResponse(resp) // utility for printing the response
+ }
+
+**After**
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ for chunk in client.models.generate_content_stream(
+ model='gemini-2.0-flash',
+ contents='Tell me a story in 300 words.'
+ ):
+ print(chunk.text)
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+
+ const response = await ai.models.generateContentStream({
+ model: "gemini-2.0-flash",
+ contents: "Write a story about a magic backpack.",
+ });
+ let text = "";
+ for await (const chunk of response) {
+ console.log(chunk.text);
+ text += chunk.text;
+ }
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ for result, err := range client.Models.GenerateContentStream(
+ ctx,
+ "gemini-2.0-flash",
+ genai.Text("Write a story about a magic backpack."),
+ nil,
+ ) {
+ if err != nil {
+ log.Fatal(err)
+ }
+ fmt.Print(result.Candidates[0].Content.Parts[0].Text)
+ }
+
+## Configuration
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel(
+ 'gemini-1.5-flash',
+ system_instruction='you are a story teller for kids under 5 years old',
+ generation_config=genai.GenerationConfig(
+ max_output_tokens=400,
+ top_k=2,
+ top_p=0.5,
+ temperature=0.5,
+ response_mime_type='application/json',
+ stop_sequences=['\n'],
+ )
+ )
+ response = model.generate_content('tell me a story in 100 words')
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({
+ model: "gemini-1.5-flash",
+ generationConfig: {
+ candidateCount: 1,
+ stopSequences: ["x"],
+ maxOutputTokens: 20,
+ temperature: 1.0,
+ },
+ });
+
+ const result = await model.generateContent(
+ "Tell me a story about a magic backpack.",
+ );
+ console.log(result.response.text())
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ defer client.Close()
+
+ model := client.GenerativeModel("gemini-1.5-flash")
+ model.SetTemperature(0.5)
+ model.SetTopP(0.5)
+ model.SetTopK(2.0)
+ model.SetMaxOutputTokens(100)
+ model.ResponseMIMEType = "application/json"
+ resp, err := model.GenerateContent(ctx, genai.Text("Tell me about New York"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ printResponse(resp) // utility for printing response
+
+**After**
+
+### Python
+
+For all methods in the new SDK, the required arguments are provided as
+keyword arguments. All optional inputs are provided in the `config`
+argument. Config arguments can be specified as either Python dictionaries or
+`Config` classes in the `google.genai.types` namespace. For utility and
+uniformity, all definitions within the `types` module are `pydantic`
+classes.
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='Tell me a story in 100 words.',
+ config=types.GenerateContentConfig(
+ system_instruction='you are a story teller for kids under 5 years old',
+ max_output_tokens= 400,
+ top_k= 2,
+ top_p= 0.5,
+ temperature= 0.5,
+ response_mime_type= 'application/json',
+ stop_sequences= ['\n'],
+ seed=42,
+ ),
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: "Tell me a story about a magic backpack.",
+ config: {
+ candidateCount: 1,
+ stopSequences: ["x"],
+ maxOutputTokens: 20,
+ temperature: 1.0,
+ },
+ });
+
+ console.log(response.text);
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ result, err := client.Models.GenerateContent(ctx,
+ "gemini-2.0-flash",
+ genai.Text("Tell me about New York"),
+ &genai.GenerateContentConfig{
+ Temperature: genai.Ptr[float32](0.5),
+ TopP: genai.Ptr[float32](0.5),
+ TopK: genai.Ptr[float32](2.0),
+ ResponseMIMEType: "application/json",
+ StopSequences: []string{"Yankees"},
+ CandidateCount: 2,
+ Seed: genai.Ptr[int32](42),
+ MaxOutputTokens: 128,
+ PresencePenalty: genai.Ptr[float32](0.5),
+ FrequencyPenalty: genai.Ptr[float32](0.5),
+ },
+ )
+ if err != nil {
+ log.Fatal(err)
+ }
+ debugPrint(result) // utility for printing response
+
+## Safety settings
+
+Generate a response with safety settings:
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content(
+ 'say something bad',
+ safety_settings={
+ 'HATE': 'BLOCK_ONLY_HIGH',
+ 'HARASSMENT': 'BLOCK_ONLY_HIGH',
+ }
+ )
+
+### JavaScript
+
+ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({
+ model: "gemini-1.5-flash",
+ safetySettings: [
+ {
+ category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+ threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+ },
+ ],
+ });
+
+ const unsafePrompt =
+ "I support Martians Soccer Club and I think " +
+ "Jupiterians Football Club sucks! Write an ironic phrase telling " +
+ "them how I feel about them.";
+
+ const result = await model.generateContent(unsafePrompt);
+
+ try {
+ result.response.text();
+ } catch (e) {
+ console.error(e);
+ console.log(result.response.candidates[0].safetyRatings);
+ }
+
+**After**
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='say something bad',
+ config=types.GenerateContentConfig(
+ safety_settings= [
+ types.SafetySetting(
+ category='HARM_CATEGORY_HATE_SPEECH',
+ threshold='BLOCK_ONLY_HIGH'
+ ),
+ ]
+ ),
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const unsafePrompt =
+ "I support Martians Soccer Club and I think " +
+ "Jupiterians Football Club sucks! Write an ironic phrase telling " +
+ "them how I feel about them.";
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: unsafePrompt,
+ config: {
+ safetySettings: [
+ {
+ category: "HARM_CATEGORY_HARASSMENT",
+ threshold: "BLOCK_ONLY_HIGH",
+ },
+ ],
+ },
+ });
+
+ console.log("Finish reason:", response.candidates[0].finishReason);
+ console.log("Safety ratings:", response.candidates[0].safetyRatings);
+
+## Async
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content_async(
+ 'tell me a story in 100 words'
+ )
+
+**After**
+
+### Python
+
+To use the new SDK with `asyncio`, there is a separate `async`
+implementation of every method under `client.aio`.
+
+ from google import genai
+
+ client = genai.Client()
+
+ response = await client.aio.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='Tell me a story in 300 words.'
+ )
+
+## Chat
+
+Start a chat and send a message to the model:
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ chat = model.start_chat()
+
+ response = chat.send_message(
+ "Tell me a story in 100 words")
+ response = chat.send_message(
+ "What happened after that?")
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+ const chat = model.startChat({
+ history: [
+ {
+ role: "user",
+ parts: [{ text: "Hello" }],
+ },
+ {
+ role: "model",
+ parts: [{ text: "Great to meet you. What would you like to know?" }],
+ },
+ ],
+ });
+ let result = await chat.sendMessage("I have 2 dogs in my house.");
+ console.log(result.response.text());
+ result = await chat.sendMessage("How many paws are in my house?");
+ console.log(result.response.text());
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, option.WithAPIKey("GOOGLE_API_KEY"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ defer client.Close()
+
+ model := client.GenerativeModel("gemini-1.5-flash")
+ cs := model.StartChat()
+
+ cs.History = []*genai.Content{
+ {
+ Parts: []genai.Part{
+ genai.Text("Hello, I have 2 dogs in my house."),
+ },
+ Role: "user",
+ },
+ {
+ Parts: []genai.Part{
+ genai.Text("Great to meet you. What would you like to know?"),
+ },
+ Role: "model",
+ },
+ }
+
+ res, err := cs.SendMessage(ctx, genai.Text("How many paws are in my house?"))
+ if err != nil {
+ log.Fatal(err)
+ }
+ printResponse(res) // utility for printing the response
+
+**After**
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ chat = client.chats.create(model='gemini-2.0-flash')
+
+ response = chat.send_message(
+ message='Tell me a story in 100 words')
+ response = chat.send_message(
+ message='What happened after that?')
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const chat = ai.chats.create({
+ model: "gemini-2.0-flash",
+ history: [
+ {
+ role: "user",
+ parts: [{ text: "Hello" }],
+ },
+ {
+ role: "model",
+ parts: [{ text: "Great to meet you. What would you like to know?" }],
+ },
+ ],
+ });
+
+ const response1 = await chat.sendMessage({
+ message: "I have 2 dogs in my house.",
+ });
+ console.log("Chat response 1:", response1.text);
+
+ const response2 = await chat.sendMessage({
+ message: "How many paws are in my house?",
+ });
+ console.log("Chat response 2:", response2.text);
+
+### Go
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ chat, err := client.Chats.Create(ctx, "gemini-2.0-flash", nil, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ result, err := chat.SendMessage(ctx, genai.Part{Text: "Hello, I have 2 dogs in my house."})
+ if err != nil {
+ log.Fatal(err)
+ }
+ debugPrint(result) // utility for printing result
+
+ result, err = chat.SendMessage(ctx, genai.Part{Text: "How many paws are in my house?"})
+ if err != nil {
+ log.Fatal(err)
+ }
+ debugPrint(result) // utility for printing result
+
+## Function calling
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+ from enum import Enum
+
+ def get_current_weather(location: str) -> str:
+ """Get the current whether in a given location.
+
+ Args:
+ location: required, The city and state, e.g. San Franciso, CA
+ unit: celsius or fahrenheit
+ """
+ print(f'Called with: {location=}')
+ return "23C"
+
+ model = genai.GenerativeModel(
+ model_name="gemini-1.5-flash",
+ tools=[get_current_weather]
+ )
+
+ response = model.generate_content("What is the weather in San Francisco?")
+ function_call = response.candidates[0].parts[0].function_call
+
+**After**
+
+### Python
+
+In the new SDK, automatic function calling is the default. Here, you disable
+it.
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ def get_current_weather(location: str) -> str:
+ """Get the current whether in a given location.
+
+ Args:
+ location: required, The city and state, e.g. San Franciso, CA
+ unit: celsius or fahrenheit
+ """
+ print(f'Called with: {location=}')
+ return "23C"
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents="What is the weather like in Boston?",
+ config=types.GenerateContentConfig(
+ tools=[get_current_weather],
+ automatic_function_calling={'disable': True},
+ ),
+ )
+
+ function_call = response.candidates[0].content.parts[0].function_call
+
+### Automatic function calling
+
+**Before**
+
+### Python
+
+The old SDK only supports automatic function calling in chat. In the new SDK
+this is the default behavior in `generate_content`.
+
+ import google.generativeai as genai
+
+ def get_current_weather(city: str) -> str:
+ return "23C"
+
+ model = genai.GenerativeModel(
+ model_name="gemini-1.5-flash",
+ tools=[get_current_weather]
+ )
+
+ chat = model.start_chat(
+ enable_automatic_function_calling=True)
+ result = chat.send_message("What is the weather in San Francisco?")
+
+**After**
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ client = genai.Client()
+
+ def get_current_weather(city: str) -> str:
+ return "23C"
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents="What is the weather like in Boston?",
+ config=types.GenerateContentConfig(
+ tools=[get_current_weather]
+ ),
+ )
+
+## Code execution
+
+Code execution is a tool that allows the model to generate Python code, run it,
+and return the result.
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel(
+ model_name="gemini-1.5-flash",
+ tools="code_execution"
+ )
+
+ result = model.generate_content(
+ "What is the sum of the first 50 prime numbers? Generate and run code for "
+ "the calculation, and make sure you get all 50.")
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({
+ model: "gemini-1.5-flash",
+ tools: [{ codeExecution: {} }],
+ });
+
+ const result = await model.generateContent(
+ "What is the sum of the first 50 prime numbers? " +
+ "Generate and run code for the calculation, and make sure you get " +
+ "all 50.",
+ );
+
+ console.log(result.response.text());
+
+**After**
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='What is the sum of the first 50 prime numbers? Generate and run '
+ 'code for the calculation, and make sure you get all 50.',
+ config=types.GenerateContentConfig(
+ tools=[types.Tool(code_execution=types.ToolCodeExecution)],
+ ),
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-pro-exp-02-05",
+ contents: `Write and execute code that calculates the sum of the first 50 prime numbers.
+ Ensure that only the executable code and its resulting output are generated.`,
+ });
+
+ // Each part may contain text, executable code, or an execution result.
+ for (const part of response.candidates[0].content.parts) {
+ console.log(part);
+ console.log("\n");
+ }
+
+ console.log("-".repeat(80));
+ // The `.text` accessor concatenates the parts into a markdown-formatted text.
+ console.log("\n", response.text);
+
+## Search grounding
+
+`GoogleSearch` (Gemini\>=2.0) and `GoogleSearchRetrieval` (Gemini \< 2.0) are
+tools that allow the model to retrieve public web data for grounding, powered by
+Google.
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content(
+ contents="what is the Google stock price?",
+ tools='google_search_retrieval'
+ )
+
+**After**
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='What is the Google stock price?',
+ config=types.GenerateContentConfig(
+ tools=[
+ types.Tool(
+ google_search=types.GoogleSearch()
+ )
+ ]
+ )
+ )
+
+## JSON response
+
+Generate answers in JSON format.
+
+**Before**
+
+### Python
+
+By specifying a `response_schema` and setting
+`response_mime_type="application/json"` users can constrain the model to
+produce a `JSON` response following a given structure.
+
+ import google.generativeai as genai
+ import typing_extensions as typing
+
+ class CountryInfo(typing.TypedDict):
+ name: str
+ population: int
+ capital: str
+ continent: str
+ major_cities: list[str]
+ gdp: int
+ official_language: str
+ total_area_sq_mi: int
+
+ model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+ result = model.generate_content(
+ "Give me information of the United States",
+ generation_config=genai.GenerationConfig(
+ response_mime_type="application/json",
+ response_schema = CountryInfo
+ ),
+ )
+
+### JavaScript
+
+ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+
+ const schema = {
+ description: "List of recipes",
+ type: SchemaType.ARRAY,
+ items: {
+ type: SchemaType.OBJECT,
+ properties: {
+ recipeName: {
+ type: SchemaType.STRING,
+ description: "Name of the recipe",
+ nullable: false,
+ },
+ },
+ required: ["recipeName"],
+ },
+ };
+
+ const model = genAI.getGenerativeModel({
+ model: "gemini-1.5-pro",
+ generationConfig: {
+ responseMimeType: "application/json",
+ responseSchema: schema,
+ },
+ });
+
+ const result = await model.generateContent(
+ "List a few popular cookie recipes.",
+ );
+ console.log(result.response.text());
+
+**After**
+
+### Python
+
+The new SDK uses
+`pydantic` classes to provide the schema (although you can pass a
+`genai.types.Schema`, or equivalent `dict`). When possible, the SDK will
+parse the returned JSON, and return the result in `response.parsed`. If you
+provided a `pydantic` class as the schema the SDK will convert that `JSON`
+to an instance of the class.
+
+ from google import genai
+ from pydantic import BaseModel
+
+ client = genai.Client()
+
+ class CountryInfo(BaseModel):
+ name: str
+ population: int
+ capital: str
+ continent: str
+ major_cities: list[str]
+ gdp: int
+ official_language: str
+ total_area_sq_mi: int
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents='Give me information of the United States.',
+ config={
+ 'response_mime_type': 'application/json',
+ 'response_schema': CountryInfo,
+ },
+ )
+
+ response.parsed
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const response = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: "List a few popular cookie recipes.",
+ config: {
+ responseMimeType: "application/json",
+ responseSchema: {
+ type: "array",
+ items: {
+ type: "object",
+ properties: {
+ recipeName: { type: "string" },
+ ingredients: { type: "array", items: { type: "string" } },
+ },
+ required: ["recipeName", "ingredients"],
+ },
+ },
+ },
+ });
+ console.log(response.text);
+
+## Files
+
+### Upload
+
+Upload a file:
+
+**Before**
+
+### Python
+
+ import requests
+ import pathlib
+ import google.generativeai as genai
+
+ # Download file
+ response = requests.get(
+ 'https://storage.googleapis.com/generativeai-downloads/data/a11.txt')
+ pathlib.Path('a11.txt').write_text(response.text)
+
+ file = genai.upload_file(path='a11.txt')
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.generate_content([
+ 'Can you summarize this file:',
+ my_file
+ ])
+ print(response.text)
+
+**After**
+
+### Python
+
+ import requests
+ import pathlib
+ from google import genai
+
+ client = genai.Client()
+
+ # Download file
+ response = requests.get(
+ 'https://storage.googleapis.com/generativeai-downloads/data/a11.txt')
+ pathlib.Path('a11.txt').write_text(response.text)
+
+ my_file = client.files.upload(file='a11.txt')
+
+ response = client.models.generate_content(
+ model='gemini-2.0-flash',
+ contents=[
+ 'Can you summarize this file:',
+ my_file
+ ]
+ )
+ print(response.text)
+
+### List and get
+
+List uploaded files and get an uploaded file with a filename:
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ for file in genai.list_files():
+ print(file.name)
+
+ file = genai.get_file(name=file.name)
+
+**After**
+
+### Python
+
+ from google import genai
+ client = genai.Client()
+
+ for file in client.files.list():
+ print(file.name)
+
+ file = client.files.get(name=file.name)
+
+### Delete
+
+Delete a file:
+
+**Before**
+
+### Python
+
+ import pathlib
+ import google.generativeai as genai
+
+ pathlib.Path('dummy.txt').write_text(dummy)
+ dummy_file = genai.upload_file(path='dummy.txt')
+
+ file = genai.delete_file(name=dummy_file.name)
+
+**After**
+
+### Python
+
+ import pathlib
+ from google import genai
+
+ client = genai.Client()
+
+ pathlib.Path('dummy.txt').write_text(dummy)
+ dummy_file = client.files.upload(file='dummy.txt')
+
+ response = client.files.delete(name=dummy_file.name)
+
+## Context caching
+
+Context caching allows the user to pass the content to the model once, cache the
+input tokens, and then refer to the cached tokens in subsequent calls to lower
+the cost.
+
+**Before**
+
+### Python
+
+ import requests
+ import pathlib
+ import google.generativeai as genai
+ from google.generativeai import caching
+
+ # Download file
+ response = requests.get(
+ 'https://storage.googleapis.com/generativeai-downloads/data/a11.txt')
+ pathlib.Path('a11.txt').write_text(response.text)
+
+ # Upload file
+ document = genai.upload_file(path="a11.txt")
+
+ # Create cache
+ apollo_cache = caching.CachedContent.create(
+ model="gemini-1.5-flash-001",
+ system_instruction="You are an expert at analyzing transcripts.",
+ contents=[document],
+ )
+
+ # Generate response
+ apollo_model = genai.GenerativeModel.from_cached_content(
+ cached_content=apollo_cache
+ )
+ response = apollo_model.generate_content("Find a lighthearted moment from this transcript")
+
+### JavaScript
+
+ import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const cacheManager = new GoogleAICacheManager("GOOGLE_API_KEY");
+ const fileManager = new GoogleAIFileManager("GOOGLE_API_KEY");
+
+ const uploadResult = await fileManager.uploadFile("path/to/a11.txt", {
+ mimeType: "text/plain",
+ });
+
+ const cacheResult = await cacheManager.create({
+ model: "models/gemini-1.5-flash",
+ contents: [
+ {
+ role: "user",
+ parts: [
+ {
+ fileData: {
+ fileUri: uploadResult.file.uri,
+ mimeType: uploadResult.file.mimeType,
+ },
+ },
+ ],
+ },
+ ],
+ });
+
+ console.log(cacheResult);
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModelFromCachedContent(cacheResult);
+ const result = await model.generateContent(
+ "Please summarize this transcript.",
+ );
+ console.log(result.response.text());
+
+**After**
+
+### Python
+
+ import requests
+ import pathlib
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ # Check which models support caching.
+ for m in client.models.list():
+ for action in m.supported_actions:
+ if action == "createCachedContent":
+ print(m.name)
+ break
+
+ # Download file
+ response = requests.get(
+ 'https://storage.googleapis.com/generativeai-downloads/data/a11.txt')
+ pathlib.Path('a11.txt').write_text(response.text)
+
+ # Upload file
+ document = client.files.upload(file='a11.txt')
+
+ # Create cache
+ model='gemini-1.5-flash-001'
+ apollo_cache = client.caches.create(
+ model=model,
+ config={
+ 'contents': [document],
+ 'system_instruction': 'You are an expert at analyzing transcripts.',
+ },
+ )
+
+ # Generate response
+ response = client.models.generate_content(
+ model=model,
+ contents='Find a lighthearted moment from this transcript',
+ config=types.GenerateContentConfig(
+ cached_content=apollo_cache.name,
+ )
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const filePath = path.join(media, "a11.txt");
+ const document = await ai.files.upload({
+ file: filePath,
+ config: { mimeType: "text/plain" },
+ });
+ console.log("Uploaded file name:", document.name);
+ const modelName = "gemini-1.5-flash";
+
+ const contents = [
+ createUserContent(createPartFromUri(document.uri, document.mimeType)),
+ ];
+
+ const cache = await ai.caches.create({
+ model: modelName,
+ config: {
+ contents: contents,
+ systemInstruction: "You are an expert analyzing transcripts.",
+ },
+ });
+ console.log("Cache created:", cache);
+
+ const response = await ai.models.generateContent({
+ model: modelName,
+ contents: "Please summarize this transcript",
+ config: { cachedContent: cache.name },
+ });
+ console.log("Response text:", response.text);
+
+## Count tokens
+
+Count the number of tokens in a request.
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ model = genai.GenerativeModel('gemini-1.5-flash')
+ response = model.count_tokens(
+ 'The quick brown fox jumps over the lazy dog.')
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY+);
+ const model = genAI.getGenerativeModel({
+ model: "gemini-1.5-flash",
+ });
+
+ // Count tokens in a prompt without calling text generation.
+ const countResult = await model.countTokens(
+ "The quick brown fox jumps over the lazy dog.",
+ );
+
+ console.log(countResult.totalTokens); // 11
+
+ const generateResult = await model.generateContent(
+ "The quick brown fox jumps over the lazy dog.",
+ );
+
+ // On the response for `generateContent`, use `usageMetadata`
+ // to get separate input and output token counts
+ // (`promptTokenCount` and `candidatesTokenCount`, respectively),
+ // as well as the combined token count (`totalTokenCount`).
+ console.log(generateResult.response.usageMetadata);
+ // candidatesTokenCount and totalTokenCount depend on response, may vary
+ // { promptTokenCount: 11, candidatesTokenCount: 124, totalTokenCount: 135 }
+
+**After**
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ response = client.models.count_tokens(
+ model='gemini-2.0-flash',
+ contents='The quick brown fox jumps over the lazy dog.',
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const prompt = "The quick brown fox jumps over the lazy dog.";
+ const countTokensResponse = await ai.models.countTokens({
+ model: "gemini-2.0-flash",
+ contents: prompt,
+ });
+ console.log(countTokensResponse.totalTokens);
+
+ const generateResponse = await ai.models.generateContent({
+ model: "gemini-2.0-flash",
+ contents: prompt,
+ });
+ console.log(generateResponse.usageMetadata);
+
+## Generate images
+
+Generate images:
+
+**Before**
+
+### Python
+
+ #pip install https://github.com/google-gemini/generative-ai-python@imagen
+ import google.generativeai as genai
+
+ imagen = genai.ImageGenerationModel(
+ "imagen-3.0-generate-001")
+ gen_images = imagen.generate_images(
+ prompt="Robot holding a red skateboard",
+ number_of_images=1,
+ safety_filter_level="block_low_and_above",
+ person_generation="allow_adult",
+ aspect_ratio="3:4",
+ )
+
+**After**
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ gen_images = client.models.generate_images(
+ model='imagen-3.0-generate-001',
+ prompt='Robot holding a red skateboard',
+ config=types.GenerateImagesConfig(
+ number_of_images= 1,
+ safety_filter_level= "BLOCK_LOW_AND_ABOVE",
+ person_generation= "ALLOW_ADULT",
+ aspect_ratio= "3:4",
+ )
+ )
+
+ for n, image in enumerate(gen_images.generated_images):
+ pathlib.Path(f'{n}.png').write_bytes(
+ image.image.image_bytes)
+
+## Embed content
+
+Generate content embeddings.
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+
+ response = genai.embed_content(
+ model='models/gemini-embedding-001',
+ content='Hello world'
+ )
+
+### JavaScript
+
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+
+ const genAI = new GoogleGenerativeAI("GOOGLE_API_KEY");
+ const model = genAI.getGenerativeModel({
+ model: "gemini-embedding-001",
+ });
+
+ const result = await model.embedContent("Hello world!");
+
+ console.log(result.embedding);
+
+**After**
+
+### Python
+
+ from google import genai
+
+ client = genai.Client()
+
+ response = client.models.embed_content(
+ model='gemini-embedding-001',
+ contents='Hello world',
+ )
+
+### JavaScript
+
+ import {GoogleGenAI} from '@google/genai';
+
+ const ai = new GoogleGenAI({ apiKey: "GOOGLE_API_KEY" });
+ const text = "Hello World!";
+ const result = await ai.models.embedContent({
+ model: "gemini-embedding-001",
+ contents: text,
+ config: { outputDimensionality: 10 },
+ });
+ console.log(result.embeddings);
+
+## Tune a Model
+
+Create and use a tuned model.
+
+The new SDK simplifies tuning with `client.tunings.tune`, which launches the
+tuning job and polls until the job is complete.
+
+**Before**
+
+### Python
+
+ import google.generativeai as genai
+ import random
+
+ # create tuning model
+ train_data = {}
+ for i in range(1, 6):
+ key = f'input {i}'
+ value = f'output {i}'
+ train_data[key] = value
+
+ name = f'generate-num-{random.randint(0,10000)}'
+ operation = genai.create_tuned_model(
+ source_model='models/gemini-1.5-flash-001-tuning',
+ training_data=train_data,
+ id = name,
+ epoch_count = 5,
+ batch_size=4,
+ learning_rate=0.001,
+ )
+ # wait for tuning complete
+ tuningProgress = operation.result()
+
+ # generate content with the tuned model
+ model = genai.GenerativeModel(model_name=f'tunedModels/{name}')
+ response = model.generate_content('55')
+
+**After**
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ # Check which models are available for tuning.
+ for m in client.models.list():
+ for action in m.supported_actions:
+ if action == "createTunedModel":
+ print(m.name)
+ break
+
+ # create tuning model
+ training_dataset=types.TuningDataset(
+ examples=[
+ types.TuningExample(
+ text_input=f'input {i}',
+ output=f'output {i}',
+ )
+ for i in range(5)
+ ],
+ )
+ tuning_job = client.tunings.tune(
+ base_model='models/gemini-1.5-flash-001-tuning',
+ training_dataset=training_dataset,
+ config=types.CreateTuningJobConfig(
+ epoch_count= 5,
+ batch_size=4,
+ learning_rate=0.001,
+ tuned_model_display_name="test tuned model"
+ )
+ )
+
+ # generate content with the tuned model
+ response = client.models.generate_content(
+ model=tuning_job.tuned_model.model,
+ contents='55',
+ )
+
+[END OF DOCUMENT: GEMINI2R9GYN0X53]
+---
+
+[START OF DOCUMENT: GEMINIKC0KFN9AS | Title: Model-Tuning.Md]
+
+With the deprecation of Gemini 1.5 Flash-001 in May 2025, we no longer have a
+model available which supports fine-tuning in the Gemini API, but it is supported
+in [Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini-use-supervised-tuning).
+
+We plan to bring fine-tuning support back in the future. We would love to [hear
+from you on our developer forum](https://discuss.ai.google.dev/c/gemini-api/4) if
+fine-tuning is important to your use case.
+
+[END OF DOCUMENT: GEMINIKC0KFN9AS]
+---
+
+[START OF DOCUMENT: GEMINI29MP6QALJB | Title: Models.Md]
+
+<br />
+
+OUR MOST ADVANCED MODEL
+
+## Gemini 2.5 Pro
+
+Our state-of-the-art thinking model, capable of reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context.
+
+### Expand to learn more
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-2.5-pro)
+
+#### Model details
+
+### Gemini 2.5 Pro
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-pro` |
+| saveSupported data types | **Inputs** Audio, images, video, text, and PDF **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - `Stable: gemini-2.5-pro` |
+| calendar_monthLatest update | June 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+### Gemini 2.5 Pro TTS
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-pro-preview-tts` |
+| saveSupported data types | **Inputs** Text **Output** Audio |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 8,000 **Output token limit** 16,000 |
+| handymanCapabilities | **Audio generation** Supported **Batch API** Not Supported **Caching** Not supported **Code execution** Not supported **Function calling** Not supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Not supported **Structured outputs** Not supported **Thinking** Not supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - `gemini-2.5-pro-preview-tts` |
+| calendar_monthLatest update | May 2025 |
+
+FAST AND INTELLIGENT
+
+## Gemini 2.5 Flash
+
+Our best model in terms of price-performance, offering well-rounded capabilities. 2.5 Flash is best for large scale processing, low-latency, high volume tasks that require thinking, and agentic use cases.
+
+### Expand to learn more
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-2.5-flash)
+
+#### Model details
+
+### Gemini 2.5 Flash
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash` |
+| saveSupported data types | **Inputs** Text, images, video, audio **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Stable: `gemini-2.5-flash` |
+| calendar_monthLatest update | June 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+### Gemini 2.5 Flash Preview
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-preview-09-2025` |
+| saveSupported data types | **Inputs** Text, images, video, audio **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL Context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.5-flash-preview-09-2025` |
+| calendar_monthLatest update | September 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+### Gemini 2.5 Flash Image
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-image` |
+| saveSupported data types | **Inputs** Images and text **Output** Images and text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 32,768 **Output token limit** 32,768 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Not Supported **Function calling** Not supported **Image generation** Supported **Grounding with Google Maps** Not supported **Live API** Not Supported **Search grounding** Not Supported **Structured outputs** Supported **Thinking** Not Supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Stable: `gemini-2.5-flash-image` - Preview: `gemini-2.5-flash-image-preview` |
+| calendar_monthLatest update | October 2025 |
+| cognition_2Knowledge cutoff | June 2025 |
+
+### Gemini 2.5 Flash Live
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-native-audio-preview-09-2025` |
+| saveSupported data types | **Inputs** Audio, video, text **Output** Audio and text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 128,000 **Output token limit** 8,000 |
+| handymanCapabilities | **Audio generation** Supported **Batch API** Not supported **Caching** Not supported **Code execution** Not supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Supported **Search grounding** Supported **Structured outputs** Not supported **Thinking** Supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.5-flash-native-audio-preview-09-2025` - Preview: `gemini-live-2.5-flash-preview` - gemini-live-2.5-flash-preview will be deprecated on December 09, 2025 |
+| calendar_monthLatest update | September 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+### Gemini 2.5 Flash TTS
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-preview-tts` |
+| saveSupported data types | **Inputs** Text **Output** Audio |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 8,000 **Output token limit** 16,000 |
+| handymanCapabilities | **Audio generation** Supported **Batch API** Supported **Caching** Not supported **Code execution** Not supported **Function calling** Not supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Not supported **Structured outputs** Not supported **Thinking** Not supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - `gemini-2.5-flash-preview-tts` |
+| calendar_monthLatest update | May 2025 |
+
+ULTRA FAST
+
+## Gemini 2.5 Flash-Lite
+
+Our fastest flash model optimized for cost-efficiency and high throughput.
+
+### Expand to learn more
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-2.5-flash-lite)
+
+#### Model details
+
+### Gemini 2.5 Flash-Lite
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-lite` |
+| saveSupported data types | **Inputs** Text, image, video, audio, PDF **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Stable: `gemini-2.5-flash-lite` |
+| calendar_monthLatest update | July 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+### Gemini 2.5 Flash-Lite Preview
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.5-flash-lite-preview-09-2025` |
+| saveSupported data types | **Inputs** Text, image, video, audio, PDF **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 65,536 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.5-flash-lite-preview-09-2025` |
+| calendar_monthLatest update | September 2025 |
+| cognition_2Knowledge cutoff | January 2025 |
+
+<br />
+
+## Previous Gemini Models
+
+OUR SECOND GENERATION WORKHORSE MODEL
+
+## Gemini 2.0 Flash
+
+Our second generation workhorse model, with a 1 million token context window.
+
+### Expand to learn more
+
+Gemini 2.0 Flash delivers next-gen features and improved capabilities,
+including superior speed, native tool use, and a 1M token
+context window.
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-2.0-flash)
+
+#### Model details
+
+### Gemini 2.0 Flash
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.0-flash` |
+| saveSupported data types | **Inputs** Audio, images, video, and text **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 8,192 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Supported **Image generation** Not supported **Live API** Supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Experimental **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Latest: `gemini-2.0-flash` - Stable: `gemini-2.0-flash-001` - Experimental: `gemini-2.0-flash-exp` |
+| calendar_monthLatest update | February 2025 |
+| cognition_2Knowledge cutoff | August 2024 |
+
+### Gemini 2.0 Flash Image
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.0-flash-preview-image-generation` |
+| saveSupported data types | **Inputs** Audio, images, video, and text **Output** Text and images |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 32,000 **Output token limit** 8,192 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Not Supported **Function calling** Not supported **Grounding with Google Maps** Not supported **Image generation** Supported **Live API** Not Supported **Search grounding** Not Supported **Structured outputs** Supported **Thinking** Not Supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.0-flash-preview-image-generation` - gemini-2.0-flash-preview-image-generation is not currently supported in a number of countries in Europe, Middle East \& Africa |
+| calendar_monthLatest update | May 2025 |
+| cognition_2Knowledge cutoff | August 2024 |
+
+### Gemini 2.0 Flash Live
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.0-flash-live-001` gemini-2.0-flash-live-001 will be deprecated on December 09, 2025 |
+| saveSupported data types | **Inputs** Audio, video, and text **Output** Text, and audio |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 8,192 |
+| handymanCapabilities | **Audio generation** Supported **Batch API** Not supported **Caching** Not supported **Code execution** Supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Supported **Search grounding** Supported **Structured outputs** Supported **Thinking** Not supported **URL context** Supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.0-flash-live-001` |
+| calendar_monthLatest update | April 2025 |
+| cognition_2Knowledge cutoff | August 2024 |
+
+OUR SECOND GENERATION FAST MODEL
+
+## Gemini 2.0 Flash-Lite
+
+Our second generation small workhorse model, with a 1 million token context window.
+
+### Expand to learn more
+
+A Gemini 2.0 Flash model optimized for cost efficiency and low latency.
+
+[Try in Google AI Studio](https://aistudio.google.com?model=gemini-2.0-flash-lite)
+
+#### Model details
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | `gemini-2.0-flash-lite` |
+| saveSupported data types | **Inputs** Audio, images, video, and text **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/models#token-size)^ | **Input token limit** 1,048,576 **Output token limit** 8,192 |
+| handymanCapabilities | **Audio generation** Not supported **Batch API** Supported **Caching** Supported **Code execution** Not supported **Function calling** Supported **Grounding with Google Maps** Not supported **Image generation** Not supported **Live API** Not supported **Search grounding** Not supported **Structured outputs** Supported **Thinking** Not Supported **URL context** Not supported |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Latest: `gemini-2.0-flash-lite` - Stable: `gemini-2.0-flash-lite-001` |
+| calendar_monthLatest update | February 2025 |
+| cognition_2Knowledge cutoff | August 2024 |
+
+<br />
+
+## Model version name patterns
+
+Gemini models are available in either *stable* , *preview* , *latest* , or
+*experimental* versions.
+| **Note:** The following list refers to the model string naming convention as of September, 2025. Models released prior to that may have different naming conventions. Refer to the exact model string if you are using an older model.
+
+### Stable
+
+Points to a specific stable model. Stable models usually don't change. Most
+production apps should use a specific stable model.
+
+For example: `gemini-2.5-flash`.
+
+### Preview
+
+Points to a preview model which may be used for production. Preview model will
+typically have billing enabled, might come with more restrictive rate limits and
+will be deprecated with at least 2 weeks notice.
+
+For example: `gemini-2.5-flash-preview-09-2025`.
+
+### Latest
+
+Points to the latest release for a specific model variation. This can be a
+stable, preview or experimental release. This alias will get hot-swapped with
+every new release of a specific model variation. A **2-week notice** will
+be provided through email before the version behind latest is changed.
+
+For example: `gemini-flash-latest`.
+
+### Experimental
+
+Points to an experimental model which will typically be not be suitable for
+production use and come with more restrictive rate limits. We release
+experimental models to gather feedback and get our latest updates into the hands
+of developers quickly.
+
+Experimental models are not stable and availability of model endpoints is
+subject to change.
+
+[END OF DOCUMENT: GEMINI29MP6QALJB]
+---
+
+[START OF DOCUMENT: GEMINIIY8S004EO | Title: Music-Generation.Md]
+
+The Gemini API, using
+[Lyria RealTime](https://deepmind.google/technologies/lyria/realtime/),
+provides access to a state-of-the-art, real-time, streaming music
+generation model. It allows developers to build applications where users
+can interactively create, continuously steer, and perform instrumental
+music.
+| **Experimental:** Lyria RealTime is an [experimental model](https://ai.google.dev/gemini-api/docs/models/experimental-models).
+
+To experience what can be built using Lyria RealTime, try it on AI Studio
+using the [Prompt DJ](https://aistudio.google.com/apps/bundled/promptdj) or the
+[MIDI DJ](https://aistudio.google.com/apps/bundled/promptdj-midi) apps!
+
+## How music generation works
+
+Lyria RealTime music generation uses a persistent, bidirectional,
+low-latency streaming connection using
+[WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API).
+
+## Generate and control music
+
+Lyria RealTime works a bit like the [Live API](https://ai.google.dev/gemini-api/docs/live)
+in the sense that it is using websockets to keep a real-time communication with
+the model. It's still not exactly the same as you can't talk to the model and
+you have to use a specific format to prompt it.
+
+The following code demonstrates how to generate music:
+
+### Python
+
+This example initializes the Lyria RealTime session using
+`client.aio.live.music.connect()`, then sends an
+initial prompt with `session.set_weighted_prompts()` along with an initial
+configuration using `session.set_music_generation_config`, starts the music
+generation using `session.play()` and sets up
+`receive_audio()` to process the audio chunks it receives.
+
+ import asyncio
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client(http_options={'api_version': 'v1alpha'})
+
+ async def main():
+ async def receive_audio(session):
+ """Example background task to process incoming audio."""
+ while True:
+ async for message in session.receive():
+ audio_data = message.server_content.audio_chunks[0].data
+ # Process audio...
+ await asyncio.sleep(10**-12)
+
+ async with (
+ client.aio.live.music.connect(model='models/lyria-realtime-exp') as session,
+ asyncio.TaskGroup() as tg,
+ ):
+ # Set up task to receive server messages.
+ tg.create_task(receive_audio(session))
+
+ # Send initial prompts and config
+ await session.set_weighted_prompts(
+ prompts=[
+ types.WeightedPrompt(text='minimal techno', weight=1.0),
+ ]
+ )
+ await session.set_music_generation_config(
+ config=types.LiveMusicGenerationConfig(bpm=90, temperature=1.0)
+ )
+
+ # Start streaming music
+ await session.play()
+ if __name__ == "__main__":
+ asyncio.run(main())
+
+| For a more complete code sample, refer to the
+| "Lyria RealTime - Get Started" file in the cookbooks repository:
+|
+|
+| [View
+| on GitHub](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_LyriaRealTime.py)
+
+### JavaScript
+
+This example initializes the Lyria RealTime session using
+`client.live.music.connect()`, then sends an
+initial prompt with `session.setWeightedPrompts()` along with an initial
+configuration using `session.setMusicGenerationConfig`, starts the music
+generation using `session.play()` and sets up an
+`onMessage` callback to process the audio chunks it receives.
+
+ import { GoogleGenAI } from "@google/genai";
+ import Speaker from "speaker";
+ import { Buffer } from "buffer";
+
+ const client = new GoogleGenAI({
+ apiKey: GEMINI_API_KEY,
+ apiVersion: "v1alpha" ,
+ });
+
+ async function main() {
+ const speaker = new Speaker({
+ channels: 2, // stereo
+ bitDepth: 16, // 16-bit PCM
+ sampleRate: 44100, // 44.1 kHz
+ });
+
+ const session = await client.live.music.connect({
+ model: "models/lyria-realtime-exp",
+ callbacks: {
+ onmessage: (message) => {
+ if (message.serverContent?.audioChunks) {
+ for (const chunk of message.serverContent.audioChunks) {
+ const audioBuffer = Buffer.from(chunk.data, "base64");
+ speaker.write(audioBuffer);
+ }
+ }
+ },
+ onerror: (error) => console.error("music session error:", error),
+ onclose: () => console.log("Lyria RealTime stream closed."),
+ },
+ });
+
+ await session.setWeightedPrompts({
+ weightedPrompts: [
+ { text: "Minimal techno with deep bass, sparse percussion, and atmospheric synths", weight: 1.0 },
+ ],
+ });
+
+ await session.setMusicGenerationConfig({
+ musicGenerationConfig: {
+ bpm: 90,
+ temperature: 1.0,
+ audioFormat: "pcm16", // important so we know format
+ sampleRateHz: 44100,
+ },
+ });
+
+ await session.play();
+ }
+
+ main().catch(console.error);
+
+| For a more complete code sample, refer to those two AI studio apps:
+|
+|
+| [Try Prompt DJ on AI Studio](https://aistudio.google.com/apps/bundled/promptdj)
+|
+|
+| [Try MIDI DJ on AI Studio](https://aistudio.google.com/apps/bundled/promptdj-midi)
+
+You can then use `session.play()`, `session.pause()`, `session.stop()` and
+`session.reset_context()` to start, pause, stop or reset the session.
+
+## Steer music in real-time
+
+### Prompt Lyria RealTime
+
+While the stream is active, you can send new `WeightedPrompt` messages at any
+time to alter the generated music. The model will smoothly transition based
+on the new input.
+
+The prompts need to follow the right format with a `text` (the
+actual prompt), and a `weight`. The `weight` can take any value except `0`. `1.0`
+is usually a good starting point.
+
+### Python
+
+ from google.genai import types
+
+ await session.set_weighted_prompts(
+ prompts=[
+ {"text": "Piano", "weight": 2.0},
+ types.WeightedPrompt(text="Meditation", weight=0.5),
+ types.WeightedPrompt(text="Live Performance", weight=1.0),
+ ]
+ )
+
+### JavaScript
+
+ await session.setMusicGenerationConfig({
+ weightedPrompts: [
+ { text: 'Harmonica', weight: 0.3 },
+ { text: 'Afrobeat', weight: 0.7 }
+ ],
+ });
+
+Note that the model transitions can be a bit abrupt when drastically changing
+the prompts so it's recommended to implement some kind of cross-fading by
+sending intermediate weight values to the model.
+
+### Update the configuration
+
+You can also update the music generation parameters in real time. You can't just
+update a parameter, you need to set the whole configuration otherwise the other
+fields will be reset back to their default values.
+
+Since updating the bpm or the scale is a drastic change for the model you'll
+also need to tell it to reset its context using `reset_context()` to take the
+new config into account. It won't stop the stream, but it will be a hard
+transition. You don't need to do it for the other parameters.
+
+### Python
+
+ from google.genai import types
+
+ await session.set_music_generation_config(
+ config=types.LiveMusicGenerationConfig(
+ bpm=128,
+ scale=types.Scale.D_MAJOR_B_MINOR,
+ music_generation_mode=types.MusicGenerationMode.QUALITY
+ )
+ )
+ await session.reset_context();
+
+### JavaScript
+
+ await session.setMusicGenerationConfig({
+ musicGenerationConfig: {
+ bpm: 120,
+ density: 0.75,
+ musicGenerationMode: MusicGenerationMode.QUALITY
+ },
+ });
+ await session.reset_context();
+
+## Prompt guide for Lyria RealTime
+
+Here's a non-exhaustive list of prompts you can use to prompt Lyria RealTime:
+
+- Instruments: `303 Acid Bass, 808 Hip Hop Beat, Accordion, Alto Saxophone,
+ Bagpipes, Balalaika Ensemble, Banjo, Bass Clarinet, Bongos, Boomy Bass,
+ Bouzouki, Buchla Synths, Cello, Charango, Clavichord, Conga Drums,
+ Didgeridoo, Dirty Synths, Djembe, Drumline, Dulcimer, Fiddle, Flamenco
+ Guitar, Funk Drums, Glockenspiel, Guitar, Hang Drum, Harmonica, Harp,
+ Harpsichord, Hurdy-gurdy, Kalimba, Koto, Lyre, Mandolin, Maracas, Marimba,
+ Mbira, Mellotron, Metallic Twang, Moog Oscillations, Ocarina, Persian Tar,
+ Pipa, Precision Bass, Ragtime Piano, Rhodes Piano, Shamisen, Shredding
+ Guitar, Sitar, Slide Guitar, Smooth Pianos, Spacey Synths, Steel Drum, Synth
+ Pads, Tabla, TR-909 Drum Machine, Trumpet, Tuba, Vibraphone, Viola Ensemble,
+ Warm Acoustic Guitar, Woodwinds, ...`
+- Music Genre: `Acid Jazz, Afrobeat, Alternative Country, Baroque, Bengal Baul,
+ Bhangra, Bluegrass, Blues Rock, Bossa Nova, Breakbeat, Celtic Folk, Chillout,
+ Chiptune, Classic Rock, Contemporary R&B, Cumbia, Deep House, Disco Funk,
+ Drum & Bass, Dubstep, EDM, Electro Swing, Funk Metal, G-funk, Garage Rock,
+ Glitch Hop, Grime, Hyperpop, Indian Classical, Indie Electronic, Indie Folk,
+ Indie Pop, Irish Folk, Jam Band, Jamaican Dub, Jazz Fusion, Latin Jazz, Lo-Fi
+ Hip Hop, Marching Band, Merengue, New Jack Swing, Minimal Techno, Moombahton,
+ Neo-Soul, Orchestral Score, Piano Ballad, Polka, Post-Punk, 60s Psychedelic
+ Rock, Psytrance, R&B, Reggae, Reggaeton, Renaissance Music, Salsa, Shoegaze,
+ Ska, Surf Rock, Synthpop, Techno, Trance, Trap Beat, Trip Hop, Vaporwave,
+ Witch house, ...`
+- Mood/Description: `Acoustic Instruments, Ambient, Bright Tones, Chill,
+ Crunchy Distortion, Danceable, Dreamy, Echo, Emotional, Ethereal Ambience,
+ Experimental, Fat Beats, Funky, Glitchy Effects, Huge Drop, Live Performance,
+ Lo-fi, Ominous Drone, Psychedelic, Rich Orchestration, Saturated Tones,
+ Subdued Melody, Sustained Chords, Swirling Phasers, Tight Groove,
+ Unsettling, Upbeat, Virtuoso, Weird Noises, ...`
+
+These are just some examples, Lyria RealTime can do much more. Experiment
+with your own prompts!
+
+## Best practices
+
+- Client applications must implement robust audio buffering to ensure smooth playback. This helps account for network jitter and slight variations in generation latency.
+- Effective prompting:
+ - Be descriptive. Use adjectives describing mood, genre, and instrumentation.
+ - Iterate and steer gradually. Rather than completely changing the prompt, try adding or modifying elements to morph the music more smoothly.
+ - Experiment with weight on `WeightedPrompt` to influence how strongly a new prompt affects the ongoing generation.
+
+## Technical details
+
+This section describes the specifics of how to use Lyria RealTime music
+generation.
+
+### Specifications
+
+- Output format: Raw 16-bit PCM Audio
+- Sample rate: 48kHz
+- Channels: 2 (stereo)
+
+### Controls
+
+Music generation can be influenced in real time by sending messages containing:
+
+- `WeightedPrompt`: A text string describing a musical idea, genre, instrument, mood, or characteristic. Multiple prompts can potentially be supplied to blend influences. See [above](https://ai.google.dev/gemini-api/docs/:#steer-music) for more details on how to best prompt Lyria RealTime.
+- `MusicGenerationConfig`: Configuration for the music generation process, influencing the characteristics of the output audio.). Parameters include:
+ - `guidance`: (float) Range: `[0.0, 6.0]`. Default: `4.0`. Controls how strictly the model follows the prompts. Higher guidance improves adherence to the prompt, but makes transitions more abrupt.
+ - `bpm`: (int) Range: `[60, 200]`. Sets the Beats Per Minute you want for the generated music. You need to stop/play or reset the context for the model it take into account the new bpm.
+ - `density`: (float) Range: `[0.0, 1.0]`. Controls the density of musical notes/sounds. Lower values produce sparser music; higher values produce "busier" music.
+ - `brightness`: (float) Range: `[0.0, 1.0]`. Adjusts the tonal quality. Higher values produce "brighter" sounding audio, generally emphasizing higher frequencies.
+ - `scale`: (Enum) Sets the musical scale (Key and Mode) for the generation. Use the [`Scale` enum values](https://ai.google.dev/gemini-api/docs/music-generation#scale-enum) provided by the SDK. You need to stop/play or reset the context for the model it take into account the new scale.
+ - `mute_bass`: (bool) Default: `False`. Controls whether the model reduces the outputs' bass.
+ - `mute_drums`: (bool) Default: `False`. Controls whether the model outputs reduces the outputs' drums.
+ - `only_bass_and_drums`: (bool) Default: `False`. Steer the model to try to only output bass and drums.
+ - `music_generation_mode`: (Enum) Indicates to the model if it should focus on `QUALITY` (default value) or `DIVERSITY` of music. It can also be set to `VOCALIZATION` to let the model generate vocalizations as another instrument (add them as new pompts).
+- `PlaybackControl`: Commands to control playback aspects, such as play, pause, stop or reset the context.
+
+For `bpm`, `density`, `brightness` and `scale`, if no value is provided, the
+model will decide what's best according to your initial prompts.
+
+More classical parameters like `temperature` (0.0 to 3.0, default 1.1), `top_k`
+(1 to 1000, default 40), and `seed` (0 to 2 147 483 647, randomly selected by
+default) are also customizable in the `MusicGenerationConfig`.
+
+#### Scale Enum Values
+
+Here are all the scale values that the model can accept:
+
+| Enum Value | Scale / Key |
+|-----------------------------|-----------------------------|
+| `C_MAJOR_A_MINOR` | C major / A minor |
+| `D_FLAT_MAJOR_B_FLAT_MINOR` | D♭ major / B♭ minor |
+| `D_MAJOR_B_MINOR` | D major / B minor |
+| `E_FLAT_MAJOR_C_MINOR` | E♭ major / C minor |
+| `E_MAJOR_D_FLAT_MINOR` | E major / C♯/D♭ minor |
+| `F_MAJOR_D_MINOR` | F major / D minor |
+| `G_FLAT_MAJOR_E_FLAT_MINOR` | G♭ major / E♭ minor |
+| `G_MAJOR_E_MINOR` | G major / E minor |
+| `A_FLAT_MAJOR_F_MINOR` | A♭ major / F minor |
+| `A_MAJOR_G_FLAT_MINOR` | A major / F♯/G♭ minor |
+| `B_FLAT_MAJOR_G_MINOR` | B♭ major / G minor |
+| `B_MAJOR_A_FLAT_MINOR` | B major / G♯/A♭ minor |
+| `SCALE_UNSPECIFIED` | Default / The model decides |
+
+The model is capable of guiding the notes that are played, but does
+not distinguish between relative keys. Thus each enum corresponds both to the
+relative major and minor. For example, `C_MAJOR_A_MINOR` would correspond to all
+the white keys of a piano, and `F_MAJOR_D_MINOR` would be all the white keys
+except B flat.
+
+### Limitations
+
+- Instrumental only: The model generates instrumental music only.
+- Safety: Prompts are checked by safety filters. Prompts triggering the filters will be ignored in which case an explanation will be written in the output's `filtered_prompt` field.
+- Watermarking: Output audio is always watermarked for identification following our [Responsible AI](https://ai.google/responsibility/principles/) principles.
+
+## What's next
+
+- Instead of music, learn how to generate multi-speakers conversation using the [TTS models](https://ai.google.dev/gemini-api/docs/audio-generation),
+- Discover how to generate [images](https://ai.google.dev/gemini-api/docs/image-generation) or [videos](https://ai.google.dev/gemini-api/docs/video),
+- Instead of generation music or audio, find out how to Gemini can [understand Audio files](https://ai.google.dev/gemini-api/docs/audio),
+- Have a real-time conversation with Gemini using the [Live API](https://ai.google.dev/gemini-api/docs/live).
+
+Explore the [Cookbook](https://github.com/google-gemini/cookbook) for more
+code examples and tutorials.
+
+[END OF DOCUMENT: GEMINIIY8S004EO]
+---
+
+[START OF DOCUMENT: GEMINI1OXOF70MLJ | Title: Openai.Md]
+
+<br />
+
+Gemini models are accessible using the OpenAI libraries (Python and TypeScript /
+Javascript) along with the REST API, by updating three lines of code
+and using your [Gemini API key](https://aistudio.google.com/apikey). If you
+aren't already using the OpenAI libraries, we recommend that you call the
+[Gemini API directly](https://ai.google.dev/gemini-api/docs/quickstart).
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ response = client.chat.completions.create(
+ model="gemini-2.5-flash",
+ messages=[
+ {"role": "system", "content": "You are a helpful assistant."},
+ {
+ "role": "user",
+ "content": "Explain to me how AI works"
+ }
+ ]
+ )
+
+ print(response.choices[0].message)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ const response = await openai.chat.completions.create({
+ model: "gemini-2.0-flash",
+ messages: [
+ { role: "system", content: "You are a helpful assistant." },
+ {
+ role: "user",
+ content: "Explain to me how AI works",
+ },
+ ],
+ });
+
+ console.log(response.choices[0].message);
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "gemini-2.0-flash",
+ "messages": [
+ {"role": "user", "content": "Explain to me how AI works"}
+ ]
+ }'
+
+What changed? Just three lines!
+
+- **`api_key="GEMINI_API_KEY"`** : Replace "`GEMINI_API_KEY`" with your actual Gemini
+ API key, which you can get in [Google AI Studio](https://aistudio.google.com).
+
+- **`base_url="https://generativelanguage.googleapis.com/v1beta/openai/"`:** This
+ tells the OpenAI library to send requests to the Gemini API endpoint instead of
+ the default URL.
+
+- **`model="gemini-2.0-flash"`**: Choose a compatible Gemini model
+
+## Thinking
+
+Gemini 2.5 models are trained to think through complex problems, leading to
+significantly improved reasoning. The Gemini API comes with a ["thinking budget"
+parameter](https://ai.google.dev/gemini-api/docs/thinking#set-budget) which gives fine grain control
+over how much the model will think.
+
+Unlike the Gemini API, the OpenAI API offers three levels of thinking control:
+`"low"`, `"medium"`, and `"high"`, which map to 1,024, 8,192, and 24,576 tokens,
+respectively.
+
+If you want to disable thinking, you can set `reasoning_effort` to `"none"`
+(note that reasoning cannot be turned off for 2.5 Pro models).
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ response = client.chat.completions.create(
+ model="gemini-2.5-flash",
+ reasoning_effort="low",
+ messages=[
+ {"role": "system", "content": "You are a helpful assistant."},
+ {
+ "role": "user",
+ "content": "Explain to me how AI works"
+ }
+ ]
+ )
+
+ print(response.choices[0].message)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ const response = await openai.chat.completions.create({
+ model: "gemini-2.5-flash",
+ reasoning_effort: "low",
+ messages: [
+ { role: "system", content: "You are a helpful assistant." },
+ {
+ role: "user",
+ content: "Explain to me how AI works",
+ },
+ ],
+ });
+
+ console.log(response.choices[0].message);
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "gemini-2.5-flash",
+ "reasoning_effort": "low",
+ "messages": [
+ {"role": "user", "content": "Explain to me how AI works"}
+ ]
+ }'
+
+Gemini thinking models also produce [thought summaries](https://ai.google.dev/gemini-api/docs/thinking#summaries) and can use exact [thinking budgets](https://ai.google.dev/gemini-api/docs/thinking#set-budget).
+You can use the [`extra_body`](https://ai.google.dev/gemini-api/docs/openai#extra-body) field to include these fields
+in your request.
+
+Note that `reasoning_effort` and `thinking_budget` overlap functionality, so
+they can't be used at the same time.
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ response = client.chat.completions.create(
+ model="gemini-2.5-flash",
+ messages=[{"role": "user", "content": "Explain to me how AI works"}],
+ extra_body={
+ 'extra_body': {
+ "google": {
+ "thinking_config": {
+ "thinking_budget": 800,
+ "include_thoughts": True
+ }
+ }
+ }
+ }
+ )
+
+ print(response.choices[0].message)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ const response = await openai.chat.completions.create({
+ model: "gemini-2.5-flash",
+ messages: [{role: "user", content: "Explain to me how AI works",}],
+ extra_body: {
+ "google": {
+ "thinking_config": {
+ "thinking_budget": 800,
+ "include_thoughts": true
+ }
+ }
+ }
+ });
+
+ console.log(response.choices[0].message);
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "gemini-2.5-flash",
+ "messages": [{"role": "user", "content": "Explain to me how AI works"}],
+ "extra_body": {
+ "google": {
+ "thinking_config": {
+ "include_thoughts": true
+ }
+ }
+ }
+ }'
+
+## Streaming
+
+The Gemini API supports [streaming responses](https://ai.google.dev/gemini-api/docs/text-generation?lang=python#generate-a-text-stream).
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ response = client.chat.completions.create(
+ model="gemini-2.0-flash",
+ messages=[
+ {"role": "system", "content": "You are a helpful assistant."},
+ {"role": "user", "content": "Hello!"}
+ ],
+ stream=True
+ )
+
+ for chunk in response:
+ print(chunk.choices[0].delta)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ async function main() {
+ const completion = await openai.chat.completions.create({
+ model: "gemini-2.0-flash",
+ messages: [
+ {"role": "system", "content": "You are a helpful assistant."},
+ {"role": "user", "content": "Hello!"}
+ ],
+ stream: true,
+ });
+
+ for await (const chunk of completion) {
+ console.log(chunk.choices[0].delta.content);
+ }
+ }
+
+ main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "gemini-2.0-flash",
+ "messages": [
+ {"role": "user", "content": "Explain to me how AI works"}
+ ],
+ "stream": true
+ }'
+
+## Function calling
+
+Function calling makes it easier for you to get structured data outputs from
+generative models and is [supported in the Gemini API](https://ai.google.dev/gemini-api/docs/function-calling/tutorial).
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ tools = [
+ {
+ "type": "function",
+ "function": {
+ "name": "get_weather",
+ "description": "Get the weather in a given location",
+ "parameters": {
+ "type": "object",
+ "properties": {
+ "location": {
+ "type": "string",
+ "description": "The city and state, e.g. Chicago, IL",
+ },
+ "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+ },
+ "required": ["location"],
+ },
+ }
+ }
+ ]
+
+ messages = [{"role": "user", "content": "What's the weather like in Chicago today?"}]
+ response = client.chat.completions.create(
+ model="gemini-2.0-flash",
+ messages=messages,
+ tools=tools,
+ tool_choice="auto"
+ )
+
+ print(response)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ async function main() {
+ const messages = [{"role": "user", "content": "What's the weather like in Chicago today?"}];
+ const tools = [
+ {
+ "type": "function",
+ "function": {
+ "name": "get_weather",
+ "description": "Get the weather in a given location",
+ "parameters": {
+ "type": "object",
+ "properties": {
+ "location": {
+ "type": "string",
+ "description": "The city and state, e.g. Chicago, IL",
+ },
+ "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+ },
+ "required": ["location"],
+ },
+ }
+ }
+ ];
+
+ const response = await openai.chat.completions.create({
+ model: "gemini-2.0-flash",
+ messages: messages,
+ tools: tools,
+ tool_choice: "auto",
+ });
+
+ console.log(response);
+ }
+
+ main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "gemini-2.0-flash",
+ "messages": [
+ {
+ "role": "user",
+ "content": "What'\''s the weather like in Chicago today?"
+ }
+ ],
+ "tools": [
+ {
+ "type": "function",
+ "function": {
+ "name": "get_weather",
+ "description": "Get the current weather in a given location",
+ "parameters": {
+ "type": "object",
+ "properties": {
+ "location": {
+ "type": "string",
+ "description": "The city and state, e.g. Chicago, IL"
+ },
+ "unit": {
+ "type": "string",
+ "enum": ["celsius", "fahrenheit"]
+ }
+ },
+ "required": ["location"]
+ }
+ }
+ }
+ ],
+ "tool_choice": "auto"
+ }'
+
+## Image understanding
+
+Gemini models are natively multimodal and provide best in class performance on
+[many common vision tasks](https://ai.google.dev/gemini-api/docs/vision).
+
+### Python
+
+ import base64
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ # Function to encode the image
+ def encode_image(image_path):
+ with open(image_path, "rb") as image_file:
+ return base64.b64encode(image_file.read()).decode('utf-8')
+
+ # Getting the base64 string
+ base64_image = encode_image("Path/to/agi/image.jpeg")
+
+ response = client.chat.completions.create(
+ model="gemini-2.0-flash",
+ messages=[
+ {
+ "role": "user",
+ "content": [
+ {
+ "type": "text",
+ "text": "What is in this image?",
+ },
+ {
+ "type": "image_url",
+ "image_url": {
+ "url": f"data:image/jpeg;base64,{base64_image}"
+ },
+ },
+ ],
+ }
+ ],
+ )
+
+ print(response.choices[0])
+
+### JavaScript
+
+ import OpenAI from "openai";
+ import fs from 'fs/promises';
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ async function encodeImage(imagePath) {
+ try {
+ const imageBuffer = await fs.readFile(imagePath);
+ return imageBuffer.toString('base64');
+ } catch (error) {
+ console.error("Error encoding image:", error);
+ return null;
+ }
+ }
+
+ async function main() {
+ const imagePath = "Path/to/agi/image.jpeg";
+ const base64Image = await encodeImage(imagePath);
+
+ const messages = [
+ {
+ "role": "user",
+ "content": [
+ {
+ "type": "text",
+ "text": "What is in this image?",
+ },
+ {
+ "type": "image_url",
+ "image_url": {
+ "url": `data:image/jpeg;base64,${base64Image}`
+ },
+ },
+ ],
+ }
+ ];
+
+ try {
+ const response = await openai.chat.completions.create({
+ model: "gemini-2.0-flash",
+ messages: messages,
+ });
+
+ console.log(response.choices[0]);
+ } catch (error) {
+ console.error("Error calling Gemini API:", error);
+ }
+ }
+
+ main();
+
+### REST
+
+ bash -c '
+ base64_image=$(base64 -i "Path/to/agi/image.jpeg");
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d "{
+ \"model\": \"gemini-2.0-flash\",
+ \"messages\": [
+ {
+ \"role\": \"user\",
+ \"content\": [
+ { \"type\": \"text\", \"text\": \"What is in this image?\" },
+ {
+ \"type\": \"image_url\",
+ \"image_url\": { \"url\": \"data:image/jpeg;base64,${base64_image}\" }
+ }
+ ]
+ }
+ ]
+ }"
+ '
+
+## Generate an image
+
+| **Note:** Image generation is only available in the paid tier.
+
+Generate an image:
+
+### Python
+
+ import base64
+ from openai import OpenAI
+ from PIL import Image
+ from io import BytesIO
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+ )
+
+ response = client.images.generate(
+ model="imagen-3.0-generate-002",
+ prompt="a portrait of a sheepadoodle wearing a cape",
+ response_format='b64_json',
+ n=1,
+ )
+
+ for image_data in response.data:
+ image = Image.open(BytesIO(base64.b64decode(image_data.b64_json)))
+ image.show()
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+ });
+
+ async function main() {
+ const image = await openai.images.generate(
+ {
+ model: "imagen-3.0-generate-002",
+ prompt: "a portrait of a sheepadoodle wearing a cape",
+ response_format: "b64_json",
+ n: 1,
+ }
+ );
+
+ console.log(image.data);
+ }
+
+ main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/images/generations" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "model": "imagen-3.0-generate-002",
+ "prompt": "a portrait of a sheepadoodle wearing a cape",
+ "response_format": "b64_json",
+ "n": 1,
+ }'
+
+## Audio understanding
+
+Analyze audio input:
+
+### Python
+
+ import base64
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ with open("/path/to/your/audio/file.wav", "rb") as audio_file:
+ base64_audio = base64.b64encode(audio_file.read()).decode('utf-8')
+
+ response = client.chat.completions.create(
+ model="gemini-2.0-flash",
+ messages=[
+ {
+ "role": "user",
+ "content": [
+ {
+ "type": "text",
+ "text": "Transcribe this audio",
+ },
+ {
+ "type": "input_audio",
+ "input_audio": {
+ "data": base64_audio,
+ "format": "wav"
+ }
+ }
+ ],
+ }
+ ],
+ )
+
+ print(response.choices[0].message.content)
+
+### JavaScript
+
+ import fs from "fs";
+ import OpenAI from "openai";
+
+ const client = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+ });
+
+ const audioFile = fs.readFileSync("/path/to/your/audio/file.wav");
+ const base64Audio = Buffer.from(audioFile).toString("base64");
+
+ async function main() {
+ const response = await client.chat.completions.create({
+ model: "gemini-2.0-flash",
+ messages: [
+ {
+ role: "user",
+ content: [
+ {
+ type: "text",
+ text: "Transcribe this audio",
+ },
+ {
+ type: "input_audio",
+ input_audio: {
+ data: base64Audio,
+ format: "wav",
+ },
+ },
+ ],
+ },
+ ],
+ });
+
+ console.log(response.choices[0].message.content);
+ }
+
+ main();
+
+### REST
+
+**Note:** If you get an `Argument list too long` error, the encoding of your audio file might be too long for curl.
+
+ bash -c '
+ base64_audio=$(base64 -i "/path/to/your/audio/file.wav");
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d "{
+ \"model\": \"gemini-2.0-flash\",
+ \"messages\": [
+ {
+ \"role\": \"user\",
+ \"content\": [
+ { \"type\": \"text\", \"text\": \"Transcribe this audio file.\" },
+ {
+ \"type\": \"input_audio\",
+ \"input_audio\": {
+ \"data\": \"${base64_audio}\",
+ \"format\": \"wav\"
+ }
+ }
+ ]
+ }
+ ]
+ }"
+ '
+
+## Structured output
+
+Gemini models can output JSON objects in any [structure you define](https://ai.google.dev/gemini-api/docs/structured-output).
+
+### Python
+
+ from pydantic import BaseModel
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ class CalendarEvent(BaseModel):
+ name: str
+ date: str
+ participants: list[str]
+
+ completion = client.beta.chat.completions.parse(
+ model="gemini-2.0-flash",
+ messages=[
+ {"role": "system", "content": "Extract the event information."},
+ {"role": "user", "content": "John and Susan are going to an AI conference on Friday."},
+ ],
+ response_format=CalendarEvent,
+ )
+
+ print(completion.choices[0].message.parsed)
+
+### JavaScript
+
+ import OpenAI from "openai";
+ import { zodResponseFormat } from "openai/helpers/zod";
+ import { z } from "zod";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai"
+ });
+
+ const CalendarEvent = z.object({
+ name: z.string(),
+ date: z.string(),
+ participants: z.array(z.string()),
+ });
+
+ const completion = await openai.chat.completions.parse({
+ model: "gemini-2.0-flash",
+ messages: [
+ { role: "system", content: "Extract the event information." },
+ { role: "user", content: "John and Susan are going to an AI conference on Friday" },
+ ],
+ response_format: zodResponseFormat(CalendarEvent, "event"),
+ });
+
+ const event = completion.choices[0].message.parsed;
+ console.log(event);
+
+## Embeddings
+
+Text embeddings measure the relatedness of text strings and can be generated
+using the [Gemini API](https://ai.google.dev/gemini-api/docs/embeddings).
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ response = client.embeddings.create(
+ input="Your text string goes here",
+ model="gemini-embedding-001"
+ )
+
+ print(response.data[0].embedding)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+ });
+
+ async function main() {
+ const embedding = await openai.embeddings.create({
+ model: "gemini-embedding-001",
+ input: "Your text string goes here",
+ });
+
+ console.log(embedding);
+ }
+
+ main();
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/openai/embeddings" \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer GEMINI_API_KEY" \
+ -d '{
+ "input": "Your text string goes here",
+ "model": "gemini-embedding-001"
+ }'
+
+## Batch API
+
+You can create [batch jobs](https://ai.google.dev/gemini-api/docs/batch-mode), submit them, and check
+their status using the OpenAI library.
+
+You'll need to prepare the JSONL file in OpenAI input format. For example:
+
+ {"custom_id": "request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "gemini-2.5-flash", "messages": [{"role": "user", "content": "Tell me a one-sentence joke."}]}}
+ {"custom_id": "request-2", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "gemini-2.5-flash", "messages": [{"role": "user", "content": "Why is the sky blue?"}]}}
+
+OpenAI compatibility for Batch supports creating a batch,
+monitoring job status, and viewing batch results.
+
+Compatibility for upload and download is currently not supported. Instead, the
+following example uses the `genai` client for uploading and downloading
+[files](https://ai.google.dev/gemini-api/docs/files), the same as when using the Gemini [Batch API](https://ai.google.dev/gemini-api/docs/batch-mode#input-file).
+
+### Python
+
+ from openai import OpenAI
+
+ # Regular genai client for uploads & downloads
+ from google import genai
+ client = genai.Client()
+
+ openai_client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ # Upload the JSONL file in OpenAI input format, using regular genai SDK
+ uploaded_file = client.files.upload(
+ file='my-batch-requests.jsonl',
+ config=types.UploadFileConfig(display_name='my-batch-requests', mime_type='jsonl')
+ )
+
+ # Create batch
+ batch = openai_client.batches.create(
+ input_file_id=batch_input_file_id,
+ endpoint="/v1/chat/completions",
+ completion_window="24h"
+ )
+
+ # Wait for batch to finish (up to 24h)
+ while True:
+ batch = client.batches.retrieve(batch.id)
+ if batch.status in ('completed', 'failed', 'cancelled', 'expired'):
+ break
+ print(f"Batch not finished. Current state: {batch.status}. Waiting 30 seconds...")
+ time.sleep(30)
+ print(f"Batch finished: {batch}")
+
+ # Download results in OpenAI output format, using regular genai SDK
+ file_content = genai_client.files.download(file=batch.output_file_id).decode('utf-8')
+
+ # See batch_output JSONL in OpenAI output format
+ for line in file_content.splitlines():
+ print(line)
+
+The OpenAI SDK also supports [generating embeddings with the Batch API](https://ai.google.dev/gemini-api/docs/batch-api#batch-embeddings). To do so, switch out the
+`create` method's `endpoint` field for an embeddings endpoint, as well as the
+`url` and `model` keys in the JSONL file:
+
+ # JSONL file using embeddings model and endpoint
+ # {"custom_id": "request-1", "method": "POST", "url": "/v1/embeddings", "body": {"model": "ggemini-embedding-001", "messages": [{"role": "user", "content": "Tell me a one-sentence joke."}]}}
+ # {"custom_id": "request-2", "method": "POST", "url": "/v1/embeddings", "body": {"model": "gemini-embedding-001", "messages": [{"role": "user", "content": "Why is the sky blue?"}]}}
+
+ # ...
+
+ # Create batch step with embeddings endpoint
+ batch = openai_client.batches.create(
+ input_file_id=batch_input_file_id,
+ endpoint="/v1/embeddings",
+ completion_window="24h"
+ )
+
+See the [Batch embedding generation](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Get_started_OpenAI_Compatibility.ipynb)
+section of the OpenAI compatibility cookbook for a complete example.
+
+## `extra_body`
+
+There are several features supported by Gemini that are not available in OpenAI
+models but can be enabled using the `extra_body` field.
+
+**`extra_body` features**
+
+|-------------------|------------------------------------------------------------------|
+| `cached_content` | Corresponds to Gemini's `GenerateContentRequest.cached_content`. |
+| `thinking_config` | Corresponds to Gemini's `ThinkingConfig`. |
+
+### `cached_content`
+
+Here's an example of using `extra_body` to set `cached_content`:
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key=MY_API_KEY,
+ base_url="https://generativelanguage.googleapis.com/v1beta/"
+ )
+
+ stream = client.chat.completions.create(
+ model="gemini-2.5-pro",
+ n=1,
+ messages=[
+ {
+ "role": "user",
+ "content": "Summarize the video"
+ }
+ ],
+ stream=True,
+ stream_options={'include_usage': True},
+ extra_body={
+ 'extra_body':
+ {
+ 'google': {
+ 'cached_content': "cachedContents/0000aaaa1111bbbb2222cccc3333dddd4444eeee"
+ }
+ }
+ }
+ )
+
+ for chunk in stream:
+ print(chunk)
+ print(chunk.usage.to_dict())
+
+## List models
+
+Get a list of available Gemini models:
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ models = client.models.list()
+ for model in models:
+ print(model.id)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+ });
+
+ async function main() {
+ const list = await openai.models.list();
+
+ for await (const model of list) {
+ console.log(model);
+ }
+ }
+ main();
+
+### REST
+
+ curl https://generativelanguage.googleapis.com/v1beta/openai/models \
+ -H "Authorization: Bearer GEMINI_API_KEY"
+
+## Retrieve a model
+
+Retrieve a Gemini model:
+
+### Python
+
+ from openai import OpenAI
+
+ client = OpenAI(
+ api_key="GEMINI_API_KEY",
+ base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+ )
+
+ model = client.models.retrieve("gemini-2.0-flash")
+ print(model.id)
+
+### JavaScript
+
+ import OpenAI from "openai";
+
+ const openai = new OpenAI({
+ apiKey: "GEMINI_API_KEY",
+ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+ });
+
+ async function main() {
+ const model = await openai.models.retrieve("gemini-2.0-flash");
+ console.log(model.id);
+ }
+
+ main();
+
+### REST
+
+ curl https://generativelanguage.googleapis.com/v1beta/openai/models/gemini-2.0-flash \
+ -H "Authorization: Bearer GEMINI_API_KEY"
+
+## Current limitations
+
+Support for the OpenAI libraries is still in beta while we extend feature support.
+
+If you have questions about supported parameters, upcoming features, or run into
+any issues getting started with Gemini, join our [Developer Forum](https://discuss.ai.google.dev/c/gemini-api/4).
+
+## What's next
+
+Try our [OpenAI Compatibility Colab](https://colab.sandbox.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Get_started_OpenAI_Compatibility.ipynb) to work through more detailed
+examples.
+
+[END OF DOCUMENT: GEMINI1OXOF70MLJ]
+---
+

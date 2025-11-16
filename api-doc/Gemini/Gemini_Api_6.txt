@@ -1,0 +1,1298 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: GEMINI2LD4YEERS8 (sha256-ef8de6dd9a283283835df8f4e331bcc88d37817e91f553aea2d34041d1fd9149) | Title: Llama-Index.Md]
+[DocID: GEMINI765VA757G (sha256-126655770c1ccd8b280759e3931973a0eca901eb2e188a57c578cceba4077b8a) | Title: Logs-Datasets.Md]
+[DocID: GEMINIC2SY0E8MA (sha256-1efd40422b221cc20654aac22904de7b6b2bc583abdaf38762130b898c9244a3) | Title: Logs-Policy.Md]
+[DocID: GEMINI685ULQTYF (sha256-0ff9f97fd727399da987fafaea7e11b8abff310846c94db4aebbc3d3685ec8dc) | Title: Long-Context.Md]
+[DocID: GEMINI10CE81457F (sha256-5d406cf3945bd25af222cd5c4cc953f9bd647f8bb7beb73eab2153e78d81a5dc) | Title: Maps-Grounding.Md]
+--- END OF TOC ---
+
+[START OF DOCUMENT: GEMINI2LD4YEERS8 | Title: Llama-Index.Md]
+
+LlamaIndex is a framework for building knowledge agents using LLMs connected to your data. This example shows you how to build a multi-agent workflow for a Research Agent. In LlamaIndex, [`Workflows`](https://docs.llamaindex.ai/en/stable/module_guides/workflow/) are the building blocks of agent or multi-agent systems.
+
+You need a Gemini API key. If you don't already have one, you can
+[get one in Google AI Studio](https://aistudio.google.com/app/apikey).
+First, install all required LlamaIndex libraries.LlamaIndex uses
+the `google-genai` package under the hood.
+
+ pip install llama-index llama-index-utils-workflow llama-index-llms-google-genai llama-index-tools-google
+
+## Set up Gemini 2.5 Pro in LlamaIndex
+
+The engine of any LlamaIndex agent is an LLM that handles reasoning and text processing. This example uses Gemini 2.5 Pro. Make sure you [set your API key as an environment variable](https://ai.google.dev/gemini-api/docs/api-key).
+
+ from llama_index.llms.google_genai import GoogleGenAI
+
+ llm = GoogleGenAI(model="gemini-2.5-pro")
+
+## Build tools
+
+Agents use tools to interact with the outside world, like searching the web or storing information. [Tools in LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/deploying/agents/tools/) can be regular Python functions, or imported from pre-existing `ToolSpecs`. Gemini comes with a built-in tool for using Google Search which is used here.
+
+ from google.genai import types
+
+ google_search_tool = types.Tool(
+ google_search=types.GoogleSearch()
+ )
+
+ llm_with_search = GoogleGenAI(
+ model="gemini-2.5-pro",
+ generation_config=types.GenerateContentConfig(tools=[google_search_tool])
+ )
+
+Now test the LLM instance with a query that requires search:
+
+ response = llm_with_search.complete("What's the weather like today in Biarritz?")
+ print(response)
+
+The Research Agent will use Python functions as tools. There are a lot of ways you could go about building a system to perform this task. In this example, you will use the following:
+
+1. `search_web` uses Gemini with Google Search to search the web for information on the given topic.
+2. `record_notes` saves research found on the web to the state so that the other tools can use it.
+3. `write_report` writes the report using the information found by the `ResearchAgent`
+4. `review_report` reviews the report and provides feedback.
+
+The `Context` class passes the state between agents/tools, and each agent will have access to the current state of the system.
+
+ from llama_index.core.workflow import Context
+
+ async def search_web(ctx: Context, query: str) -> str:
+ """Useful for searching the web about a specific query or topic"""
+ response = await llm_with_search.acomplete(f"""Please research given this query or topic,
+ and return the result\n<query_or_topic>{query}</query_or_topic>""")
+ return response
+
+ async def record_notes(ctx: Context, notes: str, notes_title: str) -> str:
+ """Useful for recording notes on a given topic."""
+ current_state = await ctx.store.get("state")
+ if "research_notes" not in current_state:
+ current_state["research_notes"] = {}
+ current_state["research_notes"][notes_title] = notes
+ await ctx.store.set("state", current_state)
+ return "Notes recorded."
+
+ async def write_report(ctx: Context, report_content: str) -> str:
+ """Useful for writing a report on a given topic."""
+ current_state = await ctx.store.get("state")
+ current_state["report_content"] = report_content
+ await ctx.store.set("state", current_state)
+ return "Report written."
+
+ async def review_report(ctx: Context, review: str) -> str:
+ """Useful for reviewing a report and providing feedback."""
+ current_state = await ctx.store.get("state")
+ current_state["review"] = review
+ await ctx.store.set("state", current_state)
+ return "Report reviewed."
+
+## Build a multi-agent assistant
+
+To build a multi-agent system, you define the agents and their interactions. Your system will have three agents:
+
+1. A `ResearchAgent` searches the web for information on the given topic.
+2. A `WriteAgent` writes the report using the information found by the `ResearchAgent`.
+3. A `ReviewAgent` reviews the report and provides feedback.
+
+This example uses the `AgentWorkflow` class to create a multi-agent system that will execute these agents in order. Each agent takes a `system_prompt` that tells it what it should do, and suggests how to work with the other agents.
+
+Optionally, you can help your multi-agent system by specifying which other agents it can talk to using `can_handoff_to` (if not, it will try to figure this out on its own).
+
+ from llama_index.core.agent.workflow import (
+ AgentInput,
+ AgentOutput,
+ ToolCall,
+ ToolCallResult,
+ AgentStream,
+ )
+ from llama_index.core.agent.workflow import FunctionAgent, ReActAgent
+
+ research_agent = FunctionAgent(
+ name="ResearchAgent",
+ description="Useful for searching the web for information on a given topic and recording notes on the topic.",
+ system_prompt=(
+ "You are the ResearchAgent that can search the web for information on a given topic and record notes on the topic. "
+ "Once notes are recorded and you are satisfied, you should hand off control to the WriteAgent to write a report on the topic."
+ ),
+ llm=llm,
+ tools=[search_web, record_notes],
+ can_handoff_to=["WriteAgent"],
+ )
+
+ write_agent = FunctionAgent(
+ name="WriteAgent",
+ description="Useful for writing a report on a given topic.",
+ system_prompt=(
+ "You are the WriteAgent that can write a report on a given topic. "
+ "Your report should be in a markdown format. The content should be grounded in the research notes. "
+ "Once the report is written, you should get feedback at least once from the ReviewAgent."
+ ),
+ llm=llm,
+ tools=[write_report],
+ can_handoff_to=["ReviewAgent", "ResearchAgent"],
+ )
+
+ review_agent = FunctionAgent(
+ name="ReviewAgent",
+ description="Useful for reviewing a report and providing feedback.",
+ system_prompt=(
+ "You are the ReviewAgent that can review a report and provide feedback. "
+ "Your feedback should either approve the current report or request changes for the WriteAgent to implement."
+ ),
+ llm=llm,
+ tools=[review_report],
+ can_handoff_to=["ResearchAgent","WriteAgent"],
+ )
+
+The Agents are defined, now you can create the `AgentWorkflow` and run it.
+
+ from llama_index.core.agent.workflow import AgentWorkflow
+
+ agent_workflow = AgentWorkflow(
+ agents=[research_agent, write_agent, review_agent],
+ root_agent=research_agent.name,
+ initial_state={
+ "research_notes": {},
+ "report_content": "Not written yet.",
+ "review": "Review required.",
+ },
+ )
+
+During execution of the workflow, you can stream events, tool calls and updates to the console.
+
+ from llama_index.core.agent.workflow import (
+ AgentInput,
+ AgentOutput,
+ ToolCall,
+ ToolCallResult,
+ AgentStream,
+ )
+
+ research_topic = """Write me a report on the history of the web.
+ Briefly describe the history of the world wide web, including
+ the development of the internet and the development of the web,
+ including 21st century developments"""
+
+ handler = agent_workflow.run(
+ user_msg=research_topic
+ )
+
+ current_agent = None
+ current_tool_calls = ""
+ async for event in handler.stream_events():
+ if (
+ hasattr(event, "current_agent_name")
+ and event.current_agent_name != current_agent
+ ):
+ current_agent = event.current_agent_name
+ print(f"\n{'='*50}")
+ print(f"🤖 Agent: {current_agent}")
+ print(f"{'='*50}\n")
+ elif isinstance(event, AgentOutput):
+ if event.response.content:
+ print("📤 Output:", event.response.content)
+ if event.tool_calls:
+ print(
+ "🛠️ Planning to use tools:",
+ [call.tool_name for call in event.tool_calls],
+ )
+ elif isinstance(event, ToolCallResult):
+ print(f"🔧 Tool Result ({event.tool_name}):")
+ print(f" Arguments: {event.tool_kwargs}")
+ print(f" Output: {event.tool_output}")
+ elif isinstance(event, ToolCall):
+ print(f"🔨 Calling Tool: {event.tool_name}")
+ print(f" With arguments: {event.tool_kwargs}")
+
+After the workflow is complete, you can print the final output of the report, as well as the final review state from then review agent.
+
+ state = await handler.ctx.store.get("state")
+ print("Report Content:\n", state["report_content"])
+ print("\n------------\nFinal Review:\n", state["review"])
+
+## Go further with custom workflows
+
+The `AgentWorkflow` is a great way to get started with multi-agent systems. But what if you need more control? You can build a workflow from scratch. Here are some reasons why you might want to build your own workflow:
+
+- **More control over the process**: You can decide the exact path your agents take. This includes creating loops, making decisions at certain points, or having agents work in parallel on different tasks.
+- **Use complex data**: Go beyond simple text. Custom workflows let you use more structured data, like JSON objects or custom classes, for your inputs and outputs.
+- **Work with different media**: Build agents that can understand and process not just text, but also images, audio, and video.
+- **Smarter planning**: You can design a workflow that first creates a detailed plan before the agents start working. This is useful for complex tasks that require multiple steps.
+- **Enable self-correction**: Create agents that can review their own work. If the output isn't good enough, the agent can try again, creating a loop of improvement until the result is perfect.
+
+To learn more about LlamaIndex Workflows, see the [LlamaIndex Workflows Documentation](https://docs.llamaindex.ai/en/stable/module_guides/workflow/).
+
+[END OF DOCUMENT: GEMINI2LD4YEERS8]
+---
+
+[START OF DOCUMENT: GEMINI765VA757G | Title: Logs-Datasets.Md]
+
+<br />
+
+This guide contains everything you need to get started with enabling logging for your existing Gemini API applications. In this guide you'll learn how to view logs from an existing or new application in the Google AI Studio dashboard to better understand model behavior and how users may be interacting with your applications. Use logging to observe, debug, and*optionally share usage feedback with Google to help improve Gemini across developer use cases* .^[\*](https://ai.google.dev/gemini-api/docs/logs-policy)^
+
+All`GenerateContent`and`StreamGenerateContent`API calls are supported, including those made through[OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai)endpoints.
+
+## 1. Enable logging in Google AI Studio
+
+Before you begin, ensure you have a billing-enabled project that you own.
+
+1. Open the logs page in Google[AI Studio](https://aistudio.google.com/logs).
+2. Choose your project from the drop-down and press the enable button to enable logging for all requests by default.
+
+![](https://ai.google.dev/static/gemini-api/docs/images/logs-state.png)
+
+You can enable or disable logging for all projects or for specific projects, and change these preferences at any time through Google AI Studio. To enable or disable logging per request, you can set the following configurations in your application code.
+
+## 2. Logging per request
+
+To disable logging per request, having already opted-in at a project level through Google AI Studio:
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Explain how AI works in a few words"
+ }
+ ]
+ }
+ ],
+ logging_behavior: LOGGING_DISABLED
+ }'
+
+To opt-in to logging per request, having not already opted-in at a project level through Google AI Studio:
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [
+ {
+ "parts": [
+ {
+ "text": "Explain how AI works in a few words"
+ }
+ ]
+ }
+ ],
+ logging_behavior: LOGGING_ENABLED_DEFAULT
+ }'
+
+## 3. View logs in AI Studio
+
+1. Go to[AI Studio](https://aistudio.google.com/logs).
+2. Select the project you've enabled logging for.
+3. You should see your logs appear in the table in reverse chronological order.
+
+![](https://storage.googleapis.com/generativeai-downloads/images/nano-bana-logs.gif)
+
+Click on an entry for a full page view of the request and response pair. You can inspect the full prompt, the complete response from Gemini, and the context from the previous turn. Note that each project has a default storage limit of up to 1,000 logs, and logs not saved in datasets will expire after 55 days. If your project reaches its storage limit you will be promoted to delete logs.
+
+## 4. Curate and share datasets
+
+- From the logs table, locate the filter bar at the top to select a property to filter by.
+- From your filtered view of logs use the checkboxes to select all or a few of the logs.
+- Click the "Create Dataset" button that appears at the top of the list.
+- Give your new dataset a descriptive name and optional description.
+- You will see the dataset you just created with the curated set of logs.
+
+![](https://storage.googleapis.com/generativeai-downloads/images/sales-dataset.gif)
+
+Datasets can be helpful for a number of different use cases.
+
+- **Curating challenge sets:**Drive future improvements that target areas where you want your AI to improve.
+- **Curate sample sets:**For example, a sample from real usage to generate responses from another model, or a collection of edge cases for routine checks before deployment.
+- **Evaluation sets:**Sets that are representative of real usage across important capabilities, for comparison across other models or system instruction iterations.
+
+You can help drive progress in AI research, the Gemini API, and Google AI Studio by choosing to share your datasets as demonstration examples. This allows us to refine our models in diverse contexts and create AI systems that remain useful to developers across many fields and applications
+
+## Next steps \& what to test
+
+Now that you have logging enabled, here are a few things to try:
+
+- **Prototype with session history:** Leverage[AI Studio Build](https://aistudio.google.com/apps)to vibe code apps and add your API key to enable a history of user logs.
+- **Re-run logs with the Gemini Batch API:** Use datasets for response sampling and evaluation of models or application logic by re-running logs via the[Gemini Batch API](https://github.com/google-gemini/cookbook/blob/main/examples/Datasets.ipynb).
+
+## Compatibility
+
+Logging is not currently supported for the following:
+
+- Imagen and Veo
+- Inputs containing videos, GIFs or PDFs
+
+[END OF DOCUMENT: GEMINI765VA757G]
+---
+
+[START OF DOCUMENT: GEMINIC2SY0E8MA | Title: Logs-Policy.Md]
+
+<br />
+
+This page outlines the storage and management of[Gemini API logs](https://ai.google.dev/gemini-api/docs/logs-datasets), which are developer-owned API data from supported Gemini API calls for projects with billing enabled. Logs encompass the entire process from a user's request to the model's response.
+
+## 1. Data that can be shared
+
+As a project owner you have the choice to opt-in to logging of Gemini API calls, for your own use or for feedback and sharing with Google to help us continually improve our models.
+
+With logging enabled, you can help us build AI systems that continue to be valuable for developers across various fields and use cases by choosing to contribute the following data for product improvements and model training:
+
+- **Datasets:**Use the Logs and Datasets interface of Google AI Studio to choose logs (requests, responses, metadata etc.) of interest from supported Gemini API calls; contributed through inclusion in datasets, with the option to opt-out during dataset creation.
+- **Feedback:**When reviewing logs, you can provide feedback; including thumbs up/down ratings and any written comments you provide.
+
+When you share a dataset with Google, your logs in that dataset, including requests and responses, will be processed in accordance with our[Terms](https://developers.google.com/terms)for "[Unpaid Services](https://ai.google.dev/gemini-api/terms#data-use-unpaid)," meaning the dataset may be used to develop and improve Google products, services, and machine learning technologies, including improving and training our models.**Do not include personal, sensitive, or confidential information.**
+| **Note:** Options are dependent on your location.
+
+## 2. How we use your data
+
+Logs will expire after 55 days by default. They will become unavailable after this period. Datasets can be created to retain logs of interest or value beyond this period for downstream use cases and optional contribution to model improvements. Logs stored in datasets do not have set expiry dates, however each project has a default storage limit of up to 1,000 logs.
+
+By default, because logging is only available for billing-enabled projects, prompts and responses within logs are not used for product improvement or development, in accordance with our[Terms](https://developers.google.com/terms)on data use.
+
+If you choose to share datasets of your logs with Google, those datasets will be used as real-world demonstration data to better understand the diversity of domains and contexts AI systems and applications are used in. This data may be used to improve model quality, and inform the training and evaluation of future models and services. This data is processed in accordance with our data use terms for[Unpaid Services](https://ai.google.dev/gemini-api/terms#data-use-unpaid). Accordingly, human reviewers may read, annotate, and process the API inputs and outputs you share. Before data is used for model improvement, Google takes steps to protect user privacy as part of this process. This includes disconnecting this data from your Google Account, API key, and Cloud project before reviewers see or annotate it.
+
+## 3. Data permissions
+
+By opting-in to contributing API data, you confirm that you have the necessary permissions for Google to process and use the data as described in this documentation.**Please do not contribute logs containing sensitive, confidential, or proprietary information obtained through the paid service** . The license you grant to Google under the "[Submission of Content](https://developers.google.com/terms#b_submission_of_content)" section in the API Terms also extends, to the extent required under applicable law for our use, to any content (e.g., prompts, including associated system instructions, cached content, and files such as images, videos, or documents) you submit to the Services and to any generated responses.
+
+## 4. Data sharing and feedback
+
+You can help us advance the frontier of AI research, the Gemini API and Google AI Studio by opting in to share your data as examples, enabling us to continually improve our models across various contexts and build AI systems that continue to be valuable to developers across various fields and use cases.
+
+[END OF DOCUMENT: GEMINIC2SY0E8MA]
+---
+
+[START OF DOCUMENT: GEMINI685ULQTYF | Title: Long-Context.Md]
+
+Many Gemini models come with large context windows of 1 million or more tokens.
+Historically, large language models (LLMs) were significantly limited by
+the amount of text (or tokens) that could be passed to the model at one time.
+The Gemini long context window unlocks many new use cases and developer
+paradigms.
+
+The code you already use for cases like [text
+generation](https://ai.google.dev/gemini-api/docs/text-generation) or [multimodal
+inputs](https://ai.google.dev/gemini-api/docs/vision) will work without any changes with long context.
+
+This document gives you an overview of what you can achieve using models with
+context windows of 1M and more tokens. The page gives a brief overview of
+a context window, and explores how developers should think about long context,
+various real world use cases for long context, and ways to optimize the usage
+of long context.
+
+For the context window sizes of specific models, see the
+[Models](https://ai.google.dev/gemini-api/docs/models) page.
+
+## What is a context window?
+
+The basic way you use the Gemini models is by passing information (context)
+to the model, which will subsequently generate a response. An analogy for the
+context window is short term memory. There is a limited amount of information
+that can be stored in someone's short term memory, and the same is true for
+generative models.
+
+You can read more about how models work under the hood in our [generative models
+guide](https://ai.google.dev/gemini-api/docs/prompting-strategies#under-the-hood).
+
+## Getting started with long context
+
+Earlier versions of generative models were only able to process 8,000
+tokens at a time. Newer models pushed this further by accepting 32,000 or even
+128,000 tokens. Gemini is the first model capable of accepting 1 million tokens.
+
+In practice, 1 million tokens would look like:
+
+- 50,000 lines of code (with the standard 80 characters per line)
+- All the text messages you have sent in the last 5 years
+- 8 average length English novels
+- Transcripts of over 200 average length podcast episodes
+
+The more limited context windows common in many other models often require
+strategies like arbitrarily dropping old messages, summarizing content, using
+RAG with vector databases, or filtering prompts to save tokens.
+
+While these techniques remain valuable in specific scenarios, Gemini's extensive
+context window invites a more direct approach: providing all relevant
+information upfront. Because Gemini models were purpose-built with massive
+context capabilities, they demonstrate powerful in-context learning. For
+example, using only in-context instructional materials (a 500-page reference
+grammar, a dictionary, and ≈400 parallel sentences), Gemini
+[learned to translate](https://storage.googleapis.com/deepmind-media/gemini/gemini_v1_5_report.pdf)
+from English to Kalamang---a Papuan language with
+fewer than 200 speakers---with quality similar to a human learner using the same
+materials. This illustrates the paradigm shift enabled by Gemini's long context,
+empowering new possibilities through robust in-context learning.
+
+## Long context use cases
+
+While the standard use case for most generative models is still text input, the
+Gemini model family enables a new paradigm of multimodal use cases. These
+models can natively understand text, video, audio, and images. They are
+accompanied by the [Gemini API that takes in multimodal file
+types](https://ai.google.dev/gemini-api/docs/prompting_with_media) for
+convenience.
+
+### Long form text
+
+Text has proved to be the layer of intelligence underpinning much of the
+momentum around LLMs. As mentioned earlier, much of the practical limitation of
+LLMs was because of not having a large enough context window to do certain
+tasks. This led to the rapid adoption of retrieval augmented generation (RAG)
+and other techniques which dynamically provide the model with relevant
+contextual information. Now, with larger and larger context windows, there are
+new techniques becoming available which unlock new use cases.
+
+Some emerging and standard use cases for text based long context include:
+
+- Summarizing large corpuses of text
+ - Previous summarization options with smaller context models would require a sliding window or another technique to keep state of previous sections as new tokens are passed to the model
+- Question and answering
+ - Historically this was only possible with RAG given the limited amount of context and models' factual recall being low
+- Agentic workflows
+ - Text is the underpinning of how agents keep state of what they have done and what they need to do; not having enough information about the world and the agent's goal is a limitation on the reliability of agents
+
+[Many-shot in-context learning](https://arxiv.org/pdf/2404.11018) is one of the
+most unique capabilities unlocked by long context models. Research has shown
+that taking the common "single shot" or "multi-shot" example paradigm, where the
+model is presented with one or a few examples of a task, and scaling that up to
+hundreds, thousands, or even hundreds of thousands of examples, can lead to
+novel model capabilities. This many-shot approach has also been shown to perform
+similarly to models which were fine-tuned for a specific task. For use cases
+where a Gemini model's performance is not yet sufficient for a production
+rollout, you can try the many-shot approach. As you might explore later in the
+long context optimization section, context caching makes this type of high input
+token workload much more economically feasible and even lower latency in some
+cases.
+
+### Long form video
+
+Video content's utility has long been constrained by the lack of accessibility
+of the medium itself. It was hard to skim the content, transcripts often failed
+to capture the nuance of a video, and most tools don't process image, text, and
+audio together. With Gemini, the long-context text capabilities translate to
+the ability to reason and answer questions about multimodal inputs with
+sustained performance.
+
+Some emerging and standard use cases for video long context include:
+
+- Video question and answering
+- Video memory, as shown with [Google's Project Astra](https://deepmind.google/technologies/gemini/project-astra/)
+- Video captioning
+- Video recommendation systems, by enriching existing metadata with new multimodal understanding
+- Video customization, by looking at a corpus of data and associated video metadata and then removing parts of videos that are not relevant to the viewer
+- Video content moderation
+- Real-time video processing
+
+When working with videos, it is important to consider how the [videos are
+processed into tokens](https://ai.google.dev/gemini-api/docs/tokens#media-token), which affects
+billing and usage limits. You can learn more about prompting with video files in
+the [Prompting
+guide](https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=python#prompting-with-videos).
+
+### Long form audio
+
+The Gemini models were the first natively multimodal large language models
+that could understand audio. Historically, the typical developer workflow would
+involve stringing together multiple domain specific models, like a
+speech-to-text model and a text-to-text model, in order to process audio. This
+led to additional latency required by performing multiple round-trip requests
+and decreased performance usually attributed to disconnected architectures of
+the multiple model setup.
+
+Some emerging and standard use cases for audio context include:
+
+- Real-time transcription and translation
+- Podcast / video question and answering
+- Meeting transcription and summarization
+- Voice assistants
+
+You can learn more about prompting with audio files in the [Prompting
+guide](https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=python#prompting-with-videos).
+
+## Long context optimizations
+
+The primary optimization when working with long context and the Gemini
+models is to use [context
+caching](https://ai.google.dev/gemini-api/docs/caching). Beyond the previous
+impossibility of processing lots of tokens in a single request, the other main
+constraint was the cost. If you have a "chat with your data" app where a user
+uploads 10 PDFs, a video, and some work documents, you would historically have
+to work with a more complex retrieval augmented generation (RAG) tool /
+framework in order to process these requests and pay a significant amount for
+tokens moved into the context window. Now, you can cache the files the user
+uploads and pay to store them on a per hour basis. The input / output cost per
+request with Gemini Flash for example is \~4x less than the standard
+input / output cost, so if
+the user chats with their data enough, it becomes a huge cost saving for you as
+the developer.
+
+## Long context limitations
+
+In various sections of this guide, we talked about how Gemini models achieve
+high performance across various needle-in-a-haystack retrieval evals. These
+tests consider the most basic setup, where you have a single needle you are
+looking for. In cases where you might have multiple "needles" or specific pieces
+of information you are looking for, the model does not perform with the same
+accuracy. Performance can vary to a wide degree depending on the context. This
+is important to consider as there is an inherent tradeoff between getting the
+right information retrieved and cost. You can get \~99% on a single query, but
+you have to pay the input token cost every time you send that query. So for 100
+pieces of information to be retrieved, if you needed 99% performance, you would
+likely need to send 100 requests. This is a good example of where context
+caching can significantly reduce the cost associated with using Gemini models
+while keeping the performance high.
+
+## FAQs
+
+### Where is the best place to put my query in the context window?
+
+In most cases, especially if the total context is long, the model's
+performance will be better if you put your query / question at the end of the
+prompt (after all the other context).
+
+### Do I lose model performance when I add more tokens to a query?
+
+Generally, if you don't need tokens to be passed to the model, it is best to
+avoid passing them. However, if you have a large chunk of tokens with some
+information and want to ask questions about that information, the model is
+highly capable of extracting that information (up to 99% accuracy in many
+cases).
+
+### How can I lower my cost with long-context queries?
+
+If you have a similar set of tokens / context that you want to re-use many
+times, [context caching](https://ai.google.dev/gemini-api/docs/caching) can help reduce the costs
+associated with asking questions about that information.
+
+### Does the context length affect the model latency?
+
+There is some fixed amount of latency in any given request, regardless of the
+size, but generally longer queries will have higher latency (time to first
+token).
+
+[END OF DOCUMENT: GEMINI685ULQTYF]
+---
+
+[START OF DOCUMENT: GEMINI10CE81457F | Title: Maps-Grounding.Md]
+
+<br />
+
+Grounding with Google Maps connects the generative capabilities of Gemini with the rich, factual, and up-to-date data of Google Maps. This feature enables developers to easily incorporate location-aware functionality into their applications. When a user query has a context related to Maps data, the Gemini model leverages Google Maps to provide factually accurate and fresh answers that are relevant to the user's specified location or general area.
+
+- **Accurate, location-aware responses:**Leverage Google Maps' extensive and current data for geographically specific queries.
+- **Enhanced personalization:**Tailor recommendations and information based on user-provided locations.
+- **Contextual information and widgets:**Context tokens to render interactive Google Maps widgets alongside generated content.
+
+## Get started
+
+This example demonstrates how to integrate Grounding with Google Maps into your application to provide accurate, location-aware responses to user queries. The prompt asks for local recommendations with an optional user location, enabling the Gemini model to leverage Google Maps data.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ prompt = "What are the best Italian restaurants within a 15-minute walk from here?"
+
+ response = client.models.generate_content(
+ model='gemini-2.5-flash',
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ # Turn on grounding with Google Maps
+ tools=[types.Tool(google_maps=types.GoogleMaps())],
+ # Optionally provide the relevant location context (this is in Los Angeles)
+ tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
+ lat_lng=types.LatLng(
+ latitude=34.050481, longitude=-118.248526))),
+ ),
+ )
+
+ print("Generated Response:")
+ print(response.text)
+
+ if grounding := response.candidates[0].grounding_metadata:
+ if grounding.grounding_chunks:
+ print('-' * 40)
+ print("Sources:")
+ for chunk in grounding.grounding_chunks:
+ print(f'- [{chunk.maps.title}]({chunk.maps.uri})')
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/gnai";
+
+ const ai = new GoogleGenAI({});
+
+ async function generateContentWithMapsGrounding() {
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: "What are the best Italian restaurants within a 15-minute walk from here?",
+ config: {
+ // Turn on grounding with Google Maps
+ tools: [{ googleMaps: {} }],
+ toolConfig: {
+ retrievalConfig: {
+ // Optionally provide the relevant location context (this is in Los Angeles)
+ latLng: {
+ latitude: 34.050481,
+ longitude: -118.248526,
+ },
+ },
+ },
+ },
+ });
+
+ console.log("Generated Response:");
+ console.log(response.text);
+
+ const grounding = response.candidates[0]?.groundingMetadata;
+ if (grounding?.groundingChunks) {
+ console.log("-".repeat(40));
+ console.log("Sources:");
+ for (const chunk of grounding.groundingChunks) {
+ if (chunk.maps) {
+ console.log(`- [${chunk.maps.title}](${chunk.maps.uri})`);
+ }
+ }
+ }
+ }
+
+ generateContentWithMapsGrounding();
+
+### REST
+
+ curl -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' \
+ -H 'Content-Type: application/json' \
+ -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+ -d '{
+ "contents": [{
+ "role": "user",
+ "parts": [{
+ "text": "What are the best Italian restaurants within a 15-minute walk from here?"
+ }]
+ }],
+ "tools": [{"googleMaps": {}}],
+ "toolConfig": {
+ "retrievalConfig": {
+ "latLng": {"latitude": 34.050481, "longitude": -118.248526}
+ }
+ }
+ }'
+
+## How Grounding with Google Maps works
+
+Grounding with Google Maps integrates the Gemini API with the Google Geo ecosystem by using the Maps API as a grounding source. When a user's query contains geographical context, the Gemini model can invoke the Grounding with Google Maps tool. The model can then generate responses grounded in Google Maps data relevant to the provided location.
+
+The process typically involves:
+
+1. **User query:**A user submits a query to your application, potentially including geographical context (e.g., "coffee shops near me," "museums in San Francisco").
+2. **Tool invocation:** The Gemini model, recognizing the geographical intent, invokes the Grounding with Google Maps tool. This tool can optionally be provided with the user's`latitude`and`longitude`. The tool is a textual search tool and behaves similarly to searching on Maps, in that local queries ("near me") will use the coordinates, while specific or non-local queries are unlikely to be influenced by the explicit location.
+3. **Data retrieval:**The Grounding with Google Maps service queries Google Maps for relevant information (e.g., places, reviews, photos, addresses, opening hours).
+4. **Grounded generation:**The retrieved Maps data is used to inform the Gemini model's response, ensuring factual accuracy and relevance.
+5. **Response \& widget token:** The model returns a text response, which includes citations to Google Maps sources. Optionally, the API response may also contain a`google_maps_widget_context_token`, allowing developers to render a contextual Google Maps widget in their application for visual interaction.
+
+## Why and when to use Grounding with Google Maps
+
+Grounding with Google Maps is ideal for applications that require accurate, up-to-date, and location-specific information. It enhances the user experience by providing relevant and personalized content backed by Google Maps' extensive database of over 250 million places worldwide.
+
+You should use Grounding with Google Maps when your application needs to:
+
+- Provide complete and accurate responses to geo-specific questions.
+- Build conversational trip planners and local guides.
+- Recommend points of interest based on location and user preferences like restaurants or shops.
+- Create location-aware experiences for social, retail, or food delivery services.
+
+Grounding with Google Maps excels in use cases where proximity and current factual data are critical, such as finding the "best coffee shop near me" or getting directions.
+
+## API methods and parameters
+
+Grounding with Google Maps is exposed through the Gemini API as a tool within the[`generateContent`](https://ai.google.dev/api/generate-content)method. You enable and configure Grounding with Google Maps by including a[`googleMaps`](https://ai.google.dev/api/caching#GoogleMaps)object in the`tools`parameter of your request.
+
+### JSON
+
+ {
+ "contents": [{
+ "parts": [
+ {"text": "Restaurants near Times Square."}
+ ]
+ }],
+ "tools": { "googleMaps": {} }
+ }
+
+The[`googleMaps`](https://ai.google.dev/api/caching#GoogleMaps)tool can additionally accept a boolean`enableWidget`parameter, that is used to control whether the[`googleMapsWidgetContextToken`](https://ai.google.dev/api/generate-content#GroundingMetadata)field is returned in the response. This can be used to display a[contextual Places widget](https://developers.google.com/maps/documentation/javascript/reference/places-widget).
+
+### JSON
+
+ {
+ "contents": [{
+ "parts": [
+ {"text": "Restaurants near Times Square."}
+ ]
+ }],
+ "tools": { "googleMaps": { "enableWidget": true } }
+ }
+
+Additionally, the tool supports passing the contextual location as`toolConfig`.
+
+### JSON
+
+ {
+ "contents": [{
+ "parts": [
+ {"text": "Restaurants near here."}
+ ]
+ }],
+ "tools": { "googleMaps": {} },
+ "toolConfig": {
+ "retrievalConfig": {
+ "latLng": {
+ "latitude": 40.758896,
+ "longitude": -73.985130
+ }
+ }
+ }
+ }
+
+### Understanding the grounding response
+
+When a response is successfully grounded with Google Maps data, the response includes a[`groundingMetadata`](https://ai.google.dev/api/generate-content#GroundingMetadata)field. This structured data is essential for verifying claims and building a rich citation experience in your application, as well as meeting the service usage requirements.
+
+### JSON
+
+ {
+ "candidates": [
+ {
+ "content": {
+ "parts": [
+ {
+ "text": "CanteenM is an American restaurant with..."
+ }
+ ],
+ "role": "model"
+ },
+ "groundingMetadata": {
+ "groundingChunks": [
+ {
+ "maps": {
+ "uri": "https://maps.google.com/?cid=13100894621228039586",
+ "title": "Heaven on 7th Marketplace",
+ "placeId": "places/ChIJ0-zA1vBZwokRon0fGj-6z7U"
+ },
+ // repeated ...
+ }
+ ],
+ "groundingSupports": [
+ {
+ "segment": {
+ "startIndex": 0,
+ "endIndex": 79,
+ "text": "CanteenM is an American restaurant with a 4.6-star rating and is open 24 hours."
+ },
+ "groundingChunkIndices": [0]
+ },
+ // repeated ...
+ ],
+ "webSearchQueries": [
+ "restaurants near me"
+ ],
+ "googleMapsWidgetContextToken": "widgetcontent/..."
+ }
+ }
+ ]
+ }
+
+The Gemini API returns the following information with the[`groundingMetadata`](https://ai.google.dev/api/generate-content#GroundingMetadata):
+
+- `groundingChunks`: Array of objects containing the`maps`sources (`uri`,`placeId`and`title`).
+- `groundingSupports`: Array of chunks to connect model response text to the sources in`groundingChunks`. Each chunk links a text span (defined by`startIndex`and`endIndex`) to one or more`groundingChunkIndices`. This is the key to building inline citations.
+- `googleMapsWidgetContextToken`: A text token that can be used to render a[contextual Places widget](https://developers.google.com/maps/documentation/javascript/reference/places-widget).
+
+For a code snippet showing how to render inline citations in text, see[the example](https://ai.google.dev/gemini-api/docs/google-search#attributing_sources_with_inline_citations)in the Grounding with Google Search docs.
+
+### Display the Google Maps contextual widget
+
+To use the returned`googleMapsWidgetContextToken`, you need to[load the Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/load-maps-js-api).
+
+## Use cases
+
+Grounding with Google Maps supports a variety of location-aware use cases. The following examples demonstrate how different prompts and parameters can leverage Grounding with Google Maps. Information in the Google Maps Grounded Results may differ from actual conditions.
+
+### Handling place-specific questions
+
+Ask detailed questions about a specific place to get answers based on Google user reviews and other Maps data.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ prompt = "Is there a cafe near the corner of 1st and Main that has outdoor seating?"
+
+ response = client.models.generate_content(
+ model='gemini-2.5-flash',
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ # Turn on the Maps tool
+ tools=[types.Tool(google_maps=types.GoogleMaps())],
+
+ # Provide the relevant location context (this is in Los Angeles)
+ tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
+ lat_lng=types.LatLng(
+ latitude=34.050481, longitude=-118.248526))),
+ ),
+ )
+
+ print("Generated Response:")
+ print(response.text)
+
+ if grounding := response.candidates[0].grounding_metadata:
+ if chunks := grounding.grounding_chunks:
+ print('-' * 40)
+ print("Sources:")
+ for chunk in chunks:
+ print(f'- [{chunk.maps.title}]({chunk.maps.uri})')
+ ```
+
+### Javascript
+
+ import { GoogleGenAI } from '@google/genai';
+
+ const ai = new GoogleGenAI({});
+
+ async function run() {
+ const prompt = "Is there a cafe near the corner of 1st and Main that has outdoor seating?";
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: prompt,
+ config: {
+ // Turn on the Maps tool
+ tools: [{googleMaps: {}}],
+ // Provide the relevant location context (this is in Los Angeles)
+ toolConfig: {
+ retrievalConfig: {
+ latLng: {
+ latitude: 34.050481,
+ longitude: -118.248526
+ }
+ }
+ }
+ },
+ });
+
+ console.log("Generated Response:");
+ console.log(response.text);
+
+ const chunks = response.candidates[0].groundingMetadata?.groundingChunks;
+ if (chunks) {
+ console.log('-'.repeat(40));
+ console.log("Sources:");
+ for (const chunk of chunks) {
+ if (chunk.maps) {
+ console.log(`- [${chunk.maps.title}](${chunk.maps.uri})`);
+ }
+ }
+ }
+ }
+
+ run();
+
+### REST
+
+ curl -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' \
+ -H 'Content-Type: application/json' \
+ -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+ -d '{
+ "contents": [{
+ "role": "user",
+ "parts": [{
+ "text": "Is there a cafe near the corner of 1st and Main that has outdoor seating?"
+ }]
+ }],
+ "tools": [{"googleMaps": {}}],
+ "toolConfig": {
+ "retrievalConfig": {
+ "latLng": {"latitude": 34.050481, "longitude": -118.248526}
+ }
+ }
+ }'
+
+### Providing location-based personalization
+
+Get recommendations tailored to a user's preferences and a specific geographical area.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ prompt = "Which family-friendly restaurants near here have the best playground reviews?"
+
+ response = client.models.generate_content(
+ model='gemini-2.5-flash',
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ tools=[types.Tool(google_maps=types.GoogleMaps())],
+ tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
+ # Provide the location as context; this is Austin, TX.
+ lat_lng=types.LatLng(
+ latitude=30.2672, longitude=-97.7431))),
+ ),
+ )
+
+ print("Generated Response:")
+ print(response.text)
+
+ if grounding := response.candidates[0].grounding_metadata:
+ if chunks := grounding.grounding_chunks:
+ print('-' * 40)
+ print("Sources:")
+ for chunk in chunks:
+ print(f'- [{chunk.maps.title}]({chunk.maps.uri})')
+
+### Javascript
+
+ import { GoogleGenAI } from '@google/genai';
+
+ const ai = new GoogleGenAI({});
+
+ async function run() {
+ const prompt = "Which family-friendly restaurants near here have the best playground reviews?";
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: prompt,
+ config: {
+ tools: [{googleMaps: {}}],
+ toolConfig: {
+ retrievalConfig: {
+ // Provide the location as context; this is Austin, TX.
+ latLng: {
+ latitude: 30.2672,
+ longitude: -97.7431
+ }
+ }
+ }
+ },
+ });
+
+ console.log("Generated Response:");
+ console.log(response.text);
+
+ const chunks = response.candidates[0].groundingMetadata?.groundingChunks;
+ if (chunks) {
+ console.log('-'.repeat(40));
+ console.log("Sources:");
+ for (const chunk of chunks) {
+ if (chunk.maps) {
+ console.log(`- [${chunk.maps.title}](${chunk.maps.uri})`);
+ }
+ }
+ }
+ }
+
+ run();
+
+### REST
+
+ curl -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' \
+ -H 'Content-Type: application/json' \
+ -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+ -d '{
+ "contents": [{
+ "role": "user",
+ "parts": [{
+ "text": "Which family-friendly restaurants near here have the best playground reviews?"
+ }],
+ }],
+ "tools": [{"googleMaps": {}}],
+ "toolConfig": {
+ "retrievalConfig": {
+ "latLng": {"latitude": 30.2672, "longitude": -97.7431}
+ }
+ }
+ }'
+
+### Assisting with itinerary planning
+
+Generate multi-day plans with directions and information about various locations, perfect for travel applications.
+
+In this example, the`googleMapsWidgetContextToken`has been requested by enabling the widget in the Google Maps tool. When enabled, the returned token can be used to render a contextual Places widget using the[<gmp-places-contextual> component](https://developers.google.com/maps/documentation/javascript/reference/places-widget#PlaceContextualElement)from the Google Maps JavaScript API.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ prompt = "Plan a day in San Francisco for me. I want to see the Golden Gate Bridge, visit a museum, and have a nice dinner."
+
+ response = client.models.generate_content(
+ model='gemini-2.5-flash',
+ contents=prompt,
+ config=types.GenerateContentConfig(
+ tools=[types.Tool(google_maps=types.GoogleMaps(enable_widget=True))],
+ tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
+ # Provide the location as context, this is in San Francisco.
+ lat_lng=types.LatLng(
+ latitude=37.78193, longitude=-122.40476))),
+ ),
+ )
+
+ print("Generated Response:")
+ print(response.text)
+
+ if grounding := response.candidates[0].grounding_metadata:
+ if grounding.grounding_chunks:
+ print('-' * 40)
+ print("Sources:")
+ for chunk in grounding.grounding_chunks:
+ print(f'- [{chunk.maps.title}]({chunk.maps.uri})')
+
+ if widget_token := grounding.google_maps_widget_context_token:
+ print('-' * 40)
+ print(f'<gmp-place-contextual context-token="{widget_token}"></gmp-place-contextual>')
+
+### Javascript
+
+ import { GoogleGenAI } from '@google/genai';
+
+ const ai = new GoogleGenAI({});
+
+ async function run() {
+ const prompt = "Plan a day in San Francisco for me. I want to see the Golden Gate Bridge, visit a museum, and have a nice dinner.";
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: prompt,
+ config: {
+ tools: [{googleMaps: {enableWidget: true}}],
+ toolConfig: {
+ retrievalConfig: {
+ // Provide the location as context, this is in San Francisco.
+ latLng: {
+ latitude: 37.78193,
+ longitude: -122.40476
+ }
+ }
+ }
+ },
+ });
+
+ console.log("Generated Response:");
+ console.log(response.text);
+
+ const groundingMetadata = response.candidates[0]?.groundingMetadata;
+ if (groundingMetadata) {
+ if (groundingMetadata.groundingChunks) {
+ console.log('-'.repeat(40));
+ console.log("Sources:");
+ for (const chunk of groundingMetadata.groundingChunks) {
+ if (chunk.maps) {
+ console.log(`- [${chunk.maps.title}](${chunk.maps.uri})`);
+ }
+ }
+ }
+
+ if (groundingMetadata.googleMapsWidgetContextToken) {
+ console.log('-'.repeat(40));
+ document.body.insertAdjacentHTML('beforeend', `<gmp-place-contextual context-token="${groundingMetadata.googleMapsWidgetContextToken}`"></gmp-place-contextual>`);
+ }
+ }
+ }
+
+ run();
+
+### REST
+
+ curl -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' \
+ -H 'Content-Type: application/json' \
+ -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+ -d '{
+ "contents": [{
+ "role": "user",
+ "parts": [{
+ "text": "Plan a day in San Francisco for me. I want to see the Golden Gate Bridge, visit a museum, and have a nice dinner."
+ }]
+ }],
+ "tools": [{"googleMaps": {"enableWidget":"true"}}],
+ "toolConfig": {
+ "retrievalConfig": {
+ "latLng": {"latitude": 37.78193, "longitude": -122.40476}
+ }
+ }
+ }'
+
+When the widget is rendered, it will look something like the following:
+
+![An example of a maps widget when rendered](https://ai.google.dev/static/gemini-api/docs/images/maps/maps-widget.png)
+
+## Service usage requirements
+
+This section describes the service usage requirements for Grounding with Google Maps.
+
+### Inform the user about the use of Google Maps sources
+
+With each Google Maps Grounded Result, you'll receive sources in`groundingChunks`that support each response. The following metadata is also returned:
+
+- source uri
+- title
+- ID
+
+When presenting results from Grounding with Google Maps, you must specify the associated Google Maps sources, and inform your users of the following:
+
+- The Google Maps sources must immediately follow the generated content that the sources support. This generated content is also referred to as Google Maps Grounded Result.
+- The Google Maps sources must be viewable within one user interaction.
+
+### Display Google Maps sources with Google Maps links
+
+For each source in`groundingChunks`and in`grounding_chunks.maps.placeAnswerSources.reviewSnippets`, a link preview must be generated following these requirements:
+
+- Attribute each source to Google Maps following the Google Maps text[attribution guidelines](https://ai.google.dev/gemini-api/docs/maps-grounding#maps-attribution-guidelines).
+- Display the source title provided in the response.
+- Link to the source using the`uri`or`googleMapsUri`from the response.
+
+These images show the minimum requirements for displaying the sources and Google Maps links.
+
+![Prompt with response showing sources](https://ai.google.dev/static/gemini-api/docs/images/maps/sources-expanded.jpg)
+
+You can collapse the view of the sources.
+
+![Prompt with response and sources collapsed](https://ai.google.dev/static/gemini-api/docs/images/maps/sources-collapsed.jpg)
+
+Optional: Enhance the link preview with additional content, such as:
+
+- A[Google Maps favicon](https://www.google.com/images/branding/product/ico/maps15_bnuw3a_32dp.ico)is inserted before the Google Maps text attribution.
+- A photo from the source URL (`og:image`).
+
+For more information about some of our Google Maps data providers and their license terms, see the[Google Maps and Google Earth legal notices](https://www.google.com/help/legalnotices_maps/).
+
+### Google Maps text attribution guidelines
+
+When you attribute sources to Google Maps in text, follow these guidelines:
+
+- Don't modify the text Google Maps in any way:
+ - Don't change the capitalization of Google Maps.
+ - Don't wrap Google Maps onto multiple lines.
+ - Don't localize Google Maps into another language.
+ - Prevent browsers from translating Google Maps by using the HTML attribute translate="no".
+- Style Google Maps text as described in the following table:
+
+| Property | Style |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Font family` | Roboto. Loading the font is optional. |
+| `Fallback font family` | Any sans serif body font already used in your product or "Sans-Serif" to invoke the default system font |
+| `Font style` | Normal |
+| `Font weight` | 400 |
+| `Font color` | White, black (#1F1F1F), or gray (#5E5E5E). Maintain accessible (4.5:1) contrast against the background. |
+| `Font size` | - Minimum font size: 12sp - Maximum font size: 16sp - To learn about sp, see Font size units on the[Material Design website](https://m3.material.io/styles/typography/type-scale-tokens#3f4488e7-3b74-45b0-a143-9d6afa4d62dc). |
+| `Spacing` | Normal |
+
+#### Example CSS
+
+The following CSS renders Google Maps with the appropriate typographic style and color on a white or light background.
+
+### CSS
+
+ @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+ .GMP-attribution {
+
+ font-family: Roboto, Sans-Serif;
+ font-style: normal;
+ font-weight: 400;
+ font-size: 1rem;
+ letter-spacing: normal;
+ white-space: nowrap;
+ color: #5e5e5e;
+ }
+
+### Context token, place ID, and review ID
+
+The Google Maps data includes context token, place ID, and review ID. You might cache, store, and export the following response data:
+
+- `googleMapsWidgetContextToken`
+- `placeId`
+- `reviewId`
+
+The restrictions against caching in the Grounding with Google Maps Terms don't apply.
+
+### Prohibited activity and territory
+
+Grounding with Google Maps has additional restrictions for certain content and activities to maintain a safe and reliable platform. In addition to the usage restrictions in the Terms, you will not use Grounding with Google Maps for high risk activities including emergency response services. You will not distribute or market your application that offers Grounding with Google Maps in a Prohibited Territory. The current Prohibited Territories are:
+
+- China
+- Crimea
+- Cuba
+- Donetsk People's Republic
+- Iran
+- Luhansk People's Republic
+- North Korea
+- Syria
+- Vietnam
+
+This list may be updated from time to time.
+
+## Best practices
+
+- **Provide user location:** For the most relevant and personalized responses, always include the`user_location`(latitude and longitude) in your`googleMapsGrounding`configuration when the user's location is known.
+- **Render the Google Maps contextual widget:** The contextual widget is rendered using the context token,`googleMapsWidgetContextToken`, which is returned in the Gemini API response and can be used to render visual content from Google Maps. For more information on the contextual widget, see[Grounding with Google Maps widget](https://developers.google.com/maps/documentation/javascript/maps-grounding-widget)in the Google Developer Guide.
+- **Inform End-Users:**Clearly inform your end-users that Google Maps data is being used to answer their queries, especially when the tool is enabled.
+- **Monitor Latency:**For conversational applications, ensure that the P95 latency for grounded responses remains within acceptable thresholds to maintain a smooth user experience.
+- **Toggle Off When Not Needed:** Grounding with Google Maps is off by default. Only enable it (`"tools": [{"googleMaps": {}}]`) when a query has a clear geographical context, to optimize performance and cost.
+
+## Limitations
+
+- **Geographical Scope:**Currently, Grounding with Google Maps is globally available
+- **Model Support:**Only specific Gemini models support Grounding with Google Maps: Gemini 2.5 Flash-Lite, Gemini 2.5 Pro, Gemini 2.5 Flash, and Gemini 2.0 Flash (but not 2.0 Flash Lite).
+- **Multimodal Inputs/Outputs:**Grounding with Google Maps does not currently support multimodal inputs or outputs beyond text and contextual map widgets.
+- **Default State:**The Grounding with Google Maps tool is off by default. You must explicitly enable it in your API requests.
+
+## Pricing and rate limits
+
+Grounding with Google Maps pricing is based on queries. The current rate is**$25 / 1K grounded prompts**. The free tier also has up to 500 requests per day available. A request is only counted towards the quota when a prompt successfully returns at least one Google Maps grounded result (i.e., results containing at least one Google Maps source). If multiple queries are sent to Google Maps from a single request, it counts as one request towards the rate limit.
+| **Note:** The quota for Grounding with Google Maps typically aligns with the underlying Gemini model rate limits.
+
+For detailed pricing information, see the[Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing).
+
+## Supported models
+
+You can find their capabilities on the[model overview](https://ai.google.dev/gemini-api/docs/models)page.
+
+| Model | Grounding with Google Maps |
+|---------------------------------------------------------------------------------------------|----------------------------|
+| [Gemini 2.5 Pro](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro) | ✔️ |
+| [Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash) | ✔️ |
+| [Gemini 2.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-lite) | ✔️ |
+| [Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash) | ✔️ |
+
+## What's next
+
+- Try the[Grounding with Google Search in the Gemini API Cookbook](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Search_Grounding.ipynb).
+- Learn about other available tools, like[Function calling](https://ai.google.dev/gemini-api/docs/function-calling).
+- To learn more about responsible AI best practices and Gemini API's safety filters, see[the Safety settings guide](https://ai.google.dev/gemini-api/docs/safety-settings).
+
+[END OF DOCUMENT: GEMINI10CE81457F]
+---
+

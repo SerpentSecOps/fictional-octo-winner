@@ -1,0 +1,3045 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: GEMINI2CEH3UDMXX (sha256-d88ebd060f65439ee4c5ae3cbb8f6669d87db71874ddf824da28de17b0ada972) | Title: Changelog.Md]
+[DocID: GEMINIQ3FI1M41D (sha256-42f4746f96f16d05e60578c6af2b8564a91b255d890869b264fe9f8dd4f9e622) | Title: Code-Execution.Md]
+[DocID: GEMINI1EIX15UM7A (sha256-81a3342424e651c41706bd4f1085ca8fbf829ec9ce9f432d1551a541eeadcafd) | Title: Computer-Use.Md]
+[DocID: GEMINI1VR1ORGWLW (sha256-add5d2723414111f3fdd02515f293eecf72a954c2131934963bb10768088d2bf) | Title: Crewai-Example.Md]
+[DocID: GEMINICBT5QKZBW (sha256-1fa191ec0ddcf9c0ed2fc64c96d3d7deb9af573eda5244213c193c6f1a9b5bca) | Title: Document-Processing.Md]
+--- END OF TOC ---
+
+[START OF DOCUMENT: GEMINI2CEH3UDMXX | Title: Changelog.Md]
+
+<br />
+
+This page documents updates to the Gemini API.
+
+## November 10, 2025
+
+- The following model is deprecated:
+
+ - `imagen-3.0-generate-002`
+
+ Use[Imagen 4](https://ai.google.dev/gemini-api/docs/imagen#imagen-4)instead. Refer to the[Gemini deprecations table](https://ai.google.dev/gemini-api/docs/deprecations)for more details.
+
+## November 6, 2025
+
+- Launched the File Search API to public preview, enabling developers to ground responses in their own data. Read the new[File Search](https://ai.google.dev/gemini-api/docs/file-search)page for more info.
+
+## November 4, 2025
+
+- The following models will be deprecated:
+
+ - November 18th:
+
+ - `gemini-2.5-flash-lite-preview-06-17`
+ - `gemini-2.5-flash-preview-05-20`
+ - December 2nd:
+
+ - `gemini-2.0-flash-thinking-exp`
+ - `gemini-2.0-flash-thinking-exp-01-21`
+ - `gemini-2.0-flash-thinking-exp-1219`
+ - `gemini-2.5-pro-preview-03-25`
+ - `gemini-2.5-pro-preview-05-06`
+ - `gemini-2.5-pro-preview-06-05`
+ - December 9th:
+
+ - `gemini-2.0-flash-lite-preview`
+ - `gemini-2.0-flash-lite-preview-02-05`
+
+## October 29, 2025
+
+- Launched the new[logging and datasets](https://ai.google.dev/gemini-api/docs/logs-datasets)tool for the Gemini API.
+
+## October 20, 2025
+
+- The following Gemini Live API models are now deprecated:
+
+ - `gemini-2.5-flash-preview-native-audio-dialog`
+ - `gemini-2.5-flash-exp-native-audio-thinking-dialog`
+
+ You can use`gemini-2.5-flash-native-audio-preview-09-2025`instead.
+- Deprecation for`gemini-2.0-flash-live-001`and`gemini-live-2.5-flash-preview`coming December 09, 2025.
+
+## October 17, 2025
+
+- **Grounding with Google Maps** is now generally available. For more information, see[Grounding with Google Maps](https://ai.google.dev/gemini-api/docs/maps-grounding)documentation.
+
+## October 15, 2025
+
+- Released[Veo 3.1 and 3.1 Fast](https://ai.google.dev/gemini-api/docs/video#veo-3.1)models in public preview, with new features including:
+
+ - Extending Veo-created videos.
+ - Referencing up to three images to generate a video.
+ - Providing first and last frame images to generate videos from.
+
+ This launch also added more options for Veo 3 output video durations: 4, 6, and 8 seconds.
+- Deprecation for`veo-3.0-generate-preview`and`veo-3.0-fast-generate-preview`coming November 6, 2025.
+
+## October 7, 2025
+
+- Launched[Gemini 2.5 Computer Use Preview](https://ai.google.dev/gemini-api/docs/computer-use)
+
+## October 2, 2025
+
+- Launched Gemini 2.5 Flash Image GA:[Image Generation with Gemini](https://ai.google.dev/gemini-api/docs/image-generation)
+
+## September 29, 2025
+
+- The following Gemini 1.5 models are now deprecated:
+ - `gemini-1.5-pro`
+ - `gemini-1.5-flash-8b`
+ - `gemini-1.5-flash`
+
+## September 25, 2025
+
+- Released Gemini Robotics-ER 1.5 model in preview. See the[Robotics overview](https://ai.google.dev/gemini-api/docs/robotics-overview)to learn about how to use the model for your robotics application.
+
+- Launched following preview models:
+
+ - `gemini-2.5-flash-preview-09-2025`
+ - `gemini-2.5-flash-lite-preview-09-2025`
+
+ See the[Models](https://ai.google.dev/gemini-api/docs/models)page for details.
+
+## September 23, 2025
+
+- Released`gemini-2.5-flash-native-audio-preview-09-2025`, a new native audio model for the Live API with improved function calling and speech cut off handling. To learn more, see the[Live API guide](https://ai.google.dev/gemini-api/docs/live-guide)and[Gemini 2.5 Flash Native Audio](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-native-audio).
+
+## September 16, 2025
+
+- The following models will be deprecated in October, 2025:
+
+ - `embedding-001`
+ - `embedding-gecko-001`
+ - `gemini-embedding-exp-03-07`(`gemini-embedding-exp`)
+
+ See the[Embeddings](https://ai.google.dev/gemini-api/docs/embeddings)page for details on the latest embeddings model.
+
+## September 10, 2025
+
+- Released support for the[Embeddings model in Batch API](https://ai.google.dev/gemini-api/docs/batch-api#batch-embedding), and added Batch API to the[OpenAI compatibility library](https://ai.google.dev/gemini-api/docs/openai#batch)for even easier ways to get started with batch queries.
+
+## September 9, 2025
+
+- Launched Veo 3 and Veo 3 Fast GA, with lower pricing and new options for aspect ratios, resolution, and seeding. Read the[Veo documentation](https://ai.google.dev/gemini-api/docs/video#model-features)for more information.
+
+## August 26, 2025
+
+- Launched[Gemini 2.5 Image Preview](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-image-preview), our latest native image generation model.
+
+## August 18, 2025
+
+- Released[URL context tool](https://ai.google.dev/gemini-api/docs/url-context)to general availability (GA), a tool for providing URLs as additional context to prompts. Support for using URL context with the`gemini-2.0-flash`model (available during experimental release) will be discontinued in one week.
+
+## August 14, 2025
+
+- Released Imagen 4 Ultra, Standard and Fast models as generally available (GA). To learn more, see the[Imagen](https://ai.google.dev/gemini-api/docs/imagen)page.
+
+## August 7, 2025
+
+- `allow_adult`setting in Image to Video generation are now available in restricted regions. See the[Veo](https://ai.google.dev/gemini-api/docs/video?example=dialogue#veo-model-parameters)page for details.
+
+## July 31, 2025
+
+- Launched image-to-video generation for the Veo 3 Preview model.
+- Released Veo 3 Fast Preview model.
+- To learn more about Veo 3, visit the[Veo](https://ai.google.dev/gemini-api/docs/video)page.
+
+## July 22, 2025
+
+- Released`gemini-2.5-flash-lite`, our fast, low-cost, high-performance Gemini 2.5 model. To learn more, see[Gemini 2.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-lite).
+
+## July 17, 2025
+
+- Launched`veo-3.0-generate-preview`, the latest update to Veo introducing video with audio generation. To learn more about Veo 3, visit the[Veo](https://ai.google.dev/gemini-api/docs/video)page.
+
+- Increased rate limits for Imagen 4 Standard and Ultra. Visit the[Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits)page for more details.
+
+## July 14, 2025
+
+- Released`gemini-embedding-001`, the stable version of our text embedding model. To learn more, see[embeddings](https://ai.google.dev/gemini-api/docs/embeddings). The`gemini-embedding-exp-03-07`model will be deprecated on August 14, 2025.
+
+## July 7, 2025
+
+- Launched Gemini API Batch Mode. Batch up requests and send them to process asynchronously. To learn more, see[Batch Mode](https://ai.google.dev/gemini-api/docs/batch-mode).
+
+## June 26, 2025
+
+- The preview models`gemini-2.5-pro-preview-05-06`and`gemini-2.5-pro-preview-03-25`are now redirecting to the latest stable version`gemini-2.5-pro`.
+
+- `gemini-2.5-pro-exp-03-25`is deprecated.
+
+## June 24, 2025
+
+- Released Imagen 4 Ultra and Standard Preview models. To learn more, see the[Image generation](https://ai.google.dev/gemini-api/docs/image-generation)page.
+
+## June 17, 2025
+
+- Released`gemini-2.5-pro`, the stable version of our most powerful model, now with adaptive thinking. To learn more, see[Gemini 2.5 Pro](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro)and[Thinking](https://ai.google.dev/gemini-api/docs/thinking).`gemini-2.5-pro-preview-05-06`will be redirected to`gemini-2.5-pro`on June 26, 2025.
+- Released`gemini-2.5-flash`, our first stable 2.5 Flash model. To learn more, see[Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash).`gemini-2.5-flash-preview-04-17`will be deprecated on July 15, 2025.
+- Released`gemini-2.5-flash-lite-preview-06-17`, a low-cost, high-performance Gemini 2.5 model. To learn more, see[Gemini 2.5 Flash-Lite Preview](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-lite).
+
+## June 05, 2025
+
+- Released`gemini-2.5-pro-preview-06-05`, a new version of our most powerful model, now with adaptive thinking. To learn more, see[Gemini 2.5 Pro Preview](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro-preview-06-05)and[Thinking](https://ai.google.dev/gemini-api/docs/thinking).`gemini-2.5-pro-preview-05-06`will be redirected to`gemini-2.5-pro`on June 26, 2025.
+
+## May 20, 2025
+
+**API updates:**
+
+- Launched support for[custom video preprocessing](https://ai.google.dev/gemini-api/docs/video-understanding#customize-video-processing)using clipping intervals and configurable frame rate sampling.
+- Launched multi-tool use, which supports configuring[code execution](https://ai.google.dev/gemini-api/docs/code-execution)and[Grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding)on the same`generateContent`request.
+- Launched support for[asynchronous function calls](https://ai.google.dev/gemini-api/docs/live-tools#async-function-calling)in the Live API.
+- Launched an experimental[URL context tool](https://ai.google.dev/gemini-api/docs/url-context)for providing URLs as additional context to prompts.
+
+**Model updates:**
+
+- Released`gemini-2.5-flash-preview-05-20`, a Gemini[preview](https://ai.google.dev/gemini-api/docs/models#model-versions)model optimized for price-performance and adaptive thinking. To learn more, see[Gemini 2.5 Flash Preview](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-preview)and[Thinking](https://ai.google.dev/gemini-api/docs/thinking).
+- Released the[`gemini-2.5-pro-preview-tts`](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro-preview-tts)and[`gemini-2.5-flash-preview-tts`](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-preview-tts)models, which are capable of[generating speech](https://ai.google.dev/gemini-api/docs/speech-generation)with one or two speakers.
+- Released the`lyria-realtime-exp`model, which[generates music](https://ai.google.dev/gemini-api/docs/music-generation)in real time.
+- Released`gemini-2.5-flash-preview-native-audio-dialog`and`gemini-2.5-flash-exp-native-audio-thinking-dialog`, new Gemini models for the Live API with native audio output capabilities. To learn more, see the[Live API guide](https://ai.google.dev/gemini-api/docs/live-guide#native-audio-output)and[Gemini 2.5 Flash Native Audio](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-native-audio).
+- Released`gemma-3n-e4b-it`preview, available on[AI Studio](https://aistudio.google.com)and through the Gemini API, as part of the[Gemma 3n](https://ai.google.dev/gemma/docs/3n)launch.
+
+## May 7, 2025
+
+- Released`gemini-2.0-flash-preview-image-generation`, a preview model for generating and editing images. To learn more, see[Image generation](https://ai.google.dev/gemini-api/docs/image-generation)and[Gemini 2.0 Flash Preview Image Generation](https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash-preview-image-generation).
+
+## May 6, 2025
+
+- Released`gemini-2.5-pro-preview-05-06`, a new version of our most powerful model, with improvements on code and function calling.`gemini-2.5-pro-preview-03-25`will automatically point to the new version of the model.
+
+## April 17, 2025
+
+- Released`gemini-2.5-flash-preview-04-17`, a Gemini[preview](https://ai.google.dev/gemini-api/docs/models#model-versions)model optimized for price-performance and adaptive thinking. To learn more, see[Gemini 2.5 Flash Preview](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-preview)and[Thinking](https://ai.google.dev/gemini-api/docs/thinking).
+
+## April 16, 2025
+
+- Launched context caching for[Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash).
+
+## April 9, 2025
+
+**Model updates:**
+
+- Released`veo-2.0-generate-001`, a generally available (GA) text- and image-to-video model, capable of generating detailed and artistically nuanced videos. To learn more, see the[Veo docs](https://ai.google.dev/gemini-api/docs/video).
+- Released`gemini-2.0-flash-live-001`, a public preview version of the[Live API](https://ai.google.dev/gemini-api/docs/live)model with billing enabled.
+
+ - **Enhanced Session Management and Reliability**
+
+ - **Session Resumption:**Keep sessions alive across temporary network disruptions. The API now supports server-side session state storage (for up to 24 hours) and provides handles (session_resumption) to reconnect and resume where you left off.
+ - **Longer Sessions via Context Compression:**Enable extended interactions beyond previous time limits. Configure context window compression with a sliding window mechanism to automatically manage context length, preventing abrupt terminations due to context limits.
+ - **Graceful Disconnect Notification:** Receive a`GoAway`server message indicating when a connection is about to close, allowing for graceful handling before termination.
+ - **More Control over Interaction Dynamics**
+
+ - **Configurable Voice Activity Detection (VAD):** Choose sensitivity levels or disable automatic VAD entirely and use new client events (`activityStart`,`activityEnd`) for manual turn control.
+
+ - **Configurable Interruption Handling:**Decide whether user input should interrupt the model's response.
+
+ - **Configurable Turn Coverage:**Choose whether the API processes all audio and video input continuously or only captures it when the end-user is detected speaking.
+
+ - **Configurable Media Resolution:**Optimize for quality or token usage by selecting the resolution for input media.
+
+ - **Richer Output and Features**
+
+ - **Expanded Voice \& Language Options:** Choose from two new voices and 30 new languages for audio output. The output language is now configurable within`speechConfig`.
+
+ - **Text Streaming:**Receive text responses incrementally as they are generated, enabling faster display to the user.
+
+ - **Token Usage Reporting:** Gain insights into usage with detailed token counts provided in the`usageMetadata`field of server messages, broken down by modality and prompt or response phases.
+
+## April 4, 2025
+
+- Released`gemini-2.5-pro-preview-03-25`, a public preview Gemini 2.5 Pro version with billing enabled. You can continue to use`gemini-2.5-pro-exp-03-25`on the free tier.
+
+## March 25, 2025
+
+- Released`gemini-2.5-pro-exp-03-25`, a public experimental Gemini model with thinking mode always on by default. To learn more, see[Gemini 2.5 Pro Experimental](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro-preview-03-25).
+
+## March 12, 2025
+
+**Model updates:**
+
+- Launched an experimental[Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/image-generation#gemini)model capable of image generation and editing.
+- Released`gemma-3-27b-it`, available on[AI Studio](https://aistudio.google.com)and through the Gemini API, as part of the[Gemma 3](https://ai.google.dev/gemma/docs/core)launch.
+
+**API updates:**
+
+- Added support for[YouTube URLs](https://ai.google.dev/gemini-api/docs/vision#youtube)as a media source.
+- Added support for including an[inline video](https://ai.google.dev/gemini-api/docs/vision#inline-video)of less than 20MB.
+
+## March 11, 2025
+
+**SDK updates:**
+
+- Released the[Google Gen AI SDK for TypeScript and JavaScript](https://googleapis.github.io/js-genai)to public preview.
+
+## March 7, 2025
+
+**Model updates:**
+
+- Released`gemini-embedding-exp-03-07`, an[experimental](https://ai.google.dev/gemini-api/docs/models/experimental-models)Gemini-based embeddings model in public preview.
+
+## February 28, 2025
+
+**API updates:**
+
+- Support for[Search as a tool](https://ai.google.dev/gemini-api/docs/grounding)added to`gemini-2.0-pro-exp-02-05`, an experimental model based on Gemini 2.0 Pro.
+
+## February 25, 2025
+
+**Model updates:**
+
+- Released`gemini-2.0-flash-lite`, a generally available (GA) version of[Gemini 2.0 Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-2.0-flash-lite), which is optimized for speed, scale, and cost efficiency.
+
+## February 19, 2025
+
+**AI Studio updates:**
+
+- Support for[additional regions](https://ai.google.dev/gemini-api/docs/available-regions)(Kosovo, Greenland and Faroe Islands).
+
+**API updates:**
+
+- Support for[additional regions](https://ai.google.dev/gemini-api/docs/available-regions)(Kosovo, Greenland and Faroe Islands).
+
+## February 18, 2025
+
+**Model updates:**
+
+- Gemini 1.0 Pro is no longer supported. For the list of supported models, see[Gemini models](https://ai.google.dev/gemini-api/docs/models/gemini).
+
+## February 11, 2025
+
+**API updates:**
+
+- Updates on the[OpenAI libraries compatibility](https://ai.google.dev/gemini-api/docs/openai).
+
+## February 6, 2025
+
+**Model updates:**
+
+- Released`imagen-3.0-generate-002`, a generally available (GA) version of[Imagen 3 in the Gemini API](https://ai.google.dev/gemini-api/docs/imagen).
+
+**SDK updates:**
+
+- Released the[Google Gen AI SDK for Java](https://github.com/googleapis/java-genai)for public preview.
+
+## February 5, 2025
+
+**Model updates:**
+
+- Released`gemini-2.0-flash-001`, a generally available (GA) version of[Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-2.0-flash)that supports text-only output.
+- Released`gemini-2.0-pro-exp-02-05`, an[experimental](https://ai.google.dev/gemini-api/docs/models/experimental-models)public preview version of Gemini 2.0 Pro.
+- Released`gemini-2.0-flash-lite-preview-02-05`, an experimental public preview[model](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-2.0-flash-lite)optimized for cost efficiency.
+
+**API updates:**
+
+- Added[file input and graph output](https://ai.google.dev/gemini-api/docs/code-execution#input-output)support to code execution.
+
+**SDK updates:**
+
+- Released the[Google Gen AI SDK for Python](https://googleapis.github.io/python-genai/)to general availability (GA).
+
+## January 21, 2025
+
+**Model updates:**
+
+- Released`gemini-2.0-flash-thinking-exp-01-21`, the latest preview version of the model behind the[Gemini 2.0 Flash Thinking Model](https://ai.google.dev/gemini-api/docs/thinking).
+
+## December 19, 2024
+
+**Model updates:**
+
+- Released Gemini 2.0 Flash Thinking Mode for public preview. Thinking Mode is a test-time compute model that lets you see the model's thought process while it generates a response, and produces responses with stronger reasoning capabilities.
+
+ Read more about Gemini 2.0 Flash Thinking Mode in our[overview page](https://ai.google.dev/gemini-api/docs/thinking-mode).
+
+## December 11, 2024
+
+**Model updates:**
+
+- Released[Gemini 2.0 Flash Experimental](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-2.0-flash)for public preview. Gemini 2.0 Flash Experimental's partial list of features includes:
+ - Twice as fast as Gemini 1.5 Pro
+ - Bidirectional streaming with our Live API
+ - Multimodal response generation in the form of text, images, and speech
+ - Built-in tool use with multi-turn reasoning to use features like code execution, Search, function calling, and more
+
+Read more about Gemini 2.0 Flash in our[overview page](https://ai.google.dev/gemini-api/docs/models/gemini-v2).
+
+## November 21, 2024
+
+**Model updates:**
+
+- Released`gemini-exp-1121`, an even more powerful experimental Gemini API model.
+
+**Model updates:**
+
+- Updated the`gemini-1.5-flash-latest`and`gemini-1.5-flash`model aliases to use`gemini-1.5-flash-002`.
+ - Change to`top_k`parameter: The`gemini-1.5-flash-002`model supports`top_k`values between 1 and 41 (exclusive). Values greater than 40 will be changed to 40.
+
+## November 14, 2024
+
+**Model updates:**
+
+- Released`gemini-exp-1114`, a powerful experimental Gemini API model.
+
+## November 8, 2024
+
+**API updates:**
+
+- Added[support for Gemini](https://ai.google.dev/gemini-api/docs/openai)in the OpenAI libraries / REST API.
+
+## October 31, 2024
+
+**API updates:**
+
+- Added[support for Grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding).
+
+## October 3, 2024
+
+**Model updates:**
+
+- Released`gemini-1.5-flash-8b-001`, a stable version of our smallest Gemini API model.
+
+## September 24, 2024
+
+**Model updates:**
+
+- Released`gemini-1.5-pro-002`and`gemini-1.5-flash-002`, two new stable versions of Gemini 1.5 Pro and 1.5 Flash, for general availability.
+- Updated the`gemini-1.5-pro-latest`model code to use`gemini-1.5-pro-002`and the`gemini-1.5-flash-latest`model code to use`gemini-1.5-flash-002`.
+- Released`gemini-1.5-flash-8b-exp-0924`to replace`gemini-1.5-flash-8b-exp-0827`.
+- Released the[civic integrity safety filter](https://ai.google.dev/gemini-api/docs/safety-settings#safety-filters)for the Gemini API and AI Studio.
+- Released support for two new parameters for Gemini 1.5 Pro and 1.5 Flash in Python and NodeJS:[`frequencyPenalty`](https://ai.google.dev/api/generate-content#FIELDS.frequency_penalty)and[`presencePenalty`](https://ai.google.dev/api/generate-content#FIELDS.presence_penalty).
+
+## September 19, 2024
+
+**AI Studio updates:**
+
+- Added thumb-up and thumb-down buttons to model responses, to enable users to provide feedback on the quality of a response.
+
+**API updates:**
+
+- Added support for Google Cloud credits, which can now be used towards Gemini API usage.
+
+## September 17, 2024
+
+**AI Studio updates:**
+
+- Added an**Open in Colab**button that exports a prompt -- and the code to run it -- to a Colab notebook. The feature doesn't yet support prompting with tools (JSON mode, function calling, or code execution).
+
+## September 13, 2024
+
+**AI Studio updates:**
+
+- Added support for compare mode, which lets you compare responses across models and prompts to find the best fit for your use case.
+
+## August 30, 2024
+
+**Model updates:**
+
+- Gemini 1.5 Flash supports[supplying JSON schema through model configuration](https://ai.google.dev/gemini-api/docs/json-mode#supply-schema-in-config).
+
+## August 27, 2024
+
+**Model updates:**
+
+- Released the following[experimental models](https://ai.google.dev/gemini-api/docs/models/experimental-models):
+ - `gemini-1.5-pro-exp-0827`
+ - `gemini-1.5-flash-exp-0827`
+ - `gemini-1.5-flash-8b-exp-0827`
+
+## August 9, 2024
+
+**API updates:**
+
+- Added support for[PDF processing](https://ai.google.dev/gemini-api/docs/document-processing).
+
+## August 5, 2024
+
+**Model updates:**
+
+- Fine-tuning support released for Gemini 1.5 Flash.
+
+## August 1, 2024
+
+**Model updates:**
+
+- Released`gemini-1.5-pro-exp-0801`, a new experimental version of[Gemini 1.5 Pro](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-pro).
+
+## July 12, 2024
+
+**Model updates:**
+
+- Support for Gemini 1.0 Pro Vision removed from Google AI services and tools.
+
+## June 27, 2024
+
+**Model updates:**
+
+- General availability release for Gemini 1.5 Pro's 2M context window.
+
+**API updates:**
+
+- Added support for[code execution](https://ai.google.dev/gemini-api/docs/code-execution).
+
+## June 18, 2024
+
+**API updates:**
+
+- Added support for[context caching](https://ai.google.dev/gemini-api/docs/caching).
+
+## June 12, 2024
+
+**Model updates:**
+
+- Gemini 1.0 Pro Vision deprecated.
+
+## May 23, 2024
+
+**Model updates:**
+
+- [Gemini 1.5 Pro](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-pro)(`gemini-1.5-pro-001`) is generally available (GA).
+- [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash)(`gemini-1.5-flash-001`) is generally available (GA).
+
+## May 14, 2024
+
+**API updates:**
+
+- Introduced a 2M context window for Gemini 1.5 Pro (waitlist).
+- Introduced pay-as-you-go[billing](https://ai.google.dev/gemini-api/docs/billing)for Gemini 1.0 Pro, with Gemini 1.5 Pro and Gemini 1.5 Flash billing coming soon.
+- Introduced increased rate limits for the upcoming paid tier of Gemini 1.5 Pro.
+- Added built-in video support to the[File API](https://ai.google.dev/api/rest/v1beta/files).
+- Added plain text support to the[File API](https://ai.google.dev/api/rest/v1beta/files).
+- Added support for parallel function calling, which returns more than one call at a time.
+
+## May 10, 2024
+
+**Model updates:**
+
+- Released[Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash)(`gemini-1.5-flash-latest`) in preview.
+
+## April 9, 2024
+
+**Model updates:**
+
+- Released[Gemini 1.5 Pro](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-pro)(`gemini-1.5-pro-latest`) in preview.
+- Released a new text embedding model,`text-embeddings-004`, which supports[elastic embedding](https://ai.google.dev/gemini-api/docs/embeddings#elastic-embedding)sizes under 768.
+
+**API updates:**
+
+- Released the[File API](https://ai.google.dev/api/rest/v1beta/files)for temporarily storing media files for use in prompting.
+- Added support for prompting with text, image, and audio data, also known as*multimodal* prompting. To learn more, see[Prompting with media](https://ai.google.dev/gemini-api/docs/prompting_with_media).
+- Released[System instructions](https://ai.google.dev/gemini-api/docs/system-instructions)in beta.
+- Added[Function calling mode](https://ai.google.dev/gemini-api/docs/function-calling#function_calling_mode), which defines the execution behavior for function calling.
+- Added support for the`response_mime_type`configuration option, which lets you request responses in[JSON format](https://ai.google.dev/gemini-api/docs/api-overview#json).
+
+## March 19, 2024
+
+**Model updates:**
+
+- Added support for[tuning Gemini 1.0 Pro](https://developers.googleblog.com/en/tune-gemini-pro-in-google-ai-studio-or-with-the-gemini-api/)in Google AI Studio or with the Gemini API.
+
+## December 13 2023
+
+**Model updates:**
+
+- gemini-pro: New text model for a wide variety of tasks. Balances capability and efficiency.
+- gemini-pro-vision: New multimodal model for a wide variety of tasks. Balances capability and efficiency.
+- embedding-001: New embeddings model.
+- aqa: A new specially tuned model that is trained to answer questions using text passages for grounding generated answers.
+
+See[Gemini models](https://ai.google.dev/gemini-api/docs/models/gemini)for more details.
+
+**API version updates:**
+
+- v1: The stable API channel.
+- v1beta: Beta channel. This channel has features that may be under development.
+
+See[the API versions topic](https://ai.google.dev/gemini-api/docs/api-versions)for more details.
+
+**API updates:**
+
+- `GenerateContent`is a single unified endpoint for chat and text.
+- Streaming available through the`StreamGenerateContent`method.
+- Multimodal capability: Image is a new supported modality
+- New beta features:
+ - [Function Calling](https://ai.google.dev/gemini-api/docs/function-calling)
+ - [Semantic Retriever](https://ai.google.dev/gemini-api/docs/semantic_retrieval)
+ - Attributed Question Answering (AQA)
+- Updated candidate count: Gemini models only return 1 candidate.
+- Different Safety Settings and SafetyRating categories. See[safety settings](https://ai.google.dev/gemini-api/docs/safety-settings)for more details.
+- Tuning models is not yet supported for Gemini models (Work in progress).
+
+[END OF DOCUMENT: GEMINI2CEH3UDMXX]
+---
+
+[START OF DOCUMENT: GEMINIQ3FI1M41D | Title: Code-Execution.Md]
+
+<br />
+
+The Gemini API provides a code execution tool that enables the model to generate and run Python code. The model can then learn iteratively from the code execution results until it arrives at a final output. You can use code execution to build applications that benefit from code-based reasoning. For example, you can use code execution to solve equations or process text. You can also use the[libraries](https://ai.google.dev/gemini-api/docs/code-execution#supported-libraries)included in the code execution environment to perform more specialized tasks.
+
+Gemini is only able to execute code in Python. You can still ask Gemini to generate code in another language, but the model can't use the code execution tool to run it.
+
+## Enable code execution
+
+To enable code execution, configure the code execution tool on the model. This allows the model to generate and run code.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents="What is the sum of the first 50 prime numbers? "
+ "Generate and run code for the calculation, and make sure you get all 50.",
+ config=types.GenerateContentConfig(
+ tools=[types.Tool(code_execution=types.ToolCodeExecution)]
+ ),
+ )
+
+ for part in response.candidates[0].content.parts:
+ if part.text is not None:
+ print(part.text)
+ if part.executable_code is not None:
+ print(part.executable_code.code)
+ if part.code_execution_result is not None:
+ print(part.code_execution_result.output)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ let response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: [
+ "What is the sum of the first 50 prime numbers? " +
+ "Generate and run code for the calculation, and make sure you get all 50.",
+ ],
+ config: {
+ tools: [{ codeExecution: {} }],
+ },
+ });
+
+ const parts = response?.candidates?.[0]?.content?.parts || [];
+ parts.forEach((part) => {
+ if (part.text) {
+ console.log(part.text);
+ }
+
+ if (part.executableCode && part.executableCode.code) {
+ console.log(part.executableCode.code);
+ }
+
+ if (part.codeExecutionResult && part.codeExecutionResult.output) {
+ console.log(part.codeExecutionResult.output);
+ }
+ });
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ config := &genai.GenerateContentConfig{
+ Tools: []*genai.Tool{
+ {CodeExecution: &genai.ToolCodeExecution{}},
+ },
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ genai.Text("What is the sum of the first 50 prime numbers? " +
+ "Generate and run code for the calculation, and make sure you get all 50."),
+ config,
+ )
+
+ fmt.Println(result.Text())
+ fmt.Println(result.ExecutableCode())
+ fmt.Println(result.CodeExecutionResult())
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -d ' {"tools": [{"code_execution": {}}],
+ "contents": {
+ "parts":
+ {
+ "text": "What is the sum of the first 50 prime numbers? Generate and run code for the calculation, and make sure you get all 50."
+ }
+ },
+ }'
+
+| **Note:** This REST example doesn't parse the JSON response as shown in the example output.
+
+The output might look something like the following, which has been formatted for readability:
+
+ Okay, I need to calculate the sum of the first 50 prime numbers. Here's how I'll
+ approach this:
+
+ 1. **Generate Prime Numbers:** I'll use an iterative method to find prime
+ numbers. I'll start with 2 and check if each subsequent number is divisible
+ by any number between 2 and its square root. If not, it's a prime.
+ 2. **Store Primes:** I'll store the prime numbers in a list until I have 50 of
+ them.
+ 3. **Calculate the Sum:** Finally, I'll sum the prime numbers in the list.
+
+ Here's the Python code to do this:
+
+ def is_prime(n):
+ """Efficiently checks if a number is prime."""
+ if n <= 1:
+ return False
+ if n <= 3:
+ return True
+ if n % 2 == 0 or n % 3 == 0:
+ return False
+ i = 5
+ while i * i <= n:
+ if n % i == 0 or n % (i + 2) == 0:
+ return False
+ i += 6
+ return True
+
+ primes = []
+ num = 2
+ while len(primes) < 50:
+ if is_prime(num):
+ primes.append(num)
+ num += 1
+
+ sum_of_primes = sum(primes)
+ print(f'{primes=}')
+ print(f'{sum_of_primes=}')
+
+ primes=[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+ 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151,
+ 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229]
+ sum_of_primes=5117
+
+ The sum of the first 50 prime numbers is 5117.
+
+This output combines several content parts that the model returns when using code execution:
+
+- `text`: Inline text generated by the model
+- `executableCode`: Code generated by the model that is meant to be executed
+- `codeExecutionResult`: Result of the executable code
+
+The naming conventions for these parts vary by programming language.
+
+## Use code execution in chat
+
+You can also use code execution as part of a chat.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+
+ client = genai.Client()
+
+ chat = client.chats.create(
+ model="gemini-2.5-flash",
+ config=types.GenerateContentConfig(
+ tools=[types.Tool(code_execution=types.ToolCodeExecution)]
+ ),
+ )
+
+ response = chat.send_message("I have a math question for you.")
+ print(response.text)
+
+ response = chat.send_message(
+ "What is the sum of the first 50 prime numbers? "
+ "Generate and run code for the calculation, and make sure you get all 50."
+ )
+
+ for part in response.candidates[0].content.parts:
+ if part.text is not None:
+ print(part.text)
+ if part.executable_code is not None:
+ print(part.executable_code.code)
+ if part.code_execution_result is not None:
+ print(part.code_execution_result.output)
+
+### JavaScript
+
+ import {GoogleGenAI} from "@google/genai";
+
+ const ai = new GoogleGenAI({});
+
+ const chat = ai.chats.create({
+ model: "gemini-2.5-flash",
+ history: [
+ {
+ role: "user",
+ parts: [{ text: "I have a math question for you:" }],
+ },
+ {
+ role: "model",
+ parts: [{ text: "Great! I'm ready for your math question. Please ask away." }],
+ },
+ ],
+ config: {
+ tools: [{codeExecution:{}}],
+ }
+ });
+
+ const response = await chat.sendMessage({
+ message: "What is the sum of the first 50 prime numbers? " +
+ "Generate and run code for the calculation, and make sure you get all 50."
+ });
+ console.log("Chat response:", response.text);
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, err := genai.NewClient(ctx, nil)
+ if err != nil {
+ log.Fatal(err)
+ }
+
+ config := &genai.GenerateContentConfig{
+ Tools: []*genai.Tool{
+ {CodeExecution: &genai.ToolCodeExecution{}},
+ },
+ }
+
+ chat, _ := client.Chats.Create(
+ ctx,
+ "gemini-2.5-flash",
+ config,
+ nil,
+ )
+
+ result, _ := chat.SendMessage(
+ ctx,
+ genai.Part{Text: "What is the sum of the first 50 prime numbers? " +
+ "Generate and run code for the calculation, and " +
+ "make sure you get all 50.",
+ },
+ )
+
+ fmt.Println(result.Text())
+ fmt.Println(result.ExecutableCode())
+ fmt.Println(result.CodeExecutionResult())
+ }
+
+### REST
+
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+ -H "x-goog-api-key: $GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -d '{"tools": [{"code_execution": {}}],
+ "contents": [
+ {
+ "role": "user",
+ "parts": [{
+ "text": "Can you print \"Hello world!\"?"
+ }]
+ },{
+ "role": "model",
+ "parts": [
+ {
+ "text": ""
+ },
+ {
+ "executable_code": {
+ "language": "PYTHON",
+ "code": "\nprint(\"hello world!\")\n"
+ }
+ },
+ {
+ "code_execution_result": {
+ "outcome": "OUTCOME_OK",
+ "output": "hello world!\n"
+ }
+ },
+ {
+ "text": "I have printed \"hello world!\" using the provided python code block. \n"
+ }
+ ],
+ },{
+ "role": "user",
+ "parts": [{
+ "text": "What is the sum of the first 50 prime numbers? Generate and run code for the calculation, and make sure you get all 50."
+ }]
+ }
+ ]
+ }'
+
+## Input/output (I/O)
+
+Starting with[Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-2.0-flash), code execution supports file input and graph output. Using these input and output capabilities, you can upload CSV and text files, ask questions about the files, and have[Matplotlib](https://matplotlib.org/)graphs generated as part of the response. The output files are returned as inline images in the response.
+
+### I/O pricing
+
+When using code execution I/O, you're charged for input tokens and output tokens:
+
+**Input tokens:**
+
+- User prompt
+
+**Output tokens:**
+
+- Code generated by the model
+- Code execution output in the code environment
+- Thinking tokens
+- Summary generated by the model
+
+### I/O details
+
+When you're working with code execution I/O, be aware of the following technical details:
+
+- The maximum runtime of the code environment is 30 seconds.
+- If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
+- The maximum file input size is limited by the model token window. In AI Studio, using Gemini Flash 2.0, the maximum input file size is 1 million tokens (roughly 2MB for text files of the supported input types). If you upload a file that's too large, AI Studio won't let you send it.
+- Code execution works best with text and CSV files.
+- The input file can be passed in`part.inlineData`or`part.fileData`(uploaded via the[Files API](https://ai.google.dev/gemini-api/docs/files)), and the output file is always returned as`part.inlineData`.
+
+| | Single turn | Bidirectional (Multimodal Live API) |
+|-----------------------------------------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
+| Models supported | All Gemini 2.0 and 2.5 models | Only Flash experimental models |
+| File input types supported | .png, .jpeg, .csv, .xml, .cpp, .java, .py, .js, .ts | .png, .jpeg, .csv, .xml, .cpp, .java, .py, .js, .ts |
+| Plotting libraries supported | Matplotlib, seaborn | Matplotlib, seaborn |
+| [Multi-tool use](https://ai.google.dev/gemini-api/docs/function-calling#multi-tool-use) | Yes (code execution + grounding only) | Yes |
+
+## Billing
+
+There's no additional charge for enabling code execution from the Gemini API. You'll be billed at the current rate of input and output tokens based on the Gemini model you're using.
+
+Here are a few other things to know about billing for code execution:
+
+- You're only billed once for the input tokens you pass to the model, and you're billed for the final output tokens returned to you by the model.
+- Tokens representing generated code are counted as output tokens. Generated code can include text and multimodal output like images.
+- Code execution results are also counted as output tokens.
+
+The billing model is shown in the following diagram:
+
+![code execution billing model](https://ai.google.dev/static/gemini-api/docs/images/code-execution-diagram.png)
+
+- You're billed at the current rate of input and output tokens based on the Gemini model you're using.
+- If Gemini uses code execution when generating your response, the original prompt, the generated code, and the result of the executed code are labeled*intermediate tokens* and are billed as*input tokens*.
+- Gemini then generates a summary and returns the generated code, the result of the executed code, and the final summary. These are billed as*output tokens*.
+- The Gemini API includes an intermediate token count in the API response, so you know why you're getting additional input tokens beyond your initial prompt.
+
+## Limitations
+
+- The model can only generate and execute code. It can't return other artifacts like media files.
+- In some cases, enabling code execution can lead to regressions in other areas of model output (for example, writing a story).
+- There is some variation in the ability of the different models to use code execution successfully.
+
+## Supported tools combinations
+
+Code execution tool can be combined with[Grounding with Google Search](https://ai.google.dev/gemini-api/docs/google-search)to power more complex use cases.
+
+## Supported libraries
+
+The code execution environment includes the following libraries:
+
+- attrs
+- chess
+- contourpy
+- fpdf
+- geopandas
+- imageio
+- jinja2
+- joblib
+- jsonschema
+- jsonschema-specifications
+- lxml
+- matplotlib
+- mpmath
+- numpy
+- opencv-python
+- openpyxl
+- packaging
+- pandas
+- pillow
+- protobuf
+- pylatex
+- pyparsing
+- PyPDF2
+- python-dateutil
+- python-docx
+- python-pptx
+- reportlab
+- scikit-learn
+- scipy
+- seaborn
+- six
+- striprtf
+- sympy
+- tabulate
+- tensorflow
+- toolz
+- xlrd
+
+You can't install your own libraries.
+| **Note:** Only`matplotlib`is supported for graph rendering using code execution.
+
+## What's next
+
+- Try the[code execution Colab](https://colab.research.google.com/github/google-gemini/cookbook/blob/main/quickstarts/Code_Execution.ipynb).
+- Learn about other Gemini API tools:
+ - [Function calling](https://ai.google.dev/gemini-api/docs/function-calling)
+ - [Grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding)
+
+[END OF DOCUMENT: GEMINIQ3FI1M41D]
+---
+
+[START OF DOCUMENT: GEMINI1EIX15UM7A | Title: Computer-Use.Md]
+
+<br />
+
+The Gemini 2.5 Computer Use Preview model and tool enable you to build browser
+control agents that interact with and automate tasks. Using screenshots, the
+Computer Use model can "see" a computer screen, and "act" by generating specific
+UI actions like mouse clicks and keyboard inputs. Similar to function calling,
+you need to write the client-side application code to receive and execute the
+Computer Use actions.
+
+With Computer Use, you can build agents that:
+
+- Automate repetitive data entry or form filling on websites.
+- Perform automated testing of web applications and user flows
+- Conduct research across various websites (e.g., gathering product information, prices, and reviews from ecommerce sites to inform a purchase)
+
+The easiest way to test the Gemini Computer Use model is through the [reference
+implementation](https://github.com/google/computer-use-preview/) or
+[Browserbase demo environment](http://gemini.browserbase.com).
+| **Note:** As a Preview model, the Gemini 2.5 Computer Use model may be prone to errors and security vulnerabilities. We recommend supervising closely for important tasks, and that you avoid using the Computer Use model for tasks involving critical decisions, sensitive data, or actions where serious errors cannot be corrected. We encourage you to review the [Safety best
+| practices](https://ai.google.dev/gemini-api/docs/computer-use#safety-best-practices), the [Prohibited Use
+| Policy](https://policies.google.com/terms/generative-ai/use-policy) and [Gemini
+| API Additional Terms of Service](https://ai.google.dev/terms).
+
+## How Computer Use works
+
+To build a browser control agent with the Computer Use model, implement
+an agent loop that does the following:
+
+1. [**Send a request to the model**](https://ai.google.dev/gemini-api/docs/computer-use#send-request)
+
+ - Add the Computer Use tool and optionally any custom user-defined functions or excluded functions to your API request.
+ - Prompt the Computer Use model with the user's request.
+2. [**Receive the model response**](https://ai.google.dev/gemini-api/docs/computer-use#model-response)
+
+ - The Computer Use model analyzes the user request and screenshot, and generates a response which includes a suggested `function_call` representing a UI action (e.g., "click at coordinate (x,y)" or "type 'text'"). For a description of all UI actions supported by the Computer Use model, see [Supported actions](https://ai.google.dev/gemini-api/docs/computer-use#supported-actions).
+ - The API response may also include a `safety_decision` from an internal safety system that checks the model's proposed action. This `safety_decision` classifies the action as:
+ - **Regular / allowed:** The action is considered safe. This may also be represented by no `safety_decision` being present.
+ - **Requires confirmation (`require_confirmation`):** The model is about to perform an action that may be risky (e.g., clicking on an "accept cookie banner").
+3. [**Execute the received action**](https://ai.google.dev/gemini-api/docs/computer-use#execute-actions)
+
+ - Your client-side code receives the `function_call` and any accompanying `safety_decision`.
+ - **Regular / allowed:** If the `safety_decision` indicates regular / allowed (or if no `safety_decision` is present), your client-side code can execute the specified `function_call` in your target environment (e.g., a web browser).
+ - **Requires confirmation:** If the `safety_decision` indicates requires confirmation, your application must prompt the end-user for confirmation before executing the `function_call`. If the user confirms, proceed to execute the action. If the user denies, don't execute the action.
+4. [**Capture the new environment state**](https://ai.google.dev/gemini-api/docs/computer-use#capture-state)
+
+ - If the action has been executed, your client captures a new screenshot of the GUI and the current URL to send back to the Computer Use model as part of a `function_response`.
+ - If an action was blocked by the safety system or denied confirmation by the user, your application might send a different form of feedback to the model or end the interaction.
+
+This process repeats from step 2 with the Computer Use model using the new
+screenshot and the ongoing goal to suggest the next action. The loop continues
+until the task is completed, an error occurs, or the process is terminated
+(e.g., due to a "block" safety response or user decision).
+
+![Computer Use
+overview](https://ai.google.dev/static/gemini-api/docs/images/computer_use.png)
+
+## How to implement Computer Use
+
+Before building with the Computer Use model and tool you will need to set up the
+following:
+
+- **Secure execution environment:** For safety reasons, you should run your Computer Use agent in a secure and controlled environment (e.g., a sandboxed virtual machine, a container, or a dedicated browser profile with limited permissions).
+- **Client-side action handler:** You will need to implement client-side logic to execute the actions generated by the model and capture screenshots of the environment after each action.
+
+The examples in this section use a browser as the execution environment
+and [Playwright](https://playwright.dev/) as the client-side action handler. To
+run these samples you must install the necessary dependencies and initialize a
+Playwright browser instance.
+
+#### Install Playwright
+
+<br />```
+    pip install google-genai playwright
+    playwright install chromium
+    
+```#### Initialize Playwright browser instance
+
+<br />```
+    from playwright.sync_api import sync_playwright
+
+    # 1. Configure screen dimensions for the target environment
+    SCREEN_WIDTH = 1440
+    SCREEN_HEIGHT = 900
+
+    # 2. Start the Playwright browser
+    # In production, utilize a sandboxed environment.
+    playwright = sync_playwright().start()
+    # Set headless=False to see the actions performed on your screen
+    browser = playwright.chromium.launch(headless=False)
+
+    # 3. Create a context and page with the specified dimensions
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT}
+    )
+    page = context.new_page()
+
+    # 4. Navigate to an initial page to start the task
+    page.goto("https://www.google.com")
+
+    # The 'page', 'SCREEN_WIDTH', and 'SCREEN_HEIGHT' variables
+    # will be used in the steps below.
+    
+```Sample code for extending to an Android
+environment is included in the [Using custom user-defined
+functions](https://ai.google.dev/gemini-api/docs/computer-use#custom-functions) section.
+
+### 1. Send a request to the model
+
+Add the Computer Use tool to your API request and send a prompt to the Computer
+Use model that includes the user's goal.
+You must use the Gemini Computer Use model,
+`gemini-2.5-computer-use-preview-10-2025`. If you try to use the Computer Use
+tool with a different model, you will get an error.
+
+You can also optionally add the following parameters:
+
+- **Excluded actions:** If there are any actions from the list of [Supported
+ UI actions](https://ai.google.dev/gemini-api/docs/computer-use#supported-actions) that you don't want the model to take, specify these actions as `excluded_predefined_functions`.
+- **User-defined functions:** In addition to the Computer Use tool, you may want to include custom user-defined functions.
+
+Note that there is no need to specify the display size when issuing a request;
+the model predicts pixel coordinates scaled to the height and width of the
+screen.
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ from google.genai.types import Content, Part
+
+ client = genai.Client()
+
+ # Specify predefined functions to exclude (optional)
+ excluded_functions = ["drag_and_drop"]
+
+ generate_content_config = genai.types.GenerateContentConfig(
+ tools=[
+ # 1. Computer Use tool with browser environment
+ types.Tool(
+ computer_use=types.ComputerUse(
+ environment=types.Environment.ENVIRONMENT_BROWSER,
+ # Optional: Exclude specific predefined functions
+ excluded_predefined_functions=excluded_functions
+ )
+ ),
+ # 2. Optional: Custom user-defined functions
+ #types.Tool(
+ # function_declarations=custom_functions
+ # )
+ ],
+ )
+
+ # Create the content with user message
+ contents=[
+ Content(
+ role="user",
+ parts=[
+ Part(text="Search for highly rated smart fridges with touchscreen, 2 doors, around 25 cu ft, priced below 4000 dollars on Google Shopping. Create a bulleted list of the 3 cheapest options in the format of name, description, price in an easy-to-read layout."),
+ ],
+ )
+ ]
+
+ # Generate content with the configured settings
+ response = client.models.generate_content(
+ model='gemini-2.5-computer-use-preview-10-2025',
+ contents=contents,
+ config=generate_content_config,
+ )
+
+ # Print the response output
+ print(response)
+
+For an example with custom functions, see [Using custom
+user-defined functions](https://ai.google.dev/gemini-api/docs/computer-use#custom-functions).
+
+### 2. Receive the model response
+
+The Computer Use model will respond with one or more `FunctionCalls` if it
+determines UI actions are needed to complete the task. Computer Use supports
+parallel function calling, meaning the model can return multiple actions in a
+single turn.
+
+Here is an example model response.
+
+ {
+ "content": {
+ "parts": [
+ {
+ "text": "I will type the search query into the search bar. The search bar is in the center of the page."
+ },
+ {
+ "function_call": {
+ "name": "type_text_at",
+ "args": {
+ "x": 371,
+ "y": 470,
+ "text": "highly rated smart fridges with touchscreen, 2 doors, around 25 cu ft, priced below 4000 dollars on Google Shopping",
+ "press_enter": true
+ }
+ }
+ }
+ ]
+ }
+ }
+
+### 3. Execute the received actions
+
+Your application code needs to parse the model response, execute the actions,
+and collect the results.
+
+The example code below extracts function calls from the Computer Use model
+response, and translates them into actions that can be executed with Playwright.
+The model outputs normalized coordinates (0-999) regardless of the input image
+dimensions, so part of the translation step is converting these normalized
+coordinates back to actual pixel values.
+
+The recommended screen size for use
+with the Computer Use model is (1440, 900). The model will work with any
+resolution, though the quality of the results may be impacted.
+
+Note that this example only includes the implementation for the 3 most common
+UI actions: `open_web_browser`, `click_at`, and `type_text_at`. For
+production use cases, you will need to implement all other UI actions from the
+[Supported actions](https://ai.google.dev/gemini-api/docs/computer-use#supported-actions) list unless you explicitly add them as
+`excluded_predefined_functions`.
+
+### Python
+
+ from typing import Any, List, Tuple
+ import time
+
+ def denormalize_x(x: int, screen_width: int) -> int:
+ """Convert normalized x coordinate (0-1000) to actual pixel coordinate."""
+ return int(x / 1000 * screen_width)
+
+ def denormalize_y(y: int, screen_height: int) -> int:
+ """Convert normalized y coordinate (0-1000) to actual pixel coordinate."""
+ return int(y / 1000 * screen_height)
+
+ def execute_function_calls(candidate, page, screen_width, screen_height):
+ results = []
+ function_calls = []
+ for part in candidate.content.parts:
+ if part.function_call:
+ function_calls.append(part.function_call)
+
+ for function_call in function_calls:
+ action_result = {}
+ fname = function_call.name
+ args = function_call.args
+ print(f" -> Executing: {fname}")
+
+ try:
+ if fname == "open_web_browser":
+ pass # Already open
+ elif fname == "click_at":
+ actual_x = denormalize_x(args["x"], screen_width)
+ actual_y = denormalize_y(args["y"], screen_height)
+ page.mouse.click(actual_x, actual_y)
+ elif fname == "type_text_at":
+ actual_x = denormalize_x(args["x"], screen_width)
+ actual_y = denormalize_y(args["y"], screen_height)
+ text = args["text"]
+ press_enter = args.get("press_enter", False)
+
+ page.mouse.click(actual_x, actual_y)
+ # Simple clear (Command+A, Backspace for Mac)
+ page.keyboard.press("Meta+A")
+ page.keyboard.press("Backspace")
+ page.keyboard.type(text)
+ if press_enter:
+ page.keyboard.press("Enter")
+ else:
+ print(f"Warning: Unimplemented or custom function {fname}")
+
+ # Wait for potential navigations/renders
+ page.wait_for_load_state(timeout=5000)
+ time.sleep(1)
+
+ except Exception as e:
+ print(f"Error executing {fname}: {e}")
+ action_result = {"error": str(e)}
+
+ results.append((fname, action_result))
+
+ return results
+
+### 4. Capture the new environment state
+
+After executing the actions, send the result of the function execution back to
+the model so it can use this information to generate the next action. If
+multiple actions (parallel calls) were executed, you must send a
+`FunctionResponse` for each one in the subsequent user turn.
+
+### Python
+
+ def get_function_responses(page, results):
+ screenshot_bytes = page.screenshot(type="png")
+ current_url = page.url
+ function_responses = []
+ for name, result in results:
+ response_data = {"url": current_url}
+ response_data.update(result)
+ function_responses.append(
+ types.FunctionResponse(
+ name=name,
+ response=response_data,
+ parts=[types.FunctionResponsePart(
+ inline_data=types.FunctionResponseBlob(
+ mime_type="image/png",
+ data=screenshot_bytes))
+ ]
+ )
+ )
+ return function_responses
+
+## Build an agent loop
+
+To enable multi-step interactions, combine the four steps from the [How to
+implement Computer Use](https://ai.google.dev/gemini-api/docs/computer-use#implement-computer-use) section into a loop.
+Remember to manage the conversation history correctly by appending both model
+responses and your function responses.
+
+To run this code sample you need to:
+
+- Install the [necessary Playwright
+ dependencies](https://ai.google.dev/gemini-api/docs/computer-use#expandable-1).
+- Define the helper functions from steps [(3) Execute the received
+ actions](https://ai.google.dev/gemini-api/docs/computer-use#execute-actions) and [(4) Capture the new environment
+ state](https://ai.google.dev/gemini-api/docs/computer-use#capture-state).
+
+### Python
+
+ import time
+ from typing import Any, List, Tuple
+ from playwright.sync_api import sync_playwright
+
+ from google import genai
+ from google.genai import types
+ from google.genai.types import Content, Part
+
+ client = genai.Client()
+
+ # Constants for screen dimensions
+ SCREEN_WIDTH = 1440
+ SCREEN_HEIGHT = 900
+
+ # Setup Playwright
+ print("Initializing browser...")
+ playwright = sync_playwright().start()
+ browser = playwright.chromium.launch(headless=False)
+ context = browser.new_context(viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT})
+ page = context.new_page()
+
+ # Define helper functions. Copy/paste from steps 3 and 4
+ # def denormalize_x(...)
+ # def denormalize_y(...)
+ # def execute_function_calls(...)
+ # def get_function_responses(...)
+
+ try:
+ # Go to initial page
+ page.goto("https://ai.google.dev/gemini-api/docs")
+
+ # Configure the model (From Step 1)
+ config = types.GenerateContentConfig(
+ tools=[types.Tool(computer_use=types.ComputerUse(
+ environment=types.Environment.ENVIRONMENT_BROWSER
+ ))],
+ thinking_config=types.ThinkingConfig(include_thoughts=True),
+ )
+
+ # Initialize history
+ initial_screenshot = page.screenshot(type="png")
+ USER_PROMPT = "Go to ai.google.dev/gemini-api/docs and search for pricing."
+ print(f"Goal: {USER_PROMPT}")
+
+ contents = [
+ Content(role="user", parts=[
+ Part(text=USER_PROMPT),
+ Part.from_bytes(data=initial_screenshot, mime_type='image/png')
+ ])
+ ]
+
+ # Agent Loop
+ turn_limit = 5
+ for i in range(turn_limit):
+ print(f"\n--- Turn {i+1} ---")
+ print("Thinking...")
+ response = client.models.generate_content(
+ model='gemini-2.5-computer-use-preview-10-2025',
+ contents=contents,
+ config=config,
+ )
+
+ candidate = response.candidates[0]
+ contents.append(candidate.content)
+
+ has_function_calls = any(part.function_call for part in candidate.content.parts)
+ if not has_function_calls:
+ text_response = " ".join([part.text for part in candidate.content.parts if part.text])
+ print("Agent finished:", text_response)
+ break
+
+ print("Executing actions...")
+ results = execute_function_calls(candidate, page, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+ print("Capturing state...")
+ function_responses = get_function_responses(page, results)
+
+ contents.append(
+ Content(role="user", parts=[Part(function_response=fr) for fr in function_responses])
+ )
+
+ finally:
+ # Cleanup
+ print("\nClosing browser...")
+ browser.close()
+ playwright.stop()
+
+## Using custom user-defined functions
+
+You can optionally include custom user-defined functions in your request to
+extend the functionality of the model. The example below adapts the Computer Use
+model and tool for mobile use cases by including custom user-defined actions
+like `open_app`, `long_press_at`, and `go_home`, while excluding
+browser-specific actions. The model can intelligently call these custom
+functions alongside standard UI actions to complete tasks in non-browser
+environments.
+
+### Python
+
+ from typing import Optional, Dict, Any
+
+ from google import genai
+ from google.genai import types
+ from google.genai.types import Content, Part
+
+ client = genai.Client()
+
+ SYSTEM_PROMPT = """You are operating an Android phone. Today's date is October 15, 2023, so ignore any other date provided.
+ * To provide an answer to the user, *do not use any tools* and output your answer on a separate line. IMPORTANT: Do not add any formatting or additional punctuation/text, just output the answer by itself after two empty lines.
+ * Make sure you scroll down to see everything before deciding something isn't available.
+ * You can open an app from anywhere. The icon doesn't have to currently be on screen.
+ * Unless explicitly told otherwise, make sure to save any changes you make.
+ * If text is cut off or incomplete, scroll or click into the element to get the full text before providing an answer.
+ * IMPORTANT: Complete the given task EXACTLY as stated. DO NOT make any assumptions that completing a similar task is correct. If you can't find what you're looking for, SCROLL to find it.
+ * If you want to edit some text, ONLY USE THE `type` tool. Do not use the onscreen keyboard.
+ * Quick settings shouldn't be used to change settings. Use the Settings app instead.
+ * The given task may already be completed. If so, there is no need to do anything.
+ """
+
+ def open_app(app_name: str, intent: Optional[str] = None) -> Dict[str, Any]:
+ """Opens an app by name.
+
+ Args:
+ app_name: Name of the app to open (any string).
+ intent: Optional deep-link or action to pass when launching, if the app supports it.
+
+ Returns:
+ JSON payload acknowledging the request (app name and optional intent).
+ """
+ return {"status": "requested_open", "app_name": app_name, "intent": intent}
+
+ def long_press_at(x: int, y: int) -> Dict[str, int]:
+ """Long-press at a specific screen coordinate.
+
+ Args:
+ x: X coordinate (absolute), scaled to the device screen width (pixels).
+ y: Y coordinate (absolute), scaled to the device screen height (pixels).
+
+ Returns:
+ Object with the coordinates pressed and the duration used.
+ """
+ return {"x": x, "y": y}
+
+ def go_home() -> Dict[str, str]:
+ """Navigates to the device home screen.
+
+ Returns:
+ A small acknowledgment payload.
+ """
+ return {"status": "home_requested"}
+
+ # Build function declarations
+ CUSTOM_FUNCTION_DECLARATIONS = [
+ types.FunctionDeclaration.from_callable(client=client, callable=open_app),
+ types.FunctionDeclaration.from_callable(client=client, callable=long_press_at),
+ types.FunctionDeclaration.from_callable(client=client, callable=go_home),
+ ]
+
+ #Exclude browser functions
+ EXCLUDED_PREDEFINED_FUNCTIONS = [
+ "open_web_browser",
+ "search",
+ "navigate",
+ "hover_at",
+ "scroll_document",
+ "go_forward",
+ "key_combination",
+ "drag_and_drop",
+ ]
+
+ #Utility function to construct a GenerateContentConfig
+ def make_generate_content_config() -> genai.types.GenerateContentConfig:
+ """Return a fixed GenerateContentConfig with Computer Use + custom functions."""
+ return genai.types.GenerateContentConfig(
+ system_instruction=SYSTEM_PROMPT,
+ tools=[
+ types.Tool(
+ computer_use=types.ComputerUse(
+ environment=types.Environment.ENVIRONMENT_BROWSER,
+ excluded_predefined_functions=EXCLUDED_PREDEFINED_FUNCTIONS,
+ )
+ ),
+ types.Tool(function_declarations=CUSTOM_FUNCTION_DECLARATIONS),
+ ],
+ )
+
+ # Create the content with user message
+ contents: list[Content] = [
+ Content(
+ role="user",
+ parts=[
+ # text instruction
+ Part(text="Open Chrome, then long-press at 200,400."),
+ ],
+ )
+ ]
+
+ # Build your fixed config (from helper)
+ config = make_generate_content_config()
+
+ # Generate content with the configured settings
+ response = client.models.generate_content(
+ model='gemini-2.5-computer-use-preview-10-2025',
+ contents=contents,
+ config=config,
+ )
+
+ print(response)
+
+## Supported UI actions
+
+The Computer Use model can request the following UI actions via a
+`FunctionCall`. Your client-side code must implement the execution logic for
+these actions. See the [reference
+implementation](https://github.com/google/computer-use-preview) for
+examples.
+
+| Command Name | Description | Arguments (in Function Call) | Example Function Call |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| **open_web_browser** | Opens the web browser. | None | `{"name": "open_web_browser", "args": {}}` |
+| **wait_5_seconds** | Pauses execution for 5 seconds to allow dynamic content to load or animations to complete. | None | `{"name": "wait_5_seconds", "args": {}}` |
+| **go_back** | Navigates to the previous page in the browser's history. | None | `{"name": "go_back", "args": {}}` |
+| **go_forward** | Navigates to the next page in the browser's history. | None | `{"name": "go_forward", "args": {}}` |
+| **search** | Navigates to the default search engine's homepage (e.g., Google). Useful for starting a new search task. | None | `{"name": "search", "args": {}}` |
+| **navigate** | Navigates the browser directly to the specified URL. | `url`: str | `{"name": "navigate", "args": {"url": "https://www.wikipedia.org"}}` |
+| **click_at** | Clicks at a specific coordinate on the webpage. The x and y values are based on a 1000x1000 grid and are scaled to the screen dimensions. | `y`: int (0-999), `x`: int (0-999) | `{"name": "click_at", "args": {"y": 300, "x": 500}}` |
+| **hover_at** | Hovers the mouse at a specific coordinate on the webpage. Useful for revealing sub-menus. x and y are based on a 1000x1000 grid. | `y`: int (0-999) `x`: int (0-999) | `{"name": "hover_at", "args": {"y": 150, "x": 250}}` |
+| **type_text_at** | Types text at a specific coordinate, defaults to clearing the field first and pressing ENTER after typing, but these can be disabled. x and y are based on a 1000x1000 grid. | `y`: int (0-999), `x`: int (0-999), `text`: str, `press_enter`: bool (Optional, default True), `clear_before_typing`: bool (Optional, default True) | `{"name": "type_text_at", "args": {"y": 250, "x": 400, "text": "search query", "press_enter": false}}` |
+| **key_combination** | Press keyboard keys or combinations, such as "Control+C" or "Enter". Useful for triggering actions (like submitting a form with "Enter") or clipboard operations. | `keys`: str (e.g. 'enter', 'control+c'). | `{"name": "key_combination", "args": {"keys": "Control+A"}}` |
+| **scroll_document** | Scrolls the entire webpage "up", "down", "left", or "right". | `direction`: str ("up", "down", "left", or "right") | `{"name": "scroll_document", "args": {"direction": "down"}}` |
+| **scroll_at** | Scrolls a specific element or area at coordinate (x, y) in the specified direction by a certain magnitude. Coordinates and magnitude (default 800) are based on a 1000x1000 grid. | `y`: int (0-999), `x`: int (0-999), `direction`: str ("up", "down", "left", "right"), `magnitude`: int (0-999, Optional, default 800) | `{"name": "scroll_at", "args": {"y": 500, "x": 500, "direction": "down", "magnitude": 400}}` |
+| **drag_and_drop** | Drags an element from a starting coordinate (x, y) and drops it at a destination coordinate (destination_x, destination_y). All coordinates are based on a 1000x1000 grid. | `y`: int (0-999), `x`: int (0-999), `destination_y`: int (0-999), `destination_x`: int (0-999) | `{"name": "drag_and_drop", "args": {"y": 100, "x": 100, "destination_y": 500, "destination_x": 500}}` |
+
+## Safety and security
+
+### Acknowledge safety decision
+
+Depending on the action, the model response might also include a
+`safety_decision` from an internal safety system that checks the model's
+proposed action.
+
+ {
+ "content": {
+ "parts": [
+ {
+ "text": "I have evaluated step 2. It seems Google detected unusual traffic and is asking me to verify I'm not a robot. I need to click the 'I'm not a robot' checkbox located near the top left (y=98, x=95).",
+ },
+ {
+ "function_call": {
+ "name": "click_at",
+ "args": {
+ "x": 60,
+ "y": 100,
+ "safety_decision": {
+ "explanation": "I have encountered a CAPTCHA challenge that requires interaction. I need you to complete the challenge by clicking the 'I'm not a robot' checkbox and any subsequent verification steps.",
+ "decision": "require_confirmation"
+ }
+ }
+ }
+ }
+ ]
+ }
+ }
+
+If the `safety_decision` is `require_confirmation`, you must
+ask the end user to confirm before proceeding with executing the action. Per the
+[terms of service](https://ai.google.dev/gemini-api/terms), you are not allowed
+to bypass requests for human confirmation.
+
+This code sample prompts the end-user for confirmation before executing the
+action. If the user does not confirm the action, the loop terminates. If the
+user confirms the action, the action is executed and the
+`safety_acknowledgement` field is marked as `True`.
+
+### Python
+
+ import termcolor
+
+ def get_safety_confirmation(safety_decision):
+ """Prompt user for confirmation when safety check is triggered."""
+ termcolor.cprint("Safety service requires explicit confirmation!", color="red")
+ print(safety_decision["explanation"])
+
+ decision = ""
+ while decision.lower() not in ("y", "n", "ye", "yes", "no"):
+ decision = input("Do you wish to proceed? [Y]es/[N]o\n")
+
+ if decision.lower() in ("n", "no"):
+ return "TERMINATE"
+ return "CONTINUE"
+
+ def execute_function_calls(candidate, page, screen_width, screen_height):
+
+ # ... Extract function calls from response ...
+
+ for function_call in function_calls:
+ extra_fr_fields = {}
+
+ # Check for safety decision
+ if 'safety_decision' in function_call.args:
+ decision = get_safety_confirmation(function_call.args['safety_decision'])
+ if decision == "TERMINATE":
+ print("Terminating agent loop")
+ break
+ extra_fr_fields["safety_acknowledgement"] = "true" # Safety acknowledgement
+
+ # ... Execute function call and append to results ...
+
+If the user confirms, you must include the safety acknowledgement in
+your `FunctionResponse`.
+
+### Python
+
+ function_response_parts.append(
+ FunctionResponse(
+ name=name,
+ response={"url": current_url,
+ **extra_fr_fields}, # Include safety acknowledgement
+ parts=[
+ types.FunctionResponsePart(
+ inline_data=types.FunctionResponseBlob(
+ mime_type="image/png", data=screenshot
+ )
+ )
+ ]
+ )
+ )
+
+### Safety best practices
+
+Computer Use API is a novel API and presents new risks that developers should be
+mindful of:
+
+- **Untrusted content \& scams:** As the model tries to achieve the user's goal, it may rely on untrustworthy sources of information and instructions from the screen. For example, if the user's goal is to purchase a Pixel phone and the model encounters a "Free-Pixel if you complete a survey" scam, there is some chance that the model will complete the survey.
+- **Occasional unintended actions:** The model can misinterpret a user's goal or webpage content, causing it to take incorrect actions like clicking the wrong button or filling the wrong form. This can lead to failed tasks or data exfiltration.
+- **Policy violations:** The API's capabilities could be directed, either intentionally or unintentionally, toward activities that violate Google's policies ([Gen AI Prohibited Use
+ Policy](https://policies.google.com/terms/generative-ai/use-policy) and the [Gemini API Additional Terms of
+ Service](https://ai.google.dev/gemini-api/terms). This includes actions that could interfere with a system's integrity, compromise security, bypass security measures, control medical devices, etc.
+
+To address these risks, you can implement the following safety measures and best
+practices:
+
+1. **Human-in-the-Loop (HITL):**
+
+ - **Implement user confirmation:** When the safety response indicates `require_confirmation`, you must implement user confirmation before execution. See [Acknowledge safety decision](https://ai.google.dev/gemini-api/docs/computer-use#safety-decisions) for sample code.
+ - **Provide custom safety instructions:** In addition to the built-in user
+ confirmation checks, developers may optionally add a custom [system
+ instruction](https://ai.google.dev/gemini-api/docs/text-generation#system-instructions)
+ that enforces their own safety policies, either to block certain model
+ actions or require user confirmation before the model takes certain
+ high-stakes irreversible actions. Here is an example of a custom safety
+ system instruction you may include when interacting with the model.
+
+ #### Example safety instructions
+
+ Set your custom safety rules as a system instruction:```
+         ## **RULE 1: Seek User Confirmation (USER_CONFIRMATION)**
+
+         This is your first and most important check. If the next required action falls
+         into any of the following categories, you MUST stop immediately, and seek the
+         user's explicit permission.
+
+         **Procedure for Seeking Confirmation:**  * **For Consequential Actions:**
+         Perform all preparatory steps (e.g., navigating, filling out forms, typing a
+         message). You will ask for confirmation **AFTER** all necessary information is
+         entered on the screen, but **BEFORE** you perform the final, irreversible action
+         (e.g., before clicking "Send", "Submit", "Confirm Purchase", "Share").  * **For
+         Prohibited Actions:** If the action is strictly forbidden (e.g., accepting legal
+         terms, solving a CAPTCHA), you must first inform the user about the required
+         action and ask for their confirmation to proceed.
+
+         **USER_CONFIRMATION Categories:**
+
+         *   **Consent and Agreements:** You are FORBIDDEN from accepting, selecting, or
+             agreeing to any of the following on the user's behalf. You must ask the
+             user to confirm before performing these actions.
+             *   Terms of Service
+             *   Privacy Policies
+             *   Cookie consent banners
+             *   End User License Agreements (EULAs)
+             *   Any other legally significant contracts or agreements.
+         *   **Robot Detection:** You MUST NEVER attempt to solve or bypass the
+             following. You must ask the user to confirm before performing these actions.
+         *   CAPTCHAs (of any kind)
+             *   Any other anti-robot or human-verification mechanisms, even if you are
+                 capable.
+         *   **Financial Transactions:**
+             *   Completing any purchase.
+             *   Managing or moving money (e.g., transfers, payments).
+             *   Purchasing regulated goods or participating in gambling.
+         *   **Sending Communications:**
+             *   Sending emails.
+             *   Sending messages on any platform (e.g., social media, chat apps).
+             *   Posting content on social media or forums.
+         *   **Accessing or Modifying Sensitive Information:**
+             *   Health, financial, or government records (e.g., medical history, tax
+                 forms, passport status).
+             *   Revealing or modifying sensitive personal identifiers (e.g., SSN, bank
+                 account number, credit card number).
+         *   **User Data Management:**
+             *   Accessing, downloading, or saving files from the web.
+             *   Sharing or sending files/data to any third party.
+             *   Transferring user data between systems.
+         *   **Browser Data Usage:**
+             *   Accessing or managing Chrome browsing history, bookmarks, autofill data,
+                 or saved passwords.
+         *   **Security and Identity:**
+             *   Logging into any user account.
+             *   Any action that involves misrepresentation or impersonation (e.g.,
+                 creating a fan account, posting as someone else).
+         *   **Insurmountable Obstacles:** If you are technically unable to interact with
+             a user interface element or are stuck in a loop you cannot resolve, ask the
+             user to take over.
+         ---
+
+         ## **RULE 2: Default Behavior (ACTUATE)**
+
+         If an action does **NOT** fall under the conditions for `USER_CONFIRMATION`,
+         your default behavior is to **Actuate**.
+
+         **Actuation Means:**  You MUST proactively perform all necessary steps to move
+         the user's request forward. Continue to actuate until you either complete the
+         non-consequential task or encounter a condition defined in Rule 1.
+
+         *   **Example 1:** If asked to send money, you will navigate to the payment
+             portal, enter the recipient's details, and enter the amount. You will then
+             **STOP** as per Rule 1 and ask for confirmation before clicking the final
+             "Send" button.
+         *   **Example 2:** If asked to post a message, you will navigate to the site,
+             open the post composition window, and write the full message. You will then
+             **STOP** as per Rule 1 and ask for confirmation before clicking the final
+             "Post" button.
+
+             After the user has confirmed, remember to get the user's latest screen
+             before continuing to perform actions.
+
+         # Final Response Guidelines:
+         Write final response to the user in the following cases:
+         - User confirmation
+         - When the task is complete or you have enough information to respond to the user
+         
+     ```2. **Secure execution environment:** Run your agent in a secure, sandboxed
+ environment to limit its potential impact (e.g., A sandboxed virtual machine
+ (VM), a container (e.g., Docker), or a dedicated browser profile with limited
+ permissions).
+
+3. **Input sanitization:** Sanitize all user-generated text in prompts to
+ mitigate the risk of unintended instructions or prompt injection. This is a
+ helpful layer of security, but not a replacement for a secure execution
+ environment.
+
+4. **Content guardrails:** Use guardrails and [content safety
+ APIs](https://ai.google.dev/gemma/docs/shieldgemma) to evaluate user inputs,
+ tool input and output, an agent's response for appropriateness, prompt
+ injection, and jailbreak detection.
+
+5. **Allowlists and blocklists:** Implement filtering mechanisms to control
+ where the model can navigate and what it can do. A blocklist of prohibited
+ websites is a good starting point, while a more restrictive allowlist is
+ even more secure.
+
+6. **Observability and logging:** Maintain detailed logs for debugging,
+ auditing, and incident response. Your client should log prompts,
+ screenshots, model-suggested actions (function_call), safety responses, and
+ all actions ultimately executed by the client.
+
+7. **Environment management:** Ensure the GUI environment is consistent.
+ Unexpected pop-ups, notifications, or changes in layout can confuse the
+ model. Start from a known, clean state for each new task if possible.
+
+## Model versions
+
+| Property | Description |
+|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id_cardModel code | **Gemini API** `gemini-2.5-computer-use-preview-10-2025` |
+| saveSupported data types | **Input** Image, text **Output** Text |
+| token_autoToken limits^[\[\*\]](https://ai.google.dev/gemini-api/docs/computer-use#token-size)^ | **Input token limit** 128,000 **Output token limit** 64,000 |
+| 123Versions | Read the [model version patterns](https://ai.google.dev/gemini-api/docs/models/gemini#model-versions) for more details. - Preview: `gemini-2.5-computer-use-preview-10-2025` |
+| calendar_monthLatest update | October 2025 |
+
+## What's next
+
+- Experiment with Computer Use in the [Browserbase demo
+ environment](http://gemini.browserbase.com).
+- Check out the [Reference
+ implementation](https://github.com/google/computer-use-preview) for example code.
+- Learn about other Gemini API tools:
+ - [Function calling](https://ai.google.dev/gemini-api/docs/function-calling)
+ - [Grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding)
+
+[END OF DOCUMENT: GEMINI1EIX15UM7A]
+---
+
+[START OF DOCUMENT: GEMINI1VR1ORGWLW | Title: Crewai-Example.Md]
+
+[CrewAI](https://docs.crewai.com/introduction) is a framework for orchestrating
+autonomous AI agents that collaborate to achieve complex goals. It lets you
+define agents by specifying roles, goals, and backstories, and then define tasks
+for them.
+
+This example demonstrates how to build a multi-agent system for analyzing
+customer support data to identify issues and propose process improvements using
+Gemini 2.5 Pro, generating a report intended to be read by a Chief Operating
+Officer (COO).
+
+The guide will show you how to create a "crew" of AI agents that can do the
+following tasks:
+
+1. Fetch and analyze customer support data (simulated in this example).
+2. Identify recurring problems and process bottlenecks.
+3. Suggest actionable improvements.
+4. Compile the findings into a concise report suitable for a COO.
+
+You need a Gemini API key. If you don't already have one, you can [get one in
+Google AI Studio](https://aistudio.google.com/app/apikey).
+
+ pip install "crewai[tools]"
+
+Set your Gemini API key as an environment variable named `GEMINI_API_KEY`, then
+configure CrewAI to use the Gemini 2.5 Pro model.
+
+ import os
+ from crewai import LLM
+
+ # Read your API key from the environment variable
+ gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+ # Use Gemini 2.5 Pro Experimental model
+ gemini_llm = LLM(
+ model='gemini/gemini-2.5-pro',
+ api_key=gemini_api_key,
+ temperature=0.0 # Lower temperature for more consistent results.
+ )
+
+## Define components
+
+CrewAI applications are built using **Tools** , **Agents** , **Tasks** , and the
+**Crew** itself. Each of these is explained in the following sections.
+
+### Tools
+
+Tools are capabilities that agents can use to interact with the outside world or
+perform specific actions. Here, you define a placeholder tool to simulate
+fetching customer support data. In a real application, you would connect to a
+database, API or file system. For more information on tools, see the [CrewAI
+tools guide](https://docs.crewai.com/concepts/tools).
+
+ from crewai.tools import BaseTool
+
+ # Placeholder tool for fetching customer support data
+ class CustomerSupportDataTool(BaseTool):
+ name: str = "Customer Support Data Fetcher"
+ description: str = (
+ "Fetches recent customer support interactions, tickets, and feedback. "
+ "Returns a summary string.")
+
+ def _run(self, argument: str) -> str:
+ # In a real scenario, this would query a database or API.
+ # For this example, return simulated data.
+ print(f"--- Fetching data for query: {argument} ---")
+ return (
+ """Recent Support Data Summary:
+ - 50 tickets related to 'login issues'. High resolution time (avg 48h).
+ - 30 tickets about 'billing discrepancies'. Mostly resolved within 12h.
+ - 20 tickets on 'feature requests'. Often closed without resolution.
+ - Frequent feedback mentions 'confusing user interface' for password reset.
+ - High volume of calls related to 'account verification process'.
+ - Sentiment analysis shows growing frustration with 'login issues' resolution time.
+ - Support agent notes indicate difficulty reproducing 'login issues'."""
+ )
+
+ support_data_tool = CustomerSupportDataTool()
+
+### Agents
+
+Agents are the individual AI workers in your crew. Each agent has a specific
+`role`, `goal`, `backstory`, assigned `llm`, and optional `tools`. For more
+information on agents, see the [CrewAI agents
+guide](https://docs.crewai.com/concepts/agents).
+
+ from crewai import Agent
+
+ # Agent 1: Data analyst
+ data_analyst = Agent(
+ role='Customer Support Data Analyst',
+ goal='Analyze customer support data to identify trends, recurring issues, and key pain points.',
+ backstory=(
+ """You are an expert data analyst specializing in customer support operations.
+ Your strength lies in identifying patterns and quantifying problems from raw support data."""
+ ),
+ verbose=True,
+ allow_delegation=False, # This agent focuses on its specific task
+ tools=[support_data_tool], # Assign the data fetching tool
+ llm=gemini_llm # Use the configured Gemini LLM
+ )
+
+ # Agent 2: Process optimizer
+ process_optimizer = Agent(
+ role='Process Optimization Specialist',
+ goal='Identify bottlenecks and inefficiencies in current support processes based on the data analysis. Propose actionable improvements.',
+ backstory=(
+ """You are a specialist in optimizing business processes, particularly in customer support.
+ You excel at pinpointing root causes of delays and inefficiencies and suggesting concrete solutions."""
+ ),
+ verbose=True,
+ allow_delegation=False,
+ # No tools needed, this agent relies on the context provided by data_analyst.
+ llm=gemini_llm
+ )
+
+ # Agent 3: Report writer
+ report_writer = Agent(
+ role='Executive Report Writer',
+ goal='Compile the analysis and improvement suggestions into a concise, clear, and actionable report for the COO.',
+ backstory=(
+ """You are a skilled writer adept at creating executive summaries and reports.
+ You focus on clarity, conciseness, and highlighting the most critical information and recommendations for senior leadership."""
+ ),
+ verbose=True,
+ allow_delegation=False,
+ llm=gemini_llm
+ )
+
+### Tasks
+
+Tasks define the specific assignments for the agents. Each task has a
+`description`, `expected_output`, and is assigned to an `agent`. Tasks are run
+sequentially by default and include the context of the previous task. For more
+information on tasks, see the [CrewAI tasks
+guide](https://docs.crewai.com/concepts/tasks).
+
+ from crewai import Task
+
+ # Task 1: Analyze data
+ analysis_task = Task(
+ description=(
+ """Fetch and analyze the latest customer support interaction data (tickets, feedback, call logs)
+ focusing on the last quarter. Identify the top 3-5 recurring issues, quantify their frequency
+ and impact (e.g., resolution time, customer sentiment). Use the Customer Support Data Fetcher tool."""
+ ),
+ expected_output=(
+ """A summary report detailing the key findings from the customer support data analysis, including:
+ - Top 3-5 recurring issues with frequency.
+ - Average resolution times for these issues.
+ - Key customer pain points mentioned in feedback.
+ - Any notable trends in sentiment or support agent observations."""
+ ),
+ agent=data_analyst # Assign task to the data_analyst agent
+ )
+
+ # Task 2: Identify bottlenecks and suggest improvements
+ optimization_task = Task(
+ description=(
+ """Based on the data analysis report provided by the Data Analyst, identify the primary bottlenecks
+ in the support processes contributing to the identified issues (especially the top recurring ones).
+ Propose 2-3 concrete, actionable process improvements to address these bottlenecks.
+ Consider potential impact and ease of implementation."""
+ ),
+ expected_output=(
+ """A concise list identifying the main process bottlenecks (e.g., lack of documentation for agents,
+ complex escalation path, UI issues) linked to the key problems.
+ A list of 2-3 specific, actionable recommendations for process improvement
+ (e.g., update agent knowledge base, simplify password reset UI, implement proactive monitoring)."""
+ ),
+ agent=process_optimizer # Assign task to the process_optimizer agent
+ # This task implicitly uses the output of analysis_task as context
+ )
+
+ # Task 3: Compile COO report
+ report_task = Task(
+ description=(
+ """Compile the findings from the Data Analyst and the recommendations from the Process Optimization Specialist
+ into a single, concise executive report for the COO. The report should clearly state:
+ 1. The most critical customer support issues identified (with brief data points).
+ 2. The key process bottlenecks causing these issues.
+ 3. The recommended process improvements.
+ Ensure the report is easy to understand, focuses on actionable insights, and is formatted professionally."""
+ ),
+ expected_output=(
+ """A well-structured executive report (max 1 page) summarizing the critical support issues,
+ underlying process bottlenecks, and clear, actionable recommendations for the COO.
+ Use clear headings and bullet points."""
+ ),
+ agent=report_writer # Assign task to the report_writer agent
+ )
+
+### Crew
+
+The `Crew` brings the agents and tasks together, defining the workflow process
+(such as "sequential").
+
+ from crewai import Crew, Process
+
+ # Define the crew with agents, tasks, and process
+ support_analysis_crew = Crew(
+ agents=[data_analyst, process_optimizer, report_writer],
+ tasks=[analysis_task, optimization_task, report_task],
+ process=Process.sequential, # Tasks will run sequentially in the order defined
+ verbose=True
+ )
+
+## Run the Crew
+
+Finally, kick off the crew execution with any necessary inputs.
+
+ # Start the crew's work
+ print("--- Starting Customer Support Analysis Crew ---")
+ # The 'inputs' dictionary provides initial context if needed by the first task.
+ # In this case, the tool simulates data fetching regardless of the input.
+ result = support_analysis_crew.kickoff(inputs={'data_query': 'last quarter support data'})
+
+ print("--- Crew Execution Finished ---")
+ print("--- Final Report for COO ---")
+ print(result)
+
+The script will now execute. The `Data Analyst` will use the tool, the `Process
+Optimizer` will analyze the findings, and the `Report Writer` will compile the
+final report, which is then printed to the console. The `verbose=True` setting
+will show the detailed thought process and actions of each agent.
+
+To learn more about CrewAI, check out the [CrewAI
+introduction](https://docs.crewai.com/introduction).
+
+[END OF DOCUMENT: GEMINI1VR1ORGWLW]
+---
+
+[START OF DOCUMENT: GEMINICBT5QKZBW | Title: Document-Processing.Md]
+
+Gemini models can process documents in PDF format, using native
+vision to understand entire document contexts. This goes beyond
+simple text extraction, allowing Gemini to:
+
+- Analyze and interpret content, including text, images, diagrams, charts, and tables, even in long documents up to 1000 pages.
+- Extract information into [structured output](https://ai.google.dev/gemini-api/docs/structured-output) formats.
+- Summarize and answer questions based on both the visual and textual elements in a document.
+- Transcribe document content (e.g. to HTML), preserving layouts and formatting, for use in downstream applications.
+
+## Passing inline PDF data
+
+You can pass inline PDF data in the request to `generateContent`.
+For PDF payloads under 20MB, you can choose between uploading base64
+encoded documents or directly uploading locally stored files.
+
+The following example shows you how to fetch a PDF from a URL and convert it to
+bytes for processing:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import httpx
+
+ client = genai.Client()
+
+ doc_url = "https://discovery.ucl.ac.uk/id/eprint/10089234/1/343019_3_art_0_py4t4l_convrt.pdf"
+
+ # Retrieve and encode the PDF byte
+ doc_data = httpx.get(doc_url).content
+
+ prompt = "Summarize this document"
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[
+ types.Part.from_bytes(
+ data=doc_data,
+ mime_type='application/pdf',
+ ),
+ prompt])
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+ async function main() {
+ const pdfResp = await fetch('https://discovery.ucl.ac.uk/id/eprint/10089234/1/343019_3_art_0_py4t4l_convrt.pdf')
+ .then((response) => response.arrayBuffer());
+
+ const contents = [
+ { text: "Summarize this document" },
+ {
+ inlineData: {
+ mimeType: 'application/pdf',
+ data: Buffer.from(pdfResp).toString("base64")
+ }
+ }
+ ];
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: contents
+ });
+ console.log(response.text);
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "io"
+ "net/http"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+ APIKey: os.Getenv("GEMINI_API_KEY"),
+ Backend: genai.BackendGeminiAPI,
+ })
+
+ pdfResp, _ := http.Get("https://discovery.ucl.ac.uk/id/eprint/10089234/1/343019_3_art_0_py4t4l_convrt.pdf")
+ var pdfBytes []byte
+ if pdfResp != nil && pdfResp.Body != nil {
+ pdfBytes, _ = io.ReadAll(pdfResp.Body)
+ pdfResp.Body.Close()
+ }
+
+ parts := []*genai.Part{
+ &genai.Part{
+ InlineData: &genai.Blob{
+ MIMEType: "application/pdf",
+ Data: pdfBytes,
+ },
+ },
+ genai.NewPartFromText("Summarize this document"),
+ }
+
+ contents := []*genai.Content{
+ genai.NewContentFromParts(parts, genai.RoleUser),
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### REST
+
+ DOC_URL="https://discovery.ucl.ac.uk/id/eprint/10089234/1/343019_3_art_0_py4t4l_convrt.pdf"
+ PROMPT="Summarize this document"
+ DISPLAY_NAME="base64_pdf"
+
+ # Download the PDF
+ wget -O "${DISPLAY_NAME}.pdf" "${DOC_URL}"
+
+ # Check for FreeBSD base64 and set flags accordingly
+ if [[ "$(base64 --version 2>&1)" = *"FreeBSD"* ]]; then
+ B64FLAGS="--input"
+ else
+ B64FLAGS="-w0"
+ fi
+
+ # Base64 encode the PDF
+ ENCODED_PDF=$(base64 $B64FLAGS "${DISPLAY_NAME}.pdf")
+
+ # Generate content using the base64 encoded PDF
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GOOGLE_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [{
+ "parts":[
+ {"inline_data": {"mime_type": "application/pdf", "data": "'"$ENCODED_PDF"'"}},
+ {"text": "'$PROMPT'"}
+ ]
+ }]
+ }' 2> /dev/null > response.json
+
+ cat response.json
+ echo
+
+ jq ".candidates[].content.parts[].text" response.json
+
+ # Clean up the downloaded PDF
+ rm "${DISPLAY_NAME}.pdf"
+
+You can also read a PDF from a local file for processing:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import pathlib
+
+ client = genai.Client()
+
+ # Retrieve and encode the PDF byte
+ filepath = pathlib.Path('file.pdf')
+
+ prompt = "Summarize this document"
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[
+ types.Part.from_bytes(
+ data=filepath.read_bytes(),
+ mime_type='application/pdf',
+ ),
+ prompt])
+ print(response.text)
+
+### JavaScript
+
+ import { GoogleGenAI } from "@google/genai";
+ import * as fs from 'fs';
+
+ const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+ async function main() {
+ const contents = [
+ { text: "Summarize this document" },
+ {
+ inlineData: {
+ mimeType: 'application/pdf',
+ data: Buffer.from(fs.readFileSync("content/343019_3_art_0_py4t4l_convrt.pdf")).toString("base64")
+ }
+ }
+ ];
+
+ const response = await ai.models.generateContent({
+ model: "gemini-2.5-flash",
+ contents: contents
+ });
+ console.log(response.text);
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+ APIKey: os.Getenv("GEMINI_API_KEY"),
+ Backend: genai.BackendGeminiAPI,
+ })
+
+ pdfBytes, _ := os.ReadFile("path/to/your/file.pdf")
+
+ parts := []*genai.Part{
+ &genai.Part{
+ InlineData: &genai.Blob{
+ MIMEType: "application/pdf",
+ Data: pdfBytes,
+ },
+ },
+ genai.NewPartFromText("Summarize this document"),
+ }
+ contents := []*genai.Content{
+ genai.NewContentFromParts(parts, genai.RoleUser),
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+## Uploading PDFs using the File API
+
+You can use the [File API](https://ai.google.dev/gemini-api/docs/files) to upload larger documents. Always use the File
+API when the total request size (including the files, text prompt, system
+instructions, etc.) is larger than 20MB.
+| **Note:** The [File API](https://ai.google.dev/gemini-api/docs/files) lets you store up to 50MB of PDF files. Files are stored for 48 hours. You can access them in that period with your API key, but you can't download them from the API. The File API is available at no cost in all regions where the Gemini API is available.
+
+Call [`media.upload`](https://ai.google.dev/api/rest/v1beta/media/upload) to upload a file using the
+File API. The following code uploads a document file and then uses the file in a
+call to
+[`models.generateContent`](https://ai.google.dev/api/generate-content#method:-models.generatecontent).
+
+### Large PDFs from URLs
+
+Use the File API to simplify uploading and processing large PDF files from URLs:
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import io
+ import httpx
+
+ client = genai.Client()
+
+ long_context_pdf_path = "https://www.nasa.gov/wp-content/uploads/static/history/alsj/a17/A17_FlightPlan.pdf"
+
+ # Retrieve and upload the PDF using the File API
+ doc_io = io.BytesIO(httpx.get(long_context_pdf_path).content)
+
+ sample_doc = client.files.upload(
+ # You can pass a path or a file-like object here
+ file=doc_io,
+ config=dict(
+ mime_type='application/pdf')
+ )
+
+ prompt = "Summarize this document"
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[sample_doc, prompt])
+ print(response.text)
+
+### JavaScript
+
+ import { createPartFromUri, GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+ async function main() {
+
+ const pdfBuffer = await fetch("https://www.nasa.gov/wp-content/uploads/static/history/alsj/a17/A17_FlightPlan.pdf")
+ .then((response) => response.arrayBuffer());
+
+ const fileBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+
+ const file = await ai.files.upload({
+ file: fileBlob,
+ config: {
+ displayName: 'A17_FlightPlan.pdf',
+ },
+ });
+
+ // Wait for the file to be processed.
+ let getFile = await ai.files.get({ name: file.name });
+ while (getFile.state === 'PROCESSING') {
+ getFile = await ai.files.get({ name: file.name });
+ console.log(`current file status: ${getFile.state}`);
+ console.log('File is still processing, retrying in 5 seconds');
+
+ await new Promise((resolve) => {
+ setTimeout(resolve, 5000);
+ });
+ }
+ if (file.state === 'FAILED') {
+ throw new Error('File processing failed.');
+ }
+
+ // Add the file to the contents.
+ const content = [
+ 'Summarize this document',
+ ];
+
+ if (file.uri && file.mimeType) {
+ const fileContent = createPartFromUri(file.uri, file.mimeType);
+ content.push(fileContent);
+ }
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: content,
+ });
+
+ console.log(response.text);
+
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "io"
+ "net/http"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+ APIKey: os.Getenv("GEMINI_API_KEY"),
+ Backend: genai.BackendGeminiAPI,
+ })
+
+ pdfURL := "https://www.nasa.gov/wp-content/uploads/static/history/alsj/a17/A17_FlightPlan.pdf"
+ localPdfPath := "A17_FlightPlan_downloaded.pdf"
+
+ respHttp, _ := http.Get(pdfURL)
+ defer respHttp.Body.Close()
+
+ outFile, _ := os.Create(localPdfPath)
+ defer outFile.Close()
+
+ _, _ = io.Copy(outFile, respHttp.Body)
+
+ uploadConfig := &genai.UploadFileConfig{MIMEType: "application/pdf"}
+ uploadedFile, _ := client.Files.UploadFromPath(ctx, localPdfPath, uploadConfig)
+
+ promptParts := []*genai.Part{
+ genai.NewPartFromURI(uploadedFile.URI, uploadedFile.MIMEType),
+ genai.NewPartFromText("Summarize this document"),
+ }
+ contents := []*genai.Content{
+ genai.NewContentFromParts(promptParts, genai.RoleUser), // Specify role
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### REST
+
+ PDF_PATH="https://www.nasa.gov/wp-content/uploads/static/history/alsj/a17/A17_FlightPlan.pdf"
+ DISPLAY_NAME="A17_FlightPlan"
+ PROMPT="Summarize this document"
+
+ # Download the PDF from the provided URL
+ wget -O "${DISPLAY_NAME}.pdf" "${PDF_PATH}"
+
+ MIME_TYPE=$(file -b --mime-type "${DISPLAY_NAME}.pdf")
+ NUM_BYTES=$(wc -c < "${DISPLAY_NAME}.pdf")
+
+ echo "MIME_TYPE: ${MIME_TYPE}"
+ echo "NUM_BYTES: ${NUM_BYTES}"
+
+ tmp_header_file=upload-header.tmp
+
+ # Initial resumable request defining metadata.
+ # The upload url is in the response headers dump them to a file.
+ curl "${BASE_URL}/upload/v1beta/files?key=${GOOGLE_API_KEY}" \
+ -D upload-header.tmp \
+ -H "X-Goog-Upload-Protocol: resumable" \
+ -H "X-Goog-Upload-Command: start" \
+ -H "X-Goog-Upload-Header-Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Header-Content-Type: ${MIME_TYPE}" \
+ -H "Content-Type: application/json" \
+ -d "{'file': {'display_name': '${DISPLAY_NAME}'}}" 2> /dev/null
+
+ upload_url=$(grep -i "x-goog-upload-url: " "${tmp_header_file}" | cut -d" " -f2 | tr -d "\r")
+ rm "${tmp_header_file}"
+
+ # Upload the actual bytes.
+ curl "${upload_url}" \
+ -H "Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Offset: 0" \
+ -H "X-Goog-Upload-Command: upload, finalize" \
+ --data-binary "@${DISPLAY_NAME}.pdf" 2> /dev/null > file_info.json
+
+ file_uri=$(jq ".file.uri" file_info.json)
+ echo "file_uri: ${file_uri}"
+
+ # Now generate content using that file
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GOOGLE_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [{
+ "parts":[
+ {"text": "'$PROMPT'"},
+ {"file_data":{"mime_type": "application/pdf", "file_uri": '$file_uri'}}]
+ }]
+ }' 2> /dev/null > response.json
+
+ cat response.json
+ echo
+
+ jq ".candidates[].content.parts[].text" response.json
+
+ # Clean up the downloaded PDF
+ rm "${DISPLAY_NAME}.pdf"
+
+### Large PDFs stored locally
+
+### Python
+
+ from google import genai
+ from google.genai import types
+ import pathlib
+ import httpx
+
+ client = genai.Client()
+
+ # Retrieve and encode the PDF byte
+ file_path = pathlib.Path('large_file.pdf')
+
+ # Upload the PDF using the File API
+ sample_file = client.files.upload(
+ file=file_path,
+ )
+
+ prompt="Summarize this document"
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[sample_file, "Summarize this document"])
+ print(response.text)
+
+### JavaScript
+
+ import { createPartFromUri, GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+ async function main() {
+ const file = await ai.files.upload({
+ file: 'path-to-localfile.pdf'
+ config: {
+ displayName: 'A17_FlightPlan.pdf',
+ },
+ });
+
+ // Wait for the file to be processed.
+ let getFile = await ai.files.get({ name: file.name });
+ while (getFile.state === 'PROCESSING') {
+ getFile = await ai.files.get({ name: file.name });
+ console.log(`current file status: ${getFile.state}`);
+ console.log('File is still processing, retrying in 5 seconds');
+
+ await new Promise((resolve) => {
+ setTimeout(resolve, 5000);
+ });
+ }
+ if (file.state === 'FAILED') {
+ throw new Error('File processing failed.');
+ }
+
+ // Add the file to the contents.
+ const content = [
+ 'Summarize this document',
+ ];
+
+ if (file.uri && file.mimeType) {
+ const fileContent = createPartFromUri(file.uri, file.mimeType);
+ content.push(fileContent);
+ }
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: content,
+ });
+
+ console.log(response.text);
+
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+ APIKey: os.Getenv("GEMINI_API_KEY"),
+ Backend: genai.BackendGeminiAPI,
+ })
+ localPdfPath := "/path/to/file.pdf"
+
+ uploadConfig := &genai.UploadFileConfig{MIMEType: "application/pdf"}
+ uploadedFile, _ := client.Files.UploadFromPath(ctx, localPdfPath, uploadConfig)
+
+ promptParts := []*genai.Part{
+ genai.NewPartFromURI(uploadedFile.URI, uploadedFile.MIMEType),
+ genai.NewPartFromText("Give me a summary of this pdf file."),
+ }
+ contents := []*genai.Content{
+ genai.NewContentFromParts(promptParts, genai.RoleUser),
+ }
+
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ "gemini-2.5-flash",
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### REST
+
+ NUM_BYTES=$(wc -c < "${PDF_PATH}")
+ DISPLAY_NAME=TEXT
+ tmp_header_file=upload-header.tmp
+
+ # Initial resumable request defining metadata.
+ # The upload url is in the response headers dump them to a file.
+ curl "${BASE_URL}/upload/v1beta/files?key=${GEMINI_API_KEY}" \
+ -D upload-header.tmp \
+ -H "X-Goog-Upload-Protocol: resumable" \
+ -H "X-Goog-Upload-Command: start" \
+ -H "X-Goog-Upload-Header-Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Header-Content-Type: application/pdf" \
+ -H "Content-Type: application/json" \
+ -d "{'file': {'display_name': '${DISPLAY_NAME}'}}" 2> /dev/null
+
+ upload_url=$(grep -i "x-goog-upload-url: " "${tmp_header_file}" | cut -d" " -f2 | tr -d "\r")
+ rm "${tmp_header_file}"
+
+ # Upload the actual bytes.
+ curl "${upload_url}" \
+ -H "Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Offset: 0" \
+ -H "X-Goog-Upload-Command: upload, finalize" \
+ --data-binary "@${PDF_PATH}" 2> /dev/null > file_info.json
+
+ file_uri=$(jq ".file.uri" file_info.json)
+ echo file_uri=$file_uri
+
+ # Now generate content using that file
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GOOGLE_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [{
+ "parts":[
+ {"text": "Can you add a few more lines to this poem?"},
+ {"file_data":{"mime_type": "application/pdf", "file_uri": '$file_uri'}}]
+ }]
+ }' 2> /dev/null > response.json
+
+ cat response.json
+ echo
+
+ jq ".candidates[].content.parts[].text" response.json
+
+You can verify the API successfully stored the uploaded file and get its
+metadata by calling [`files.get`](https://ai.google.dev/api/rest/v1beta/files/get). Only the `name`
+(and by extension, the `uri`) are unique.
+
+### Python
+
+ from google import genai
+ import pathlib
+
+ client = genai.Client()
+
+ fpath = pathlib.Path('example.txt')
+ fpath.write_text('hello')
+
+ file = client.files.upload(file='example.txt')
+
+ file_info = client.files.get(name=file.name)
+ print(file_info.model_dump_json(indent=4))
+
+### REST
+
+ name=$(jq ".file.name" file_info.json)
+ # Get the file of interest to check state
+ curl https://generativelanguage.googleapis.com/v1beta/files/$name > file_info.json
+ # Print some information about the file you got
+ name=$(jq ".file.name" file_info.json)
+ echo name=$name
+ file_uri=$(jq ".file.uri" file_info.json)
+ echo file_uri=$file_uri
+
+## Passing multiple PDFs
+
+The Gemini API is capable of processing multiple PDF documents (up to 1000 pages)
+in a single request, as long as the combined size of the documents and the text
+prompt stays within the model's context window.
+
+### Python
+
+ from google import genai
+ import io
+ import httpx
+
+ client = genai.Client()
+
+ doc_url_1 = "https://arxiv.org/pdf/2312.11805"
+ doc_url_2 = "https://arxiv.org/pdf/2403.05530"
+
+ # Retrieve and upload both PDFs using the File API
+ doc_data_1 = io.BytesIO(httpx.get(doc_url_1).content)
+ doc_data_2 = io.BytesIO(httpx.get(doc_url_2).content)
+
+ sample_pdf_1 = client.files.upload(
+ file=doc_data_1,
+ config=dict(mime_type='application/pdf')
+ )
+ sample_pdf_2 = client.files.upload(
+ file=doc_data_2,
+ config=dict(mime_type='application/pdf')
+ )
+
+ prompt = "What is the difference between each of the main benchmarks between these two papers? Output these in a table."
+
+ response = client.models.generate_content(
+ model="gemini-2.5-flash",
+ contents=[sample_pdf_1, sample_pdf_2, prompt])
+ print(response.text)
+
+### JavaScript
+
+ import { createPartFromUri, GoogleGenAI } from "@google/genai";
+
+ const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+ async function uploadRemotePDF(url, displayName) {
+ const pdfBuffer = await fetch(url)
+ .then((response) => response.arrayBuffer());
+
+ const fileBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+
+ const file = await ai.files.upload({
+ file: fileBlob,
+ config: {
+ displayName: displayName,
+ },
+ });
+
+ // Wait for the file to be processed.
+ let getFile = await ai.files.get({ name: file.name });
+ while (getFile.state === 'PROCESSING') {
+ getFile = await ai.files.get({ name: file.name });
+ console.log(`current file status: ${getFile.state}`);
+ console.log('File is still processing, retrying in 5 seconds');
+
+ await new Promise((resolve) => {
+ setTimeout(resolve, 5000);
+ });
+ }
+ if (file.state === 'FAILED') {
+ throw new Error('File processing failed.');
+ }
+
+ return file;
+ }
+
+ async function main() {
+ const content = [
+ 'What is the difference between each of the main benchmarks between these two papers? Output these in a table.',
+ ];
+
+ let file1 = await uploadRemotePDF("https://arxiv.org/pdf/2312.11805", "PDF 1")
+ if (file1.uri && file1.mimeType) {
+ const fileContent = createPartFromUri(file1.uri, file1.mimeType);
+ content.push(fileContent);
+ }
+ let file2 = await uploadRemotePDF("https://arxiv.org/pdf/2403.05530", "PDF 2")
+ if (file2.uri && file2.mimeType) {
+ const fileContent = createPartFromUri(file2.uri, file2.mimeType);
+ content.push(fileContent);
+ }
+
+ const response = await ai.models.generateContent({
+ model: 'gemini-2.5-flash',
+ contents: content,
+ });
+
+ console.log(response.text);
+ }
+
+ main();
+
+### Go
+
+ package main
+
+ import (
+ "context"
+ "fmt"
+ "io"
+ "net/http"
+ "os"
+ "google.golang.org/genai"
+ )
+
+ func main() {
+
+ ctx := context.Background()
+ client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+ APIKey: os.Getenv("GEMINI_API_KEY"),
+ Backend: genai.BackendGeminiAPI,
+ })
+
+ docUrl1 := "https://arxiv.org/pdf/2312.11805"
+ docUrl2 := "https://arxiv.org/pdf/2403.05530"
+ localPath1 := "doc1_downloaded.pdf"
+ localPath2 := "doc2_downloaded.pdf"
+
+ respHttp1, _ := http.Get(docUrl1)
+ defer respHttp1.Body.Close()
+
+ outFile1, _ := os.Create(localPath1)
+ _, _ = io.Copy(outFile1, respHttp1.Body)
+ outFile1.Close()
+
+ respHttp2, _ := http.Get(docUrl2)
+ defer respHttp2.Body.Close()
+
+ outFile2, _ := os.Create(localPath2)
+ _, _ = io.Copy(outFile2, respHttp2.Body)
+ outFile2.Close()
+
+ uploadConfig1 := &genai.UploadFileConfig{MIMEType: "application/pdf"}
+ uploadedFile1, _ := client.Files.UploadFromPath(ctx, localPath1, uploadConfig1)
+
+ uploadConfig2 := &genai.UploadFileConfig{MIMEType: "application/pdf"}
+ uploadedFile2, _ := client.Files.UploadFromPath(ctx, localPath2, uploadConfig2)
+
+ promptParts := []*genai.Part{
+ genai.NewPartFromURI(uploadedFile1.URI, uploadedFile1.MIMEType),
+ genai.NewPartFromURI(uploadedFile2.URI, uploadedFile2.MIMEType),
+ genai.NewPartFromText("What is the difference between each of the " +
+ "main benchmarks between these two papers? " +
+ "Output these in a table."),
+ }
+ contents := []*genai.Content{
+ genai.NewContentFromParts(promptParts, genai.RoleUser),
+ }
+
+ modelName := "gemini-2.5-flash"
+ result, _ := client.Models.GenerateContent(
+ ctx,
+ modelName,
+ contents,
+ nil,
+ )
+
+ fmt.Println(result.Text())
+ }
+
+### REST
+
+ DOC_URL_1="https://arxiv.org/pdf/2312.11805"
+ DOC_URL_2="https://arxiv.org/pdf/2403.05530"
+ DISPLAY_NAME_1="Gemini_paper"
+ DISPLAY_NAME_2="Gemini_1.5_paper"
+ PROMPT="What is the difference between each of the main benchmarks between these two papers? Output these in a table."
+
+ # Function to download and upload a PDF
+ upload_pdf() {
+ local doc_url="$1"
+ local display_name="$2"
+
+ # Download the PDF
+ wget -O "${display_name}.pdf" "${doc_url}"
+
+ local MIME_TYPE=$(file -b --mime-type "${display_name}.pdf")
+ local NUM_BYTES=$(wc -c < "${display_name}.pdf")
+
+ echo "MIME_TYPE: ${MIME_TYPE}"
+ echo "NUM_BYTES: ${NUM_BYTES}"
+
+ local tmp_header_file=upload-header.tmp
+
+ # Initial resumable request
+ curl "${BASE_URL}/upload/v1beta/files?key=${GOOGLE_API_KEY}" \
+ -D "${tmp_header_file}" \
+ -H "X-Goog-Upload-Protocol: resumable" \
+ -H "X-Goog-Upload-Command: start" \
+ -H "X-Goog-Upload-Header-Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Header-Content-Type: ${MIME_TYPE}" \
+ -H "Content-Type: application/json" \
+ -d "{'file': {'display_name': '${display_name}'}}" 2> /dev/null
+
+ local upload_url=$(grep -i "x-goog-upload-url: " "${tmp_header_file}" | cut -d" " -f2 | tr -d "\r")
+ rm "${tmp_header_file}"
+
+ # Upload the PDF
+ curl "${upload_url}" \
+ -H "Content-Length: ${NUM_BYTES}" \
+ -H "X-Goog-Upload-Offset: 0" \
+ -H "X-Goog-Upload-Command: upload, finalize" \
+ --data-binary "@${display_name}.pdf" 2> /dev/null > "file_info_${display_name}.json"
+
+ local file_uri=$(jq ".file.uri" "file_info_${display_name}.json")
+ echo "file_uri for ${display_name}: ${file_uri}"
+
+ # Clean up the downloaded PDF
+ rm "${display_name}.pdf"
+
+ echo "${file_uri}"
+ }
+
+ # Upload the first PDF
+ file_uri_1=$(upload_pdf "${DOC_URL_1}" "${DISPLAY_NAME_1}")
+
+ # Upload the second PDF
+ file_uri_2=$(upload_pdf "${DOC_URL_2}" "${DISPLAY_NAME_2}")
+
+ # Now generate content using both files
+ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GOOGLE_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -X POST \
+ -d '{
+ "contents": [{
+ "parts":[
+ {"file_data": {"mime_type": "application/pdf", "file_uri": '$file_uri_1'}},
+ {"file_data": {"mime_type": "application/pdf", "file_uri": '$file_uri_2'}},
+ {"text": "'$PROMPT'"}
+ ]
+ }]
+ }' 2> /dev/null > response.json
+
+ cat response.json
+ echo
+
+ jq ".candidates[].content.parts[].text" response.json
+
+## Technical details
+
+Gemini supports a maximum of 1,000 document pages.
+Each document page is equivalent to 258 tokens.
+
+While there are no specific limits to the number of pixels in a document besides
+the model's [context window](https://ai.google.dev/gemini-api/docs/long-context), larger pages are
+scaled down to a maximum resolution of 3072x3072 while preserving their original
+aspect ratio, while smaller pages are scaled up to 768x768 pixels. There is no
+cost reduction for pages at lower sizes, other than bandwidth, or performance
+improvement for pages at higher resolution.
+
+### Document types
+
+Technically, you can pass other MIME types for document understanding, like
+TXT, Markdown, HTML, XML, etc. However, document vision ***only meaningfully
+understands PDFs***. Other types will be extracted as pure text, and the model
+won't be able to interpret what we see in the rendering of those files. Any
+file-type specifics like charts, diagrams, HTML tags, Markdown formatting, etc.,
+will be lost.
+
+### Best practices
+
+For best results:
+
+- Rotate pages to the correct orientation before uploading.
+- Avoid blurry pages.
+- If using a single page, place the text prompt after the page.
+
+## What's next
+
+To learn more, see the following resources:
+
+- [File prompting strategies](https://ai.google.dev/gemini-api/docs/files#prompt-guide): The Gemini API supports prompting with text, image, audio, and video data, also known as multimodal prompting.
+- [System instructions](https://ai.google.dev/gemini-api/docs/text-generation#system-instructions): System instructions let you steer the behavior of the model based on your specific needs and use cases.
+
+[END OF DOCUMENT: GEMINICBT5QKZBW]
+---
+

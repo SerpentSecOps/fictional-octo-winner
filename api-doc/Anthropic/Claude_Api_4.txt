@@ -1,0 +1,2720 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: CLAUDE5189VPHFS (sha256-0ceaa4b82788f487c2aaa75d7080f2e48b6445300cf17696b9c42c0bd3348df9) | Title: Fine-Grained-Tool-Streaming]
+[DocID: CLAUDE2164QT4KGN (sha256-bbbd4259e5978ff989bd2fd72ff752f39e0663992eff947598e8937f6729993e) | Title: Get-Started]
+[DocID: CLAUDE1VC0OAGS34 (sha256-acc39ff99c30efcc675950b4fb0bf2275cfe9c76906acf2acaa9e72f1fce03c7) | Title: Handle-Streaming-Refusals]
+[DocID: CLAUDE26PCIYGXDV (sha256-c9f012c9f7030c24e9636712d4f6d11e91a15461ba4b5fa3a2659d9e29573a58) | Title: Hosting]
+[DocID: CLAUDE1D7MGJB4V7 (sha256-7e444d894063d580810d02b7011dc8e1e7737b816b2540a1269259d98233a557) | Title: Implement-Tool-Use]
+[DocID: CLAUDE15FBYH4PPH (sha256-6a4a37e54425ea83c09f7ae85f6b1e306f3aff68224310eacd992ae9385b40ce) | Title: Increase-Consistency]
+[DocID: CLAUDE22S0UL21MW (sha256-bfdd8753e1c81af97172fc129f1387cbd6b34dd3bee697dcbfba34e344eb4ec3) | Title: Intro]
+[DocID: CLAUDE1B8J8SEIV5 (sha256-79333cbc43013e430b1524e1d2dc33ed6f240c81c28f2456946626ea98634530) | Title: Keep-Claude-In-Character]
+[DocID: CLAUDE2C3YNPSHNI (sha256-d7ceeec89d5e0e4e8a3de22bd084993a58b52028b33688442c8204fc14d0cbcc) | Title: Long-Context-Tips]
+[DocID: CLAUDE1MTQKBACSK (sha256-96ef5a84fa44244d23819c087f853272c521a379a79b6939949eef4cdc482c88) | Title: Mcp-Connector]
+--- END OF TOC ---
+
+[START OF DOCUMENT: CLAUDE5189VPHFS | Title: Fine-Grained-Tool-Streaming]
+
+# Fine-grained tool streaming
+
+Tool use now supports fine-grained [streaming](/en/docs/build-with-claude/streaming) for parameter values. This allows developers to stream tool use parameters without buffering / JSON validation, reducing the latency to begin receiving large parameters.
+
+<Note>
+ Fine-grained tool streaming is a beta feature. Please make sure to evaluate your responses before using it in production.
+
+ Please use [this form](https://forms.gle/D4Fjr7GvQRzfTZT96) to provide feedback on the quality of the model responses, the API itself, or the quality of the documentation—we cannot wait to hear from you!
+</Note>
+
+<Warning>
+ When using fine-grained tool streaming, you may potentially receive invalid or partial JSON inputs. Please make sure to account for these edge cases in your code.
+</Warning>
+
+## How to use fine-grained tool streaming
+
+To use this beta feature, simply add the beta header `fine-grained-tool-streaming-2025-05-14` to a tool use request and turn on streaming.
+
+Here's an example of how to use fine-grained tool streaming with the API:
+
+<CodeGroup>```bash Shell theme={null}
+  curl https://api.anthropic.com/v1/messages \
+    -H "content-type: application/json" \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: fine-grained-tool-streaming-2025-05-14" \
+    -d '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 65536,
+      "tools": [
+        {
+          "name": "make_file",
+          "description": "Write text to a file",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "The filename to write text to"
+              },
+              "lines_of_text": {
+                "type": "array",
+                "description": "An array of lines of text to write to the file"
+              }
+            },
+            "required": ["filename", "lines_of_text"]
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Can you write a long poem and make a file called poem.txt?"
+        }
+      ],
+      "stream": true
+    }' | jq '.usage'
+  ``````Python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  response = client.beta.messages.stream(
+      max_tokens=65536,
+      model="claude-sonnet-4-5",
+      tools=[{
+        "name": "make_file",
+        "description": "Write text to a file",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "filename": {
+              "type": "string",
+              "description": "The filename to write text to"
+            },
+            "lines_of_text": {
+              "type": "array",
+              "description": "An array of lines of text to write to the file"
+            }
+          },
+          "required": ["filename", "lines_of_text"]
+        }
+      }],
+      messages=[{
+        "role": "user",
+        "content": "Can you write a long poem and make a file called poem.txt?"
+      }],
+      betas=["fine-grained-tool-streaming-2025-05-14"]
+  )
+
+  print(response.usage)
+  ``````TypeScript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  const message = await anthropic.beta.messages.stream({
+    model: "claude-sonnet-4-5",
+    max_tokens: 65536,
+    tools: [{
+      "name": "make_file",
+      "description": "Write text to a file",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "The filename to write text to"
+          },
+          "lines_of_text": {
+            "type": "array",
+            "description": "An array of lines of text to write to the file"
+          }
+        },
+        "required": ["filename", "lines_of_text"]
+      }
+    }],
+    messages: [{ 
+      role: "user", 
+      content: "Can you write a long poem and make a file called poem.txt?" 
+    }],
+    betas: ["fine-grained-tool-streaming-2025-05-14"]
+  });
+
+  console.log(message.usage);
+  ```</CodeGroup>
+
+In this example, fine-grained tool streaming enables Claude to stream the lines of a long poem into the tool call `make_file` without buffering to validate if the `lines_of_text` parameter is valid JSON. This means you can see the parameter stream as it arrives, without having to wait for the entire parameter to buffer and validate.
+
+<Note>
+ With fine-grained tool streaming, tool use chunks start streaming faster, and are often longer and contain fewer word breaks. This is due to differences in chunking behavior.
+
+ Example:
+
+ Without fine-grained streaming (15s delay):```
+  Chunk 1: '{"'
+  Chunk 2: 'query": "Ty'
+  Chunk 3: 'peScri'
+  Chunk 4: 'pt 5.0 5.1 '
+  Chunk 5: '5.2 5'
+  Chunk 6: '.3'
+  Chunk 8: ' new f'
+  Chunk 9: 'eatur'
+  ...
+  ```With fine-grained streaming (3s delay):```
+  Chunk 1: '{"query": "TypeScript 5.0 5.1 5.2 5.3'
+  Chunk 2: ' new features comparison'
+  ```</Note>
+
+<Warning>
+ Because fine-grained streaming sends parameters without buffering or JSON validation, there is no guarantee that the resulting stream will complete in a valid JSON string.
+ Particularly, if the [stop reason](/en/docs/build-with-claude/handling-stop-reasons) `max_tokens` is reached, the stream may end midway through a parameter and may be incomplete. You will generally have to write specific support to handle when `max_tokens` is reached.
+</Warning>
+
+## Handling invalid JSON in tool responses
+
+When using fine-grained tool streaming, you may receive invalid or incomplete JSON from the model. If you need to pass this invalid JSON back to the model in an error response block, you may wrap it in a JSON object to ensure proper handling (with a reasonable key). For example:```json  theme={null}
+{
+  "INVALID_JSON": "<your invalid json string>"
+}
+```This approach helps the model understand that the content is invalid JSON while preserving the original malformed data for debugging purposes.
+
+<Note>
+ When wrapping invalid JSON, make sure to properly escape any quotes or special characters in the invalid JSON string to maintain valid JSON structure in the wrapper object.
+</Note>
+
+[END OF DOCUMENT: CLAUDE5189VPHFS]
+---
+
+[START OF DOCUMENT: CLAUDE2164QT4KGN | Title: Get-Started]
+
+# Get started with Claude
+
+> Make your first API call to Claude and build a simple web search assistant
+
+## Prerequisites
+
+* An Anthropic [Console account](https://console.anthropic.com/)
+* An [API key](https://console.anthropic.com/settings/keys)
+
+## Call the API
+
+<Tabs>
+ <Tab title="cURL">
+ <Steps>
+ <Step title="Set your API key">
+ Get your API key at the [Claude Console](https://console.anthropic.com/settings/keys) and set it as an environment variable:```bash  theme={null}
+        export ANTHROPIC_API_KEY='your-api-key-here'
+        ```</Step>
+
+ <Step title="Make your first API call">
+ Run this command to create a simple web search assistant:```bash  theme={null}
+        curl https://api.anthropic.com/v1/messages \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: $ANTHROPIC_API_KEY" \
+          -H "anthropic-version: 2023-06-01" \
+          -d '{
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 1000,
+            "messages": [
+              {
+                "role": "user", 
+                "content": "What should I search for to find the latest developments in renewable energy?"
+              }
+            ]
+          }'
+        ```**Example output:**```json  theme={null}
+        {
+          "id": "msg_01HCDu5LRGeP2o7s2xGmxyx8",
+          "type": "message", 
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Here are some effective search strategies to find the latest renewable energy developments:\n\n## Search Terms to Use:\n- \"renewable energy news 2024\"\n- \"clean energy breakthrough\"\n- \"solar/wind/battery technology advances\"\n- \"green energy innovations\"\n- \"climate tech developments\"\n- \"energy storage solutions\"\n\n## Best Sources to Check:\n\n**News & Industry Sites:**\n- Renewable Energy World\n- GreenTech Media (now Wood Mackenzie)\n- Energy Storage News\n- CleanTechnica\n- PV Magazine (for solar)\n- WindPower Engineering & Development..."
+            }
+          ],
+          "model": "claude-sonnet-4-5",
+          "stop_reason": "end_turn",
+          "usage": {
+            "input_tokens": 21,
+            "output_tokens": 305
+          }
+        }
+        ```</Step>
+ </Steps>
+ </Tab>
+
+ <Tab title="Python">
+ <Steps>
+ <Step title="Set your API key">
+ Get your API key from the [Claude Console](https://console.anthropic.com/settings/keys) and set it as an environment variable:```bash  theme={null}
+        export ANTHROPIC_API_KEY='your-api-key-here'
+        ```</Step>
+
+ <Step title="Install the SDK">
+ Install the Anthropic Python SDK:```bash  theme={null}
+        pip install anthropic
+        ```</Step>
+
+ <Step title="Create your code">
+ Save this as `quickstart.py`:```python  theme={null}
+        import anthropic
+
+        client = anthropic.Anthropic()
+
+        message = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "What should I search for to find the latest developments in renewable energy?"
+                }
+            ]
+        )
+        print(message.content)
+        ```</Step>
+
+ <Step title="Run your code">```bash  theme={null}
+        python quickstart.py
+        ```**Example output:**```python  theme={null}
+        [TextBlock(text='Here are some effective search strategies for finding the latest renewable energy developments:\n\n**Search Terms to Use:**\n- "renewable energy news 2024"\n- "clean energy breakthroughs"\n- "solar/wind/battery technology advances"\n- "energy storage innovations"\n- "green hydrogen developments"\n- "renewable energy policy updates"\n\n**Reliable Sources to Check:**\n- **News & Analysis:** Reuters Energy, Bloomberg New Energy Finance, Greentech Media, Energy Storage News\n- **Industry Publications:** Renewable Energy World, PV Magazine, Wind Power Engineering\n- **Research Organizations:** International Energy Agency (IEA), National Renewable Energy Laboratory (NREL)\n- **Government Sources:** Department of Energy websites, EPA clean energy updates\n\n**Specific Topics to Explore:**\n- Perovskite and next-gen solar cells\n- Offshore wind expansion\n- Grid-scale battery storage\n- Green hydrogen production\n- Carbon capture technologies\n- Smart grid innovations\n- Energy policy changes and incentives...', type='text')]
+        ```</Step>
+ </Steps>
+ </Tab>
+
+ <Tab title="TypeScript">
+ <Steps>
+ <Step title="Set your API key">
+ Get your API key from the [Claude Console](https://console.anthropic.com/settings/keys) and set it as an environment variable:```bash  theme={null}
+        export ANTHROPIC_API_KEY='your-api-key-here'
+        ```</Step>
+
+ <Step title="Install the SDK">
+ Install the Anthropic TypeScript SDK:```bash  theme={null}
+        npm install @anthropic-ai/sdk
+        ```</Step>
+
+ <Step title="Create your code">
+ Save this as `quickstart.ts`:```typescript  theme={null}
+        import Anthropic from "@anthropic-ai/sdk";
+
+        async function main() {
+          const anthropic = new Anthropic();
+
+          const msg = await anthropic.messages.create({
+            model: "claude-sonnet-4-5",
+            max_tokens: 1000,
+            messages: [
+              {
+                role: "user",
+                content: "What should I search for to find the latest developments in renewable energy?"
+              }
+            ]
+          });
+          console.log(msg);
+        }
+
+        main().catch(console.error);
+        ```</Step>
+
+ <Step title="Run your code">```bash  theme={null}
+        npx tsx quickstart.ts
+        ```**Example output:**```javascript  theme={null}
+        {
+          id: 'msg_01ThFHzad6Bh4TpQ6cHux9t8',
+          type: 'message',
+          role: 'assistant',
+          model: 'claude-sonnet-4-5-20250929',
+          content: [
+            {
+              type: 'text',
+              text: 'Here are some effective search strategies to find the latest renewable energy developments:\n\n' +
+                '## Search Terms to Use:\n' +
+                '- "renewable energy news 2024"\n' +
+                '- "clean energy breakthroughs"\n' +
+                '- "solar wind technology advances"\n' +
+                '- "energy storage innovations"\n' +
+                '- "green hydrogen developments"\n' +
+                '- "offshore wind projects"\n' +
+                '- "battery technology renewable"\n\n' +
+                '## Best Sources to Check:\n\n' +
+                '**News & Industry Sites:**\n' +
+                '- Renewable Energy World\n' +
+                '- CleanTechnica\n' +
+                '- GreenTech Media (now Wood Mackenzie)\n' +
+                '- Energy Storage News\n' +
+                '- PV Magazine (for solar)...'
+            }
+          ],
+          stop_reason: 'end_turn',
+          usage: {
+            input_tokens: 21,
+            output_tokens: 302
+          }
+        }
+        ```</Step>
+ </Steps>
+ </Tab>
+
+ <Tab title="Java">
+ <Steps>
+ <Step title="Set your API key">
+ Get your API key from the [Claude Console](https://console.anthropic.com/settings/keys) and set it as an environment variable:```bash  theme={null}
+        export ANTHROPIC_API_KEY='your-api-key-here'
+        ```</Step>
+
+ <Step title="Install the SDK">
+ Add the Anthropic Java SDK to your project. First find the current version on [Maven Central](https://central.sonatype.com/artifact/com.anthropic/anthropic-java).
+
+ **Gradle:**```gradle  theme={null}
+        implementation("com.anthropic:anthropic-java:1.0.0")
+        ```**Maven:**```xml  theme={null}
+        <dependency>
+          <groupId>com.anthropic</groupId>
+          <artifactId>anthropic-java</artifactId>
+          <version>1.0.0</version>
+        </dependency>
+        ```</Step>
+
+ <Step title="Create your code">
+ Save this as `QuickStart.java`:```java  theme={null}
+        import com.anthropic.client.AnthropicClient;
+        import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+        import com.anthropic.models.messages.Message;
+        import com.anthropic.models.messages.MessageCreateParams;
+
+        public class QuickStart {
+            public static void main(String[] args) {
+                AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+
+                MessageCreateParams params = MessageCreateParams.builder()
+                        .model("claude-sonnet-4-5-20250929")
+                        .maxTokens(1000)
+                        .addUserMessage("What should I search for to find the latest developments in renewable energy?")
+                        .build();
+
+                Message message = client.messages().create(params);
+                System.out.println(message.content());
+            }
+        }
+        ```</Step>
+
+ <Step title="Run your code">```bash  theme={null}
+        javac QuickStart.java
+        java QuickStart
+        ```**Example output:**```java  theme={null}
+        [ContentBlock{text=TextBlock{text=Here are some effective search strategies to find the latest renewable energy developments:
+
+        ## Search Terms to Use:
+        - "renewable energy news 2024"
+        - "clean energy breakthroughs"  
+        - "solar/wind/battery technology advances"
+        - "energy storage innovations"
+        - "green hydrogen developments"
+        - "renewable energy policy updates"
+
+        ## Best Sources to Check:
+        - **News & Analysis:** Reuters Energy, Bloomberg New Energy Finance, Greentech Media
+        - **Industry Publications:** Renewable Energy World, PV Magazine, Wind Power Engineering
+        - **Research Organizations:** International Energy Agency (IEA), National Renewable Energy Laboratory (NREL)
+        - **Government Sources:** Department of Energy websites, EPA clean energy updates
+
+        ## Specific Topics to Explore:
+        - Perovskite and next-gen solar cells
+        - Offshore wind expansion
+        - Grid-scale battery storage
+        - Green hydrogen production..., type=text}}]
+        ```</Step>
+ </Steps>
+ </Tab>
+</Tabs>
+
+## Next steps
+
+Now that you have made your first Claude API request, it's time to explore what else is possible:
+
+<CardGroup cols={3}>
+ <Card title="Working with Messages" icon="messages" href="/en/docs/build-with-claude/working-with-messages">
+ Learn common patterns for the Messages API.
+ </Card>
+
+ <Card title="Features Overview" icon="brain-circuit" href="/en/api/overview">
+ Explore Claude's advanced features and capabilities.
+ </Card>
+
+ <Card title="Client SDKs" icon="code-simple" href="/en/api/client-sdks">
+ Discover Anthropic client libraries.
+ </Card>
+
+ <Card title="Claude Cookbook" icon="hat-chef" href="https://github.com/anthropics/anthropic-cookbook">
+ Learn with interactive Jupyter notebooks.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE2164QT4KGN]
+---
+
+[START OF DOCUMENT: CLAUDE1VC0OAGS34 | Title: Handle-Streaming-Refusals]
+
+# Streaming refusals
+
+Starting with Claude 4 models, streaming responses from Claude's API return **`stop_reason`: `"refusal"`** when streaming classifiers intervene to handle potential policy violations. This new safety feature helps maintain content compliance during real-time streaming.
+
+<Tip>
+ To learn more about refusals triggered by API safety filters for Claude Sonnet 4.5, see [Understanding Sonnet 4.5's API Safety Filters](https://support.claude.com/en/articles/12449294-understanding-sonnet-4-5-s-api-safety-filters).
+</Tip>
+
+## API response format
+
+When streaming classifiers detect content that violates our policies, the API returns this response:```json  theme={null}
+{
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello.."
+    }
+  ],
+  "stop_reason": "refusal"
+}
+```<Warning>
+ No additional refusal message is included. You must handle the response and provide appropriate user-facing messaging.
+</Warning>
+
+## Reset context after refusal
+
+When you receive **`stop_reason`: `refusal`**, you must reset the conversation context **by removing or updating the turn that was refused** before continuing. Attempting to continue without resetting will result in continued refusals.
+
+<Note>
+ Usage metrics are still provided in the response for billing purposes, even when the response is refused.
+
+ You will be billed for output tokens up until the refusal.
+</Note>
+
+<Tip>
+ If you encounter `refusal` stop reasons frequently while using Claude Sonnet 4.5 or Opus 4.1, you can try updating your API calls to use Sonnet 4 (`claude-sonnet-4-20250514`), which has different usage restrictions.
+</Tip>
+
+## Implementation guide
+
+Here's how to detect and handle streaming refusals in your application:
+
+<CodeGroup>```bash Shell theme={null}
+  # Stream request and check for refusal
+  response=$(curl -N https://api.anthropic.com/v1/messages \
+    --header "anthropic-version: 2023-06-01" \
+    --header "content-type: application/json" \
+    --header "x-api-key: $ANTHROPIC_API_KEY" \
+    --data '{
+      "model": "claude-sonnet-4-5",
+      "messages": [{"role": "user", "content": "Hello"}],
+      "max_tokens": 256,
+      "stream": true
+    }')
+
+  # Check for refusal in the stream
+  if echo "$response" | grep -q '"stop_reason":"refusal"'; then
+    echo "Response refused - resetting conversation context"
+    # Reset your conversation state here
+  fi
+  ``````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+  messages = []
+
+  def reset_conversation():
+      """Reset conversation context after refusal"""
+      global messages
+      messages = []
+      print("Conversation reset due to refusal")
+
+  try:
+      with client.messages.stream(
+          max_tokens=1024,
+          messages=messages + [{"role": "user", "content": "Hello"}],
+          model="claude-sonnet-4-5",
+      ) as stream:
+          for event in stream:
+              # Check for refusal in message delta
+              if hasattr(event, 'type') and event.type == 'message_delta':
+                  if event.delta.stop_reason == 'refusal':
+                      reset_conversation()
+                      break
+  except Exception as e:
+      print(f"Error: {e}")
+  ``````typescript TypeScript theme={null}
+  import Anthropic from '@anthropic-ai/sdk';
+
+  const client = new Anthropic();
+  let messages: any[] = [];
+
+  function resetConversation() {
+    // Reset conversation context after refusal
+    messages = [];
+    console.log('Conversation reset due to refusal');
+  }
+
+  try {
+    const stream = await client.messages.stream({
+      messages: [...messages, { role: 'user', content: 'Hello' }],
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+    });
+
+    for await (const event of stream) {
+      // Check for refusal in message delta
+      if (event.type === 'message_delta' && event.delta.stop_reason === 'refusal') {
+        resetConversation();
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+  ```</CodeGroup>
+
+<Note>
+ If you need to test refusal handling in your application, you can use this special test string as your prompt: `ANTHROPIC_MAGIC_STRING_TRIGGER_REFUSAL_1FAEFB6177B4672DEE07F9D3AFC62588CCD2631EDCF22E8CCC1FB35B501C9C86`
+</Note>
+
+## Current refusal types
+
+The API currently handles refusals in three different ways:
+
+| Refusal Type | Response Format | When It Occurs |
+| ---------------------------------- | ---------------------------- | ----------------------------------------------- |
+| Streaming classifier refusals | **`stop_reason`: `refusal`** | During streaming when content violates policies |
+| API input and copyright validation | 400 error codes | When input fails validation checks |
+| Model-generated refusals | Standard text responses | When the model itself decides to refuse |
+
+<Note>
+ Future API versions will expand the **`stop_reason`: `refusal`** pattern to unify refusal handling across all types.
+</Note>
+
+## Best practices
+
+* **Monitor for refusals**: Include **`stop_reason`: `refusal`** checks in your error handling
+* **Reset automatically**: Implement automatic context reset when refusals are detected
+* **Provide custom messaging**: Create user-friendly messages for better UX when refusals occur
+* **Track refusal patterns**: Monitor refusal frequency to identify potential issues with your prompts
+
+## Migration notes
+
+* Future models will expand this pattern to other refusal types
+* Plan your error handling to accommodate future unification of refusal responses
+
+[END OF DOCUMENT: CLAUDE1VC0OAGS34]
+---
+
+[START OF DOCUMENT: CLAUDE26PCIYGXDV | Title: Hosting]
+
+# Hosting the Agent SDK
+
+> Deploy and host Claude Agent SDK in production environments
+
+The Claude Agent SDK differs from traditional stateless LLM APIs in that it maintains conversational state and executes commands in a persistent environment. This guide covers the architecture, hosting considerations, and best practices for deploying SDK-based agents in production.
+
+## Hosting Requirements
+
+### Container-Based Sandboxing
+
+For security and isolation, the SDK should run inside a **sandboxed container environment**. This provides:
+
+* **Process isolation** - Separate execution environment per session
+* **Resource limits** - CPU, memory, and storage constraints
+* **Network control** - Restrict outbound connections
+* **Ephemeral filesystems** - Clean state for each session
+
+### System Requirements
+
+Each SDK instance requires:
+
+* **Runtime dependencies**
+ * Python 3.10+ (for Python SDK) or Node.js 18+ (for TypeScript SDK)
+ * Node.js (required by Claude Code CLI)
+ * Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
+
+* **Resource allocation**
+ * Recommended: 1GiB RAM, 5GiB of disk, and 1 CPU (vary this based on your task as needed)
+
+* **Network access**
+ * Outbound HTTPS to `api.anthropic.com`
+ * Optional: Access to MCP servers or external tools
+
+## Understanding the SDK Architecture
+
+Unlike stateless API calls, the Claude Agent SDK operates as a **long-running process** that:
+
+* **Executes commands** in a persistent shell environment
+* **Manages file operations** within a working directory
+* **Handles tool execution** with context from previous interactions
+
+## Sandbox Provider Options
+
+Several providers specialize in secure container environments for AI code execution:
+
+* **[Cloudflare Sandboxes](https://github.com/cloudflare/sandbox-sdk)**
+* **[Modal Sandboxes](https://modal.com/docs/guide/sandbox)**
+* **[Daytona](https://www.daytona.io/)**
+* **[E2B](https://e2b.dev/)**
+* **[Fly Machines](https://fly.io/docs/machines/)**
+* **[Vercel Sandbox](https://vercel.com/docs/functions/sandbox)**
+
+## Production Deployment Patterns
+
+### Pattern 1: Ephemeral Sessions
+
+Create a new container for each user task, then destroy it when complete.
+
+Best for one-off tasks, the user may still interact with the AI while the task is completing, but once completed the container is destroyed.
+
+**Examples:**
+
+* Bug Investigation & Fix: Debug and resolve a specific issue with relevant context
+* Invoice Processing: Extract and structure data from receipts/invoices for accounting systems
+* Translation Tasks: Translate documents or content batches between languages
+* Image/Video Processing: Apply transformations, optimizations, or extract metadata from media files
+
+### Pattern 2: Long-Running Sessions
+
+Maintain persistent container instances for long running tasks. Often times running *multiple* Claude Agent processes inside of the container based on demand.
+
+Best for proactive agents that take action without the users input, agents that serve content or agents that process high amounts of messages.
+
+**Examples:**
+
+* Email Agent: Monitors incoming emails and autonomously triages, responds, or takes actions based on content
+* Site Builder: Hosts custom websites per user with live editing capabilities served through container ports
+* High-Frequency Chat Bots: Handles continuous message streams from platforms like Slack where rapid response times are critical
+
+### Pattern 3: Hybrid Sessions
+
+Ephemeral containers that are hydrated with history and state, possibly from a database or from the SDK's session resumption features.
+
+Best for containers with intermittent interaction from the user that kicks off work and spins down when the work is completed but can be continued.
+
+**Examples:**
+
+* Personal Project Manager: Helps manage ongoing projects with intermittent check-ins, maintains context of tasks, decisions, and progress
+* Deep Research: Conducts multi-hour research tasks, saves findings and resumes investigation when user returns
+* Customer Support Agent: Handles support tickets that span multiple interactions, loads ticket history and customer context
+
+### Pattern 4: Single Containers
+
+Run multiple Claude Agent SDK processes in one global container.
+
+Best for agents that must collaborate closely together. This is likely the least popular pattern because you will have to prevent agents from overwriting each other.
+
+**Examples:**
+
+* **Simulations**: Agents that interact with each other in simulations such as video games.
+
+# FAQ
+
+### How do I communicate with my sandboxes?
+
+When hosting in containers, expose ports to communicate with your SDK instances. Your application can expose HTTP/WebSocket endpoints for external clients while the SDK runs internally within the container.
+
+### What is the cost of hosting a container?
+
+We have found that the dominant cost of serving agents is the tokens, containers vary based on what you provision but a minimum cost is roughly 5 cents per hour running.
+
+### When should I shut down idle containers vs. keeping them warm?
+
+This is likely provider dependent, different sandbox providers will let you set different criteria for idle timeouts after which a sandbox might spin down.
+You will want to tune this timeout based on how frequent you think user response might be.
+
+### How often should I update the Claude Code CLI?
+
+The Claude Code CLI is versioned with semver, so any breaking changes will be versioned.
+
+### How do I monitor container health and agent performance?
+
+Since containers are just servers the same logging infrastructure you use for the backend will work for containers.
+
+### How long can an agent session run before timing out?
+
+An agent session will not timeout, but we recommend setting a 'maxTurns' property to prevent Claude from getting stuck in a loop.
+
+## Next Steps
+
+* [Sessions Guide](/en/docs/agent-sdk/sessions) - Learn about session management
+* [Permissions](/en/docs/agent-sdk/permissions) - Configure tool permissions
+* [Cost Tracking](/en/docs/agent-sdk/cost-tracking) - Monitor API usage
+* [MCP Integration](/en/docs/agent-sdk/mcp) - Extend with custom tools
+
+[END OF DOCUMENT: CLAUDE26PCIYGXDV]
+---
+
+[START OF DOCUMENT: CLAUDE1D7MGJB4V7 | Title: Implement-Tool-Use]
+
+# How to implement tool use
+
+## Choosing a model
+
+We recommend using the latest Claude Sonnet (4.5) or Claude Opus (4.1) model for complex tools and ambiguous queries; they handle multiple tools better and seek clarification when needed.
+
+Use Claude Haiku models for straightforward tools, but note they may infer missing parameters.
+
+<Tip>
+ If using Claude with tool use and extended thinking, refer to our guide [here](/en/docs/build-with-claude/extended-thinking) for more information.
+</Tip>
+
+## Specifying client tools
+
+Client tools (both Anthropic-defined and user-defined) are specified in the `tools` top-level parameter of the API request. Each tool definition includes:
+
+| Parameter | Description |
+| :------------- | :-------------------------------------------------------------------------------------------------- |
+| `name` | The name of the tool. Must match the regex `^[a-zA-Z0-9_-]{1,64}$`. |
+| `description` | A detailed plaintext description of what the tool does, when it should be used, and how it behaves. |
+| `input_schema` | A [JSON Schema](https://json-schema.org/) object defining the expected parameters for the tool. |
+
+<Accordion title="Example simple tool definition">```JSON JSON theme={null}
+  {
+    "name": "get_weather",
+    "description": "Get the current weather in a given location",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "The city and state, e.g. San Francisco, CA"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["celsius", "fahrenheit"],
+          "description": "The unit of temperature, either 'celsius' or 'fahrenheit'"
+        }
+      },
+      "required": ["location"]
+    }
+  }
+  ```This tool, named `get_weather`, expects an input object with a required `location` string and an optional `unit` string that must be either "celsius" or "fahrenheit".
+</Accordion>
+
+### Tool use system prompt
+
+When you call the Claude API with the `tools` parameter, we construct a special system prompt from the tool definitions, tool configuration, and any user-specified system prompt. The constructed prompt is designed to instruct the model to use the specified tool(s) and provide the necessary context for the tool to operate properly:```
+In this environment you have access to a set of tools you can use to answer the user's question.
+{{ FORMATTING INSTRUCTIONS }}
+String and scalar parameters should be specified as is, while lists and objects should use JSON format. Note that spaces for string values are not stripped. The output is not expected to be valid XML and is parsed with regular expressions.
+Here are the functions available in JSONSchema format:
+{{ TOOL DEFINITIONS IN JSON SCHEMA }}
+{{ USER SYSTEM PROMPT }}
+{{ TOOL CONFIGURATION }}
+```### Best practices for tool definitions
+
+To get the best performance out of Claude when using tools, follow these guidelines:
+
+* **Provide extremely detailed descriptions.** This is by far the most important factor in tool performance. Your descriptions should explain every detail about the tool, including:
+ * What the tool does
+ * When it should be used (and when it shouldn't)
+ * What each parameter means and how it affects the tool's behavior
+ * Any important caveats or limitations, such as what information the tool does not return if the tool name is unclear. The more context you can give Claude about your tools, the better it will be at deciding when and how to use them. Aim for at least 3-4 sentences per tool description, more if the tool is complex.
+* **Prioritize descriptions over examples.** While you can include examples of how to use a tool in its description or in the accompanying prompt, this is less important than having a clear and comprehensive explanation of the tool's purpose and parameters. Only add examples after you've fully fleshed out the description.
+
+<AccordionGroup>
+ <Accordion title="Example of a good tool description">```JSON JSON theme={null}
+    {
+      "name": "get_stock_price",
+      "description": "Retrieves the current stock price for a given ticker symbol. The ticker symbol must be a valid symbol for a publicly traded company on a major US stock exchange like NYSE or NASDAQ. The tool will return the latest trade price in USD. It should be used when the user asks about the current or most recent price of a specific stock. It will not provide any other information about the stock or company.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "The stock ticker symbol, e.g. AAPL for Apple Inc."
+          }
+        },
+        "required": ["ticker"]
+      }
+    }
+    ```</Accordion>
+
+ <Accordion title="Example poor tool description">```JSON JSON theme={null}
+    {
+      "name": "get_stock_price",
+      "description": "Gets the stock price for a ticker.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string"
+          }
+        },
+        "required": ["ticker"]
+      }
+    }
+    ```</Accordion>
+</AccordionGroup>
+
+The good description clearly explains what the tool does, when to use it, what data it returns, and what the `ticker` parameter means. The poor description is too brief and leaves Claude with many open questions about the tool's behavior and usage.
+
+## Tool runner (beta)
+
+The tool runner provides an out-of-the-box solution for executing tools with Claude. Instead of manually handling tool calls, tool results, and conversation management, the tool runner automatically:
+
+* Executes tools when Claude calls them
+* Handles the request/response cycle
+* Manages conversation state
+* Provides type safety and validation
+
+We recommend that you use the tool runner for most tool use implementations.
+
+<Note>
+ The tool runner is currently in beta and only available in the [Python](https://github.com/anthropics/anthropic-sdk-python/blob/main/tools.md) and [TypeScript](https://github.com/anthropics/anthropic-sdk-typescript/blob/main/helpers.md#tool-helpers) SDKs.
+</Note>
+
+<Tabs>
+ <Tab title="Python">
+ ### Basic usage
+
+ Use the `@beta_tool` decorator to define tools and `client.beta.messages.tool_runner()` to execute them.
+
+ <Note>
+ If you're using the async client, replace `@beta_tool` with `@beta_async_tool` and define the function with `async def`.
+ </Note>```python  theme={null}
+    import anthropic
+    import json
+    from anthropic import beta_tool
+
+    # Initialize client
+    client = anthropic.Anthropic()
+
+    # Define tools using the decorator
+    @beta_tool
+    def get_weather(location: str, unit: str = "fahrenheit") -> str:
+        """Get the current weather in a given location.
+
+        Args:
+            location: The city and state, e.g. San Francisco, CA
+            unit: Temperature unit, either 'celsius' or 'fahrenheit'
+        """
+        # In a full implementation, you'd call a weather API here
+        return json.dumps({"temperature": "20°C", "condition": "Sunny"})
+
+    @beta_tool
+    def calculate_sum(a: int, b: int) -> str:
+        """Add two numbers together.
+
+        Args:
+            a: First number
+            b: Second number
+        """
+        return str(a + b)
+
+    # Use the tool runner
+    runner = client.beta.messages.tool_runner(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        tools=[get_weather, calculate_sum],
+        messages=[
+            {"role": "user", "content": "What's the weather like in Paris? Also, what's 15 + 27?"}
+        ]
+    )
+    for message in runner:
+        print(message.content[0].text)
+    ```The decorated function must return a content block or content block array, including text, images, or document blocks. This allows tools to return rich, multimodal responses. Returned strings will be converted to a text content block.
+ If you want to return a structured JSON object to Claude, encode it to a JSON string before returning it. Numbers, booleans or other non-string primitives also must be converted to strings.
+
+ The `@beta_tool` decorator will inspect the function arguments and the docstring to extract a json schema representation of the given function, in the example above `calculate_sum` will be turned into:```json  theme={null}
+    {
+      "name": "calculate_sum",
+      "description": "Adds two integers together.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "description": "The first integer to add.",
+            "title": "Left",
+            "type": "integer"
+          },
+          "right": {
+            "description": "The second integer to add.",
+            "title": "Right",
+            "type": "integer"
+          }
+        },
+        "required": ["left", "right"],
+        "type": "object"
+      }
+    }
+    ```### Iterating over the tool runner
+
+ The tool runner returned by `tool_runner()` is an iterable, which you can iterate over with a `for` loop. This is often referred to as a "tool call loop".
+ Each loop iteration yields a message that was returned by Claude.
+
+ After your code has a chance to process the current message inside the loop, the tool runner will check the message to see if Claude requested a tool use. If so, it will call the tool and send the tool result back to Claude automatically, then yield the next message from Claude to start the next iteration of your loop.
+
+ You may end the loop at any iteration with a simple `break` statement. The tool runner will loop until Claude returns a message without a tool use.
+
+ If you don't care about intermediate messages, instead of using a loop, you can call the `until_done()` method, which will return the final message from Claude:```python  theme={null}
+    runner = client.beta.messages.tool_runner(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        tools=[get_weather, calculate_sum],
+        messages=[
+            {"role": "user", "content": "What's the weather like in Paris? Also, what's 15 + 27?"}
+        ]
+    )
+    final_message = runner.until_done()
+    print(final_message.content[0].text)
+    ```### Advanced usage
+
+ Within the loop, you have the ability to fully customize the tool runner's next request to the Messages API.
+ The method `runner.generate_tool_call_response()` will call the tool (if Claude triggered a tool use) and give you access to the tool result that will be sent back to the Messages API.
+ The methods `runner.set_messages_params()` and `runner.append_messages()` allow you to modify the parameters for the next Messages API request.```python  theme={null}
+    runner = client.beta.messages.tool_runner(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        tools=[get_weather],
+        messages=[{"role": "user", "content": "What's the weather in San Francisco?"}]
+    )
+    for message in runner:
+        # Get the tool response that will be sent
+        tool_response = runner.generate_tool_call_response()
+
+        # Customize the next request
+        runner.set_messages_params(lambda params: {
+            **params,
+            "max_tokens": 2048  # Increase tokens for next request
+        })
+
+        # Or add additional messages
+        runner.append_messages(
+            {"role": "user", "content": "Please be concise in your response."}
+        )
+    ```### Streaming
+
+ When enabling streaming with `stream=True`, each value emitted by the tool runner is a `BetaMessageStream` as returned from `anthropic.messages.stream()`. The `BetaMessageStream` is itself an iterable that yields streaming events from the Messages API.
+
+ You can use `message_stream.get_final_message()` to let the SDK do the accumulation of streaming events into the final message for you.```python  theme={null}
+    runner = client.beta.messages.tool_runner(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        tools=[calculate_sum],
+        messages=[{"role": "user", "content": "What is 15 + 27?"}],
+        stream=True
+    )
+
+    # When streaming, the runner returns BetaMessageStream
+    for message_stream in runner:
+        for event in message_stream:
+            print('event:', event)
+        print('message:', message_stream.get_final_message())
+
+    print(runner.until_done())
+    ```</Tab>
+
+ <Tab title="TypeScript (Zod)">
+ ### Basic usage
+
+ Use `betaZodTool()` for type-safe tool definitions with Zod validation (requires Zod 3.25.0 or higher).```typescript  theme={null}
+    import { Anthropic } from '@anthropic-ai/sdk';
+    import { betaZodTool, betaTool } from '@anthropic-ai/sdk/helpers/beta/zod';
+    import { z } from 'zod';
+
+    const anthropic = new Anthropic();
+
+    // Using betaZodTool (requires Zod 3.25.0+)
+    const getWeatherTool = betaZodTool({
+      name: 'get_weather',
+      description: 'Get the current weather in a given location',
+      inputSchema: z.object({
+        location: z.string().describe('The city and state, e.g. San Francisco, CA'),
+        unit: z.enum(['celsius', 'fahrenheit']).default('fahrenheit')
+          .describe('Temperature unit')
+      }),
+      run: async (input) => {
+        // In a full implementation, you'd call a weather API here
+        return JSON.stringify({temperature: '20°C', condition: 'Sunny'});
+      }
+    });
+
+    // Use the tool runner
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      tools: [getWeatherTool],
+      messages: [
+        {
+          role: 'user',
+          content: "What's the weather like in Paris?"
+        }
+      ]
+    });
+
+    // Process messages as they come in
+    for await (const message of runner) {
+      console.log(message.content[0].text);
+    }
+    ```The `run` function must return a content block or content block array, including text, images, or document blocks. This allows tools to return rich, multimodal responses. Returned strings will be converted to a text content block.
+ If you want to return a structured JSON object to Claude, stringify it to a JSON string before returning it. Numbers, booleans or other non-string primitives also must be converted to strings.
+
+ ### Iterating over the tool runner
+
+ The tool runner returned by `toolRunner()` is an async iterable, which you can iterate over with a `for await ... of` loop. This is often referred to as a "tool call loop".
+ Each loop iteration yields a messages that was returned by Claude.
+
+ After your code had a chance to process the current message inside the loop, the tool runner will check the message to see if Claude requested a tool use. If so, it will call the tool and send the tool result back to Claude automatically, then yield the next message from Claude to start the next iteration of your loop.
+
+ You may end the loop at any iteration with a simple `break` statement. The tool runner will loop until Claude returns a message without a tool use.
+
+ If you don't care about intermediate messages, instead of using a loop, you may simply `await` the tool runner, which will return the final message from Claude.
+
+ ### Advanced usage
+
+ Within the loop, you have the ability to fully customize the tool runner's next request to the Messages API.
+ The method `runner.generateToolResponse()` will call the tool (if Claude triggered a tool use) and give you access to the tool result that will be sent back to the Messages API.
+ The methods `runner.setMessagesParams()` and `runner.pushMessages()` allow you to modify the parameters for the next Messages API request. The current parameters are available under `runner.params`.```typescript  theme={null}
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      tools: [getWeatherTool],
+      messages: [
+        { role: 'user', content: "What's the weather in San Francisco?" }
+      ]
+    });
+
+    for await (const message of runner) {
+      // Get the tool response that will be sent
+      const toolResponse = await runner.generateToolResponse();
+
+      // Customize the next request
+      runner.setMessagesParams(params => ({
+        ...params,
+        max_tokens: 2048  // Increase tokens for next request
+      }));
+
+      // Or add additional messages
+      runner.pushMessages(
+        { role: 'user', content: 'Please be concise in your response.' }
+      );
+    }
+    ```### Streaming
+
+ When enabling streaming with `stream: true`, each value emitted by the tool runner is a `MessageStream` as returned from `anthropic.messages.stream()`. The `MessageStream` is itself an async iterable that yields streaming events from the Messages API.
+
+ You can use `messageStream.finalMessage()` to let the SDK do the accumulation of streaming events into the final message for you.```typescript  theme={null}
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: 'What is the weather in San Francisco?' }],
+      tools: [calculatorTool],
+      stream: true,
+    });
+
+    // When streaming, the runner returns BetaMessageStream
+    for await (const messageStream of runner) {
+      for await (const event of messageStream) {
+        console.log('event:', event);
+      }
+      console.log('message:', await messageStream.finalMessage());
+    }
+
+    console.log(await runner);
+    ```</Tab>
+
+ <Tab title="TypeScript (JSON Schema)">
+ ### Basic usage
+
+ Use `betaTool()` for type-safe tool definitions based on JSON schemas. TypeScript and your editor will be aware of the type of the `input` parameter for autocompletion.
+
+ <Note>
+ The input generated by Claude will not be validated at runtime. Perform validation inside the `run` function if needed.
+ </Note>```typescript  theme={null}
+    import { Anthropic } from '@anthropic-ai/sdk';
+    import { betaZodTool, betaTool } from '@anthropic-ai/sdk/helpers/beta/json-schema';
+    import { z } from 'zod';
+
+    const anthropic = new Anthropic();
+
+    // Using betaTool with JSON schema (no Zod required)
+    const calculateSumTool = betaTool({
+      name: 'calculate_sum',
+      description: 'Add two numbers together',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          a: { type: 'number', description: 'First number' },
+          b: { type: 'number', description: 'Second number' }
+        },
+        required: ['a', 'b']
+      },
+      run: async (input) => {
+        return String(input.a + input.b);
+      }
+    });
+
+    // Use the tool runner
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      tools: [getWeatherTool, calculateSumTool],
+      messages: [
+        {
+          role: 'user',
+          content: "What's 15 + 27?"
+        }
+      ]
+    });
+
+    // Process messages as they come in
+    for await (const message of runner) {
+      console.log(message.content[0].text);
+    }
+    ```The `run` function must return any content block or content block array, including text, image, or document blocks. This allows tools to return rich, multimodal responses. Returned strings will be converted to a text content block.
+ If you want to return a structured JSON object to Claude, encode it to a JSON string before returning it. Numbers, booleans or other non-string primitives also must be converted to strings.
+
+ ### Iterating over the tool runner
+
+ The tool runner returned by `toolRunner()` is an async iterable, which you can iterate over with a `for await ... of` loop. This is often referred to as a "tool call loop".
+ Each loop iteration yields a messages that was returned by Claude.
+
+ After your code had a chance to process the current message inside the loop, the tool runner will check the message to see if Claude requested a tool use. If so, it will call the tool and send the tool result back to Claude automatically, then yield the next message from Claude to start the next iteration of your loop.
+
+ You may end the loop at any iteration with a simple `break` statement. The tool runner will loop until Claude returns a message without a tool use.
+
+ If you don't care about intermediate messages, instead of using a loop, you may simply `await` the tool runner, which will return the final message from Claude.
+
+ ### Advanced usage
+
+ Within the loop, you have the ability to fully customize the tool runner's next request to the Messages API.
+ The method `runner.generateToolResponse()` will call the tool (if Claude triggered a tool use) and give you access to the tool result that will be sent back to the Messages API.
+ The methods `runner.setMessagesParams()` and `runner.pushMessages()` allow you to modify the parameters for the next Messages API request. The current parameters are available under `runner.params`.```typescript  theme={null}
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      tools: [getWeatherTool],
+      messages: [
+        { role: 'user', content: "What's the weather in San Francisco?" }
+      ]
+    });
+
+    for await (const message of runner) {
+      // Get the tool response that will be sent
+      const toolResponse = await runner.generateToolResponse();
+
+      // Customize the next request
+      runner.setMessagesParams(params => ({
+        ...params,
+        max_tokens: 2048  // Increase tokens for next request
+      }));
+
+      // Or add additional messages
+      runner.pushMessages(
+        { role: 'user', content: 'Please be concise in your response.' }
+      );
+    }
+    ```### Streaming
+
+ When enabling streaming with `stream: true`, each value emitted by the tool runner is a `MessageStream` as returned from `anthropic.messages.stream()`. The `MessageStream` is itself an async iterable that yields streaming events from the Messages API.
+
+ You can use `messageStream.finalMessage()` to let the SDK do the accumulation of streaming events into the final message for you.```typescript  theme={null}
+    const runner = anthropic.beta.messages.toolRunner({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: 'What is the weather in San Francisco?' }],
+      tools: [calculatorTool],
+      stream: true,
+    });
+
+    // When streaming, the runner returns BetaMessageStream
+    for await (const messageStream of runner) {
+      for await (const event of messageStream) {
+        console.log('event:', event);
+      }
+      console.log('message:', await messageStream.finalMessage());
+    }
+
+    console.log(await runner);
+    ```</Tab>
+</Tabs>
+
+<Note>
+ The SDK tool runner is in beta. The rest of this document covers manual tool implementation.
+</Note>
+
+## Controlling Claude's output
+
+### Forcing tool use
+
+In some cases, you may want Claude to use a specific tool to answer the user's question, even if Claude thinks it can provide an answer without using a tool. You can do this by specifying the tool in the `tool_choice` field like so:```
+tool_choice = {"type": "tool", "name": "get_weather"}
+```When working with the tool\_choice parameter, we have four possible options:
+
+* `auto` allows Claude to decide whether to call any provided tools or not. This is the default value when `tools` are provided.
+* `any` tells Claude that it must use one of the provided tools, but doesn't force a particular tool.
+* `tool` allows us to force Claude to always use a particular tool.
+* `none` prevents Claude from using any tools. This is the default value when no `tools` are provided.
+
+<Note>
+ When using [prompt caching](/en/docs/build-with-claude/prompt-caching#what-invalidates-the-cache), changes to the `tool_choice` parameter will invalidate cached message blocks. Tool definitions and system prompts remain cached, but message content must be reprocessed.
+</Note>
+
+This diagram illustrates how each option works:
+
+<Frame>
+ <img src="https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=fb88b9fa0da23fc231e4fece253f4406" data-og-width="1920" width="1920" data-og-height="1080" height="1080" data-path="images/tool_choice.png" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=280&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=11a4cfd7ab7815ea14c21e0948d060d4 280w, https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=560&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=c889c279adce34f1fa479bc722b3fe6f 560w, https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=840&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=e16651305d256ded74250f1c0dadb622 840w, https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=1100&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=a99b0dd3b603051efdf9536ba9307a34 1100w, https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=1650&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=5045888f298f7261d3ae2e1466e54027 1650w, https://mintcdn.com/anthropic-claude-docs/LF5WV0SNF6oudpT5/images/tool_choice.png?w=2500&fit=max&auto=format&n=LF5WV0SNF6oudpT5&q=85&s=8a9c615a15610a949a2dad3aaa8113b8 2500w" />
+</Frame>
+
+Note that when you have `tool_choice` as `any` or `tool`, we will prefill the assistant message to force a tool to be used. This means that the models will not emit a natural language response or explanation before `tool_use` content blocks, even if explicitly asked to do so.
+
+<Note>
+ When using [extended thinking](/en/docs/build-with-claude/extended-thinking) with tool use, `tool_choice: {"type": "any"}` and `tool_choice: {"type": "tool", "name": "..."}` are not supported and will result in an error. Only `tool_choice: {"type": "auto"}` (the default) and `tool_choice: {"type": "none"}` are compatible with extended thinking.
+</Note>
+
+Our testing has shown that this should not reduce performance. If you would like the model to provide natural language context or explanations while still requesting that the model use a specific tool, you can use `{"type": "auto"}` for `tool_choice` (the default) and add explicit instructions in a `user` message. For example: `What's the weather like in London? Use the get_weather tool in your response.`
+
+<Tip>
+ **Guaranteed tool calls with strict tools**
+
+ Combine `tool_choice: {"type": "any"}` with [strict tool use](/en/docs/build-with-claude/structured-outputs) to guarantee both that one of your tools will be called AND that the tool inputs strictly follow your schema. Set `strict: true` on your tool definitions to enable schema validation.
+</Tip>
+
+### JSON output
+
+Tools do not necessarily need to be client functions — you can use tools anytime you want the model to return JSON output that follows a provided schema. For example, you might use a `record_summary` tool with a particular schema. See [Tool use with Claude](/en/docs/agents-and-tools/tool-use/overview) for a full working example.
+
+### Model responses with tools
+
+When using tools, Claude will often comment on what it's doing or respond naturally to the user before invoking tools.
+
+For example, given the prompt "What's the weather like in San Francisco right now, and what time is it there?", Claude might respond with:```JSON JSON theme={null}
+{
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "I'll help you check the current weather and time in San Francisco."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_01A09q90qw90lq917835lq9",
+      "name": "get_weather",
+      "input": {"location": "San Francisco, CA"}
+    }
+  ]
+}
+```This natural response style helps users understand what Claude is doing and creates a more conversational interaction. You can guide the style and content of these responses through your system prompts and by providing `<examples>` in your prompts.
+
+It's important to note that Claude may use various phrasings and approaches when explaining its actions. Your code should treat these responses like any other assistant-generated text, and not rely on specific formatting conventions.
+
+### Parallel tool use
+
+By default, Claude may use multiple tools to answer a user query. You can disable this behavior by:
+
+* Setting `disable_parallel_tool_use=true` when tool\_choice type is `auto`, which ensures that Claude uses **at most one** tool
+* Setting `disable_parallel_tool_use=true` when tool\_choice type is `any` or `tool`, which ensures that Claude uses **exactly one** tool
+
+<AccordionGroup>
+ <Accordion title="Complete parallel tool use example">
+ <Note>
+ **Simpler with Tool runner**: The example below shows manual parallel tool handling. For most use cases, [tool runner](#tool-runner-beta) automatically handle parallel tool execution with much less code.
+ </Note>
+
+ Here's a complete example showing how to properly format parallel tool calls in the message history:
+
+ <CodeGroup>```python Python theme={null}
+      import anthropic
+
+      client = anthropic.Anthropic()
+
+      # Define tools
+      tools = [
+          {
+              "name": "get_weather",
+              "description": "Get the current weather in a given location",
+              "input_schema": {
+                  "type": "object",
+                  "properties": {
+                      "location": {
+                          "type": "string",
+                          "description": "The city and state, e.g. San Francisco, CA"
+                      }
+                  },
+                  "required": ["location"]
+              }
+          },
+          {
+              "name": "get_time",
+              "description": "Get the current time in a given timezone",
+              "input_schema": {
+                  "type": "object",
+                  "properties": {
+                      "timezone": {
+                          "type": "string",
+                          "description": "The timezone, e.g. America/New_York"
+                      }
+                  },
+                  "required": ["timezone"]
+              }
+          }
+      ]
+
+      # Initial request
+      response = client.messages.create(
+          model="claude-sonnet-4-5",
+          max_tokens=1024,
+          tools=tools,
+          messages=[
+              {
+                  "role": "user",
+                  "content": "What's the weather in SF and NYC, and what time is it there?"
+              }
+          ]
+      )
+
+      # Claude's response with parallel tool calls
+      print("Claude wants to use tools:", response.stop_reason == "tool_use")
+      print("Number of tool calls:", len([c for c in response.content if c.type == "tool_use"]))
+
+      # Build the conversation with tool results
+      messages = [
+          {
+              "role": "user",
+              "content": "What's the weather in SF and NYC, and what time is it there?"
+          },
+          {
+              "role": "assistant",
+              "content": response.content  # Contains multiple tool_use blocks
+          },
+          {
+              "role": "user",
+              "content": [
+                  {
+                      "type": "tool_result",
+                      "tool_use_id": "toolu_01",  # Must match the ID from tool_use
+                      "content": "San Francisco: 68°F, partly cloudy"
+                  },
+                  {
+                      "type": "tool_result",
+                      "tool_use_id": "toolu_02",
+                      "content": "New York: 45°F, clear skies"
+                  },
+                  {
+                      "type": "tool_result",
+                      "tool_use_id": "toolu_03",
+                      "content": "San Francisco time: 2:30 PM PST"
+                  },
+                  {
+                      "type": "tool_result",
+                      "tool_use_id": "toolu_04",
+                      "content": "New York time: 5:30 PM EST"
+                  }
+              ]
+          }
+      ]
+
+      # Get final response
+      final_response = client.messages.create(
+          model="claude-sonnet-4-5",
+          max_tokens=1024,
+          tools=tools,
+          messages=messages
+      )
+
+      print(final_response.content[0].text)
+      ``````typescript TypeScript theme={null}
+      import { Anthropic } from '@anthropic-ai/sdk';
+
+      const anthropic = new Anthropic();
+
+      // Define tools
+      const tools = [
+        {
+          name: "get_weather",
+          description: "Get the current weather in a given location",
+          input_schema: {
+            type: "object",
+            properties: {
+              location: {
+                type: "string",
+                description: "The city and state, e.g. San Francisco, CA"
+              }
+            },
+            required: ["location"]
+          }
+        },
+        {
+          name: "get_time",
+          description: "Get the current time in a given timezone",
+          input_schema: {
+            type: "object",
+            properties: {
+              timezone: {
+                type: "string",
+                description: "The timezone, e.g. America/New_York"
+              }
+            },
+            required: ["timezone"]
+          }
+        }
+      ];
+
+      // Initial request
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 1024,
+        tools: tools,
+        messages: [
+          {
+            role: "user",
+            content: "What's the weather in SF and NYC, and what time is it there?"
+          }
+        ]
+      });
+
+      // Build conversation with tool results
+      const messages = [
+        {
+          role: "user",
+          content: "What's the weather in SF and NYC, and what time is it there?"
+        },
+        {
+          role: "assistant",
+          content: response.content  // Contains multiple tool_use blocks
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_01",  // Must match the ID from tool_use
+              content: "San Francisco: 68°F, partly cloudy"
+            },
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_02",
+              content: "New York: 45°F, clear skies"
+            },
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_03",
+              content: "San Francisco time: 2:30 PM PST"
+            },
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_04",
+              content: "New York time: 5:30 PM EST"
+            }
+          ]
+        }
+      ];
+
+      // Get final response
+      const finalResponse = await anthropic.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 1024,
+        tools: tools,
+        messages: messages
+      });
+
+      console.log(finalResponse.content[0].text);
+      ```</CodeGroup>
+
+ The assistant message with parallel tool calls would look like this:```json  theme={null}
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll check the weather and time for both San Francisco and New York City."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01",
+          "name": "get_weather",
+          "input": {"location": "San Francisco, CA"}
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_02",
+          "name": "get_weather",
+          "input": {"location": "New York, NY"}
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_03",
+          "name": "get_time",
+          "input": {"timezone": "America/Los_Angeles"}
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_04",
+          "name": "get_time",
+          "input": {"timezone": "America/New_York"}
+        }
+      ]
+    }
+    ```</Accordion>
+
+ <Accordion title="Complete test script for parallel tools">
+ Here's a complete, runnable script to test and verify parallel tool calls are working correctly:
+
+ <CodeGroup>```python Python theme={null}
+      #!/usr/bin/env python3
+      """Test script to verify parallel tool calls with the Claude API"""
+
+      import os
+      from anthropic import Anthropic
+
+      # Initialize client
+      client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+      # Define tools
+      tools = [
+          {
+              "name": "get_weather",
+              "description": "Get the current weather in a given location",
+              "input_schema": {
+                  "type": "object",
+                  "properties": {
+                      "location": {
+                          "type": "string",
+                          "description": "The city and state, e.g. San Francisco, CA"
+                      }
+                  },
+                  "required": ["location"]
+              }
+          },
+          {
+              "name": "get_time",
+              "description": "Get the current time in a given timezone",
+              "input_schema": {
+                  "type": "object",
+                  "properties": {
+                      "timezone": {
+                          "type": "string",
+                          "description": "The timezone, e.g. America/New_York"
+                      }
+                  },
+                  "required": ["timezone"]
+              }
+          }
+      ]
+
+      # Test conversation with parallel tool calls
+      messages = [
+          {
+              "role": "user",
+              "content": "What's the weather in SF and NYC, and what time is it there?"
+          }
+      ]
+
+      # Make initial request
+      print("Requesting parallel tool calls...")
+      response = client.messages.create(
+          model="claude-sonnet-4-5",
+          max_tokens=1024,
+          messages=messages,
+          tools=tools
+      )
+
+      # Check for parallel tool calls
+      tool_uses = [block for block in response.content if block.type == "tool_use"]
+      print(f"\n✓ Claude made {len(tool_uses)} tool calls")
+
+      if len(tool_uses) > 1:
+          print("✓ Parallel tool calls detected!")
+          for tool in tool_uses:
+              print(f"  - {tool.name}: {tool.input}")
+      else:
+          print("✗ No parallel tool calls detected")
+
+      # Simulate tool execution and format results correctly
+      tool_results = []
+      for tool_use in tool_uses:
+          if tool_use.name == "get_weather":
+              if "San Francisco" in str(tool_use.input):
+                  result = "San Francisco: 68°F, partly cloudy"
+              else:
+                  result = "New York: 45°F, clear skies"
+          else:  # get_time
+              if "Los_Angeles" in str(tool_use.input):
+                  result = "2:30 PM PST"
+              else:
+                  result = "5:30 PM EST"
+
+          tool_results.append({
+              "type": "tool_result",
+              "tool_use_id": tool_use.id,
+              "content": result
+          })
+
+      # Continue conversation with tool results
+      messages.extend([
+          {"role": "assistant", "content": response.content},
+          {"role": "user", "content": tool_results}  # All results in one message!
+      ])
+
+      # Get final response
+      print("\nGetting final response...")
+      final_response = client.messages.create(
+          model="claude-sonnet-4-5",
+          max_tokens=1024,
+          messages=messages,
+          tools=tools
+      )
+
+      print(f"\nClaude's response:\n{final_response.content[0].text}")
+
+      # Verify formatting
+      print("\n--- Verification ---")
+      print(f"✓ Tool results sent in single user message: {len(tool_results)} results")
+      print("✓ No text before tool results in content array")
+      print("✓ Conversation formatted correctly for future parallel tool use")
+      ``````typescript TypeScript theme={null}
+      #!/usr/bin/env node
+      // Test script to verify parallel tool calls with the Claude API
+
+      import { Anthropic } from '@anthropic-ai/sdk';
+
+      const anthropic = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY
+      });
+
+      // Define tools
+      const tools = [
+        {
+          name: "get_weather",
+          description: "Get the current weather in a given location",
+          input_schema: {
+            type: "object",
+            properties: {
+              location: {
+                type: "string",
+                description: "The city and state, e.g. San Francisco, CA"
+              }
+            },
+            required: ["location"]
+          }
+        },
+        {
+          name: "get_time",
+          description: "Get the current time in a given timezone",
+          input_schema: {
+            type: "object",
+            properties: {
+              timezone: {
+                type: "string",
+                description: "The timezone, e.g. America/New_York"
+              }
+            },
+            required: ["timezone"]
+          }
+        }
+      ];
+
+      async function testParallelTools() {
+        // Make initial request
+        console.log("Requesting parallel tool calls...");
+        const response = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 1024,
+          messages: [{
+            role: "user",
+            content: "What's the weather in SF and NYC, and what time is it there?"
+          }],
+          tools: tools
+        });
+
+        // Check for parallel tool calls
+        const toolUses = response.content.filter(block => block.type === "tool_use");
+        console.log(`\n✓ Claude made ${toolUses.length} tool calls`);
+
+        if (toolUses.length > 1) {
+          console.log("✓ Parallel tool calls detected!");
+          toolUses.forEach(tool => {
+            console.log(`  - ${tool.name}: ${JSON.stringify(tool.input)}`);
+          });
+        } else {
+          console.log("✗ No parallel tool calls detected");
+        }
+
+        // Simulate tool execution and format results correctly
+        const toolResults = toolUses.map(toolUse => {
+          let result;
+          if (toolUse.name === "get_weather") {
+            result = toolUse.input.location.includes("San Francisco")
+              ? "San Francisco: 68°F, partly cloudy"
+              : "New York: 45°F, clear skies";
+          } else {
+            result = toolUse.input.timezone.includes("Los_Angeles")
+              ? "2:30 PM PST"
+              : "5:30 PM EST";
+          }
+
+          return {
+            type: "tool_result",
+            tool_use_id: toolUse.id,
+            content: result
+          };
+        });
+
+        // Get final response with correct formatting
+        console.log("\nGetting final response...");
+        const finalResponse = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 1024,
+          messages: [
+            { role: "user", content: "What's the weather in SF and NYC, and what time is it there?" },
+            { role: "assistant", content: response.content },
+            { role: "user", content: toolResults }  // All results in one message!
+          ],
+          tools: tools
+        });
+
+        console.log(`\nClaude's response:\n${finalResponse.content[0].text}`);
+
+        // Verify formatting
+        console.log("\n--- Verification ---");
+        console.log(`✓ Tool results sent in single user message: ${toolResults.length} results`);
+        console.log("✓ No text before tool results in content array");
+        console.log("✓ Conversation formatted correctly for future parallel tool use");
+      }
+
+      testParallelTools().catch(console.error);
+      ```</CodeGroup>
+
+ This script demonstrates:
+
+ * How to properly format parallel tool calls and results
+ * How to verify that parallel calls are being made
+ * The correct message structure that encourages future parallel tool use
+ * Common mistakes to avoid (like text before tool results)
+
+ Run this script to test your implementation and ensure Claude is making parallel tool calls effectively.
+ </Accordion>
+</AccordionGroup>
+
+#### Maximizing parallel tool use
+
+While Claude 4 models have excellent parallel tool use capabilities by default, you can increase the likelihood of parallel tool execution across all models with targeted prompting:
+
+<AccordionGroup>
+ <Accordion title="System prompts for parallel tool use">
+ For Claude 4 models (Opus 4.1, Opus 4, and Sonnet 4), add this to your system prompt:```text  theme={null}
+    For maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially.
+    ```For even stronger parallel tool use (recommended if the default isn't sufficient), use:```text  theme={null}
+    <use_parallel_tool_calls>
+    For maximum efficiency, whenever you perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially. Prioritize calling tools in parallel whenever possible. For example, when reading 3 files, run 3 tool calls in parallel to read all 3 files into context at the same time. When running multiple read-only commands like `ls` or `list_dir`, always run all of the commands in parallel. Err on the side of maximizing parallel tool calls rather than running too many tools sequentially.
+    </use_parallel_tool_calls>
+    ```</Accordion>
+
+ <Accordion title="User message prompting">
+ You can also encourage parallel tool use within specific user messages:```python  theme={null}
+    # Instead of:
+    "What's the weather in Paris? Also check London."
+
+    # Use:
+    "Check the weather in Paris and London simultaneously."
+
+    # Or be explicit:
+    "Please use parallel tool calls to get the weather for Paris, London, and Tokyo at the same time."
+    ```</Accordion>
+</AccordionGroup>
+
+<Warning>
+ **Parallel tool use with Claude Sonnet 3.7**
+
+ Claude Sonnet 3.7 may be less likely to make make parallel tool calls in a response, even when you have not set `disable_parallel_tool_use`. To work around this, we recommend enabling [token-efficient tool use](/en/docs/agents-and-tools/tool-use/token-efficient-tool-use), which helps encourage Claude to use parallel tools. This beta feature also reduces latency and saves an average of 14% in output tokens.
+
+ If you prefer not to opt into the token-efficient tool use beta, you can also introduce a "batch tool" that can act as a meta-tool to wrap invocations to other tools simultaneously. We find that if this tool is present, the model will use it to simultaneously call multiple tools in parallel for you.
+
+ See [this example](https://github.com/anthropics/anthropic-cookbook/blob/main/tool_use/parallel_tools_claude_3_7_sonnet.ipynb) in our cookbook for how to use this workaround.
+</Warning>
+
+## Handling tool use and tool result content blocks
+
+<Note>
+ **Simpler with Tool runner**: The manual tool handling described in this section is automatically managed by [tool runner](#tool-runner-beta). Use this section when you need custom control over tool execution.
+</Note>
+
+Claude's response differs based on whether it uses a client or server tool.
+
+### Handling results from client tools
+
+The response will have a `stop_reason` of `tool_use` and one or more `tool_use` content blocks that include:
+
+* `id`: A unique identifier for this particular tool use block. This will be used to match up the tool results later.
+* `name`: The name of the tool being used.
+* `input`: An object containing the input being passed to the tool, conforming to the tool's `input_schema`.
+
+<Accordion title="Example API response with a `tool_use` content block">```JSON JSON theme={null}
+  {
+    "id": "msg_01Aq9w938a90dw8q",
+    "model": "claude-sonnet-4-5",
+    "stop_reason": "tool_use",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I'll check the current weather in San Francisco for you."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01A09q90qw90lq917835lq9",
+        "name": "get_weather",
+        "input": {"location": "San Francisco, CA", "unit": "celsius"}
+      }
+    ]
+  }
+  ```</Accordion>
+
+When you receive a tool use response for a client tool, you should:
+
+1. Extract the `name`, `id`, and `input` from the `tool_use` block.
+2. Run the actual tool in your codebase corresponding to that tool name, passing in the tool `input`.
+3. Continue the conversation by sending a new message with the `role` of `user`, and a `content` block containing the `tool_result` type and the following information:
+ * `tool_use_id`: The `id` of the tool use request this is a result for.
+ * `content`: The result of the tool, as a string (e.g. `"content": "15 degrees"`), a list of nested content blocks (e.g. `"content": [{"type": "text", "text": "15 degrees"}]`), or a list of document blocks (e.g. `"content": ["type": "document", "source": {"type": "text", "media_type": "text/plain", "data": "15 degrees"}]`). These content blocks can use the `text`, `image`, or `document` types.
+ * `is_error` (optional): Set to `true` if the tool execution resulted in an error.
+
+<Note>
+ **Important formatting requirements**:
+
+ * Tool result blocks must immediately follow their corresponding tool use blocks in the message history. You cannot include any messages between the assistant's tool use message and the user's tool result message.
+ * In the user message containing tool results, the tool\_result blocks must come FIRST in the content array. Any text must come AFTER all tool results.
+
+ For example, this will cause a 400 error:```json  theme={null}
+  {"role": "user", "content": [
+    {"type": "text", "text": "Here are the results:"},  // ❌ Text before tool_result
+    {"type": "tool_result", "tool_use_id": "toolu_01", ...}
+  ]}
+  ```This is correct:```json  theme={null}
+  {"role": "user", "content": [
+    {"type": "tool_result", "tool_use_id": "toolu_01", ...},
+    {"type": "text", "text": "What should I do next?"}  // ✅ Text after tool_result
+  ]}
+  ```If you receive an error like "tool\_use ids were found without tool\_result blocks immediately after", check that your tool results are formatted correctly.
+</Note>
+
+<AccordionGroup>
+ <Accordion title="Example of successful tool result">```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+          "content": "15 degrees"
+        }
+      ]
+    }
+    ```</Accordion>
+
+ <Accordion title="Example of tool result with images">```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+          "content": [
+            {"type": "text", "text": "15 degrees"},
+            {
+              "type": "image",
+              "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": "/9j/4AAQSkZJRg...",
+              }
+            }
+          ]
+        }
+      ]
+    }
+    ```</Accordion>
+
+ <Accordion title="Example of empty tool result">```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+        }
+      ]
+    }
+    ```</Accordion>
+
+ <Accordion title="Example of tool result with documents">```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+          "content": [
+            {"type": "text", "text": "The weather is"},
+            {
+              "type": "document",
+              "source": {
+                "type": "text",
+                "media_type": "text/plain",
+                "data": "15 degrees"
+              }
+            }
+          ]
+        }
+      ]
+    }
+    ```</Accordion>
+</AccordionGroup>
+
+After receiving the tool result, Claude will use that information to continue generating a response to the original user prompt.
+
+### Handling results from server tools
+
+Claude executes the tool internally and incorporates the results directly into its response without requiring additional user interaction.
+
+<Tip>
+ **Differences from other APIs**
+
+ Unlike APIs that separate tool use or use special roles like `tool` or `function`, the Claude API integrates tools directly into the `user` and `assistant` message structure.
+
+ Messages contain arrays of `text`, `image`, `tool_use`, and `tool_result` blocks. `user` messages include client content and `tool_result`, while `assistant` messages contain AI-generated content and `tool_use`.
+</Tip>
+
+### Handling the `max_tokens` stop reason
+
+If Claude's [response is cut off due to hitting the `max_tokens` limit](/en/docs/build-with-claude/handling-stop-reasons#max-tokens), and the truncated response contains an incomplete tool use block, you'll need to retry the request with a higher `max_tokens` value to get the full tool use.
+
+<CodeGroup>```python Python theme={null}
+  # Check if response was truncated during tool use
+  if response.stop_reason == "max_tokens":
+      # Check if the last content block is an incomplete tool_use
+      last_block = response.content[-1]
+      if last_block.type == "tool_use":
+          # Send the request with higher max_tokens
+          response = client.messages.create(
+              model="claude-sonnet-4-5",
+              max_tokens=4096,  # Increased limit
+              messages=messages,
+              tools=tools
+          )
+  ``````typescript TypeScript theme={null}
+  // Check if response was truncated during tool use
+  if (response.stop_reason === "max_tokens") {
+    // Check if the last content block is an incomplete tool_use
+    const lastBlock = response.content[response.content.length - 1];
+    if (lastBlock.type === "tool_use") {
+      // Send the request with higher max_tokens
+      response = await anthropic.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 4096, // Increased limit
+        messages: messages,
+        tools: tools
+      });
+    }
+  }
+  ```</CodeGroup>
+
+#### Handling the `pause_turn` stop reason
+
+When using server tools like web search, the API may return a `pause_turn` stop reason, indicating that the API has paused a long-running turn.
+
+Here's how to handle the `pause_turn` stop reason:
+
+<CodeGroup>```python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  # Initial request with web search
+  response = client.messages.create(
+      model="claude-3-7-sonnet-latest",
+      max_tokens=1024,
+      messages=[
+          {
+              "role": "user",
+              "content": "Search for comprehensive information about quantum computing breakthroughs in 2025"
+          }
+      ],
+      tools=[{
+          "type": "web_search_20250305",
+          "name": "web_search",
+          "max_uses": 10
+      }]
+  )
+
+  # Check if the response has pause_turn stop reason
+  if response.stop_reason == "pause_turn":
+      # Continue the conversation with the paused content
+      messages = [
+          {"role": "user", "content": "Search for comprehensive information about quantum computing breakthroughs in 2025"},
+          {"role": "assistant", "content": response.content}
+      ]
+
+      # Send the continuation request
+      continuation = client.messages.create(
+          model="claude-3-7-sonnet-latest",
+          max_tokens=1024,
+          messages=messages,
+          tools=[{
+              "type": "web_search_20250305",
+              "name": "web_search",
+              "max_uses": 10
+          }]
+      )
+
+      print(continuation)
+  else:
+      print(response)
+  ``````typescript TypeScript theme={null}
+  import { Anthropic } from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  // Initial request with web search
+  const response = await anthropic.messages.create({
+    model: "claude-3-7-sonnet-latest",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: "Search for comprehensive information about quantum computing breakthroughs in 2025"
+      }
+    ],
+    tools: [{
+      type: "web_search_20250305",
+      name: "web_search",
+      max_uses: 10
+    }]
+  });
+
+  // Check if the response has pause_turn stop reason
+  if (response.stop_reason === "pause_turn") {
+    // Continue the conversation with the paused content
+    const messages = [
+      { role: "user", content: "Search for comprehensive information about quantum computing breakthroughs in 2025" },
+      { role: "assistant", content: response.content }
+    ];
+
+    // Send the continuation request
+    const continuation = await anthropic.messages.create({
+      model: "claude-3-7-sonnet-latest",
+      max_tokens: 1024,
+      messages: messages,
+      tools: [{
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 10
+      }]
+    });
+
+    console.log(continuation);
+  } else {
+    console.log(response);
+  }
+  ```</CodeGroup>
+
+When handling `pause_turn`:
+
+* **Continue the conversation**: Pass the paused response back as-is in a subsequent request to let Claude continue its turn
+* **Modify if needed**: You can optionally modify the content before continuing if you want to interrupt or redirect the conversation
+* **Preserve tool state**: Include the same tools in the continuation request to maintain functionality
+
+## Troubleshooting errors
+
+<Note>
+ **Built-in Error Handling**: [Tool runner](#tool-runner-beta) provide automatic error handling for most common scenarios. This section covers manual error handling for advanced use cases.
+</Note>
+
+There are a few different types of errors that can occur when using tools with Claude:
+
+<AccordionGroup>
+ <Accordion title="Tool execution error">
+ If the tool itself throws an error during execution (e.g. a network error when fetching weather data), you can return the error message in the `content` along with `"is_error": true`:```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+          "content": "ConnectionError: the weather service API is not available (HTTP 500)",
+          "is_error": true
+        }
+      ]
+    }
+    ```Claude will then incorporate this error into its response to the user, e.g. "I'm sorry, I was unable to retrieve the current weather because the weather service API is not available. Please try again later."
+ </Accordion>
+
+ <Accordion title="Invalid tool name">
+ If Claude's attempted use of a tool is invalid (e.g. missing required parameters), it usually means that the there wasn't enough information for Claude to use the tool correctly. Your best bet during development is to try the request again with more-detailed `description` values in your tool definitions.
+
+ However, you can also continue the conversation forward with a `tool_result` that indicates the error, and Claude will try to use the tool again with the missing information filled in:```JSON JSON theme={null}
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+          "content": "Error: Missing required 'location' parameter",
+          "is_error": true
+        }
+      ]
+    }
+    ```If a tool request is invalid or missing parameters, Claude will retry 2-3 times with corrections before apologizing to the user.
+
+ <Tip>
+ To eliminate invalid tool calls entirely, use [strict tool use](/en/docs/build-with-claude/structured-outputs) with `strict: true` on your tool definitions. This guarantees that tool inputs will always match your schema exactly, preventing missing parameters and type mismatches.
+ </Tip>
+ </Accordion>
+
+ <Accordion title="<search_quality_reflection> tags">
+ To prevent Claude from reflecting on search quality with \<search\_quality\_reflection> tags, add "Do not reflect on the quality of the returned search results in your response" to your prompt.
+ </Accordion>
+
+ <Accordion title="Server tool errors">
+ When server tools encounter errors (e.g., network issues with Web Search), Claude will transparently handle these errors and attempt to provide an alternative response or explanation to the user. Unlike client tools, you do not need to handle `is_error` results for server tools.
+
+ For web search specifically, possible error codes include:
+
+ * `too_many_requests`: Rate limit exceeded
+ * `invalid_input`: Invalid search query parameter
+ * `max_uses_exceeded`: Maximum web search tool uses exceeded
+ * `query_too_long`: Query exceeds maximum length
+ * `unavailable`: An internal error occurred
+ </Accordion>
+
+ <Accordion title="Parallel tool calls not working">
+ If Claude isn't making parallel tool calls when expected, check these common issues:
+
+ **1. Incorrect tool result formatting**
+
+ The most common issue is formatting tool results incorrectly in the conversation history. This "teaches" Claude to avoid parallel calls.
+
+ Specifically for parallel tool use:
+
+ * ❌ **Wrong**: Sending separate user messages for each tool result
+ * ✅ **Correct**: All tool results must be in a single user message```json  theme={null}
+    // ❌ This reduces parallel tool use
+    [
+      {"role": "assistant", "content": [tool_use_1, tool_use_2]},
+      {"role": "user", "content": [tool_result_1]},
+      {"role": "user", "content": [tool_result_2]}  // Separate message
+    ]
+
+    // ✅ This maintains parallel tool use
+    [
+      {"role": "assistant", "content": [tool_use_1, tool_use_2]},
+      {"role": "user", "content": [tool_result_1, tool_result_2]}  // Single message
+    ]
+    ```See the [general formatting requirements above](#handling-tool-use-and-tool-result-content-blocks) for other formatting rules.
+
+ **2. Weak prompting**
+
+ Default prompting may not be sufficient. Use stronger language:```text  theme={null}
+    <use_parallel_tool_calls>
+    For maximum efficiency, whenever you perform multiple independent operations,
+    invoke all relevant tools simultaneously rather than sequentially.
+    Prioritize calling tools in parallel whenever possible.
+    </use_parallel_tool_calls>
+    ```**3. Measuring parallel tool usage**
+
+ To verify parallel tool calls are working:```python  theme={null}
+    # Calculate average tools per tool-calling message
+    tool_call_messages = [msg for msg in messages if any(
+        block.type == "tool_use" for block in msg.content
+    )]
+    total_tool_calls = sum(
+        len([b for b in msg.content if b.type == "tool_use"])
+        for msg in tool_call_messages
+    )
+    avg_tools_per_message = total_tool_calls / len(tool_call_messages)
+    print(f"Average tools per message: {avg_tools_per_message}")
+    # Should be > 1.0 if parallel calls are working
+    ```**4. Model-specific behavior**
+
+ * Claude Opus 4.1, Opus 4, and Sonnet 4: Excel at parallel tool use with minimal prompting
+ * Claude Sonnet 3.7: May need stronger prompting or [token-efficient tool use](/en/docs/agents-and-tools/tool-use/token-efficient-tool-use)
+ * Claude Haiku: Less likely to use parallel tools without explicit prompting
+ </Accordion>
+</AccordionGroup>
+
+[END OF DOCUMENT: CLAUDE1D7MGJB4V7]
+---
+
+[START OF DOCUMENT: CLAUDE15FBYH4PPH | Title: Increase-Consistency]
+
+# Increase output consistency (JSON mode)
+
+<Tip>
+ **For guaranteed JSON schema conformance**
+
+ If you need Claude to always output valid JSON that conforms to a specific schema, use [Structured Outputs](/en/docs/build-with-claude/structured-outputs) instead of the prompt engineering techniques below. Structured outputs provide guaranteed schema compliance and are specifically designed for this use case.
+
+ The techniques below are useful for general output consistency or when you need flexibility beyond strict JSON schemas.
+</Tip>
+
+Here's how to make Claude's responses more consistent:
+
+## Specify the desired output format
+
+Precisely define your desired output format using JSON, XML, or custom templates so that Claude understands every output formatting element you require.
+
+<Accordion title="Example: Standardizing customer feedback">
+ | Role | Content |
+ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | You're a Customer Insights AI. Analyze this feedback and output in JSON format with keys: "sentiment" (positive/negative/neutral), "key\_issues" (list), and "action\_items" (list of dicts with "team" and "task").<br /><br />"I've been a loyal user for 3 years, but the recent UI update is a disaster. Finding basic features is now a scavenger hunt. Plus, the new 'premium' pricing is outrageous. I'm considering switching unless this is fixed ASAP." |
+ | Assistant | \{<br /> "sentiment": "negative",<br /> "key\_issues": \[<br /> "Poor UI/UX in recent update",<br /> "Difficulty finding basic features",<br /> "Perceived high pricing (new 'premium' tier)"<br /> ],<br /> "action\_items": \[<br /> \{<br /> "team": "Product",<br /> "task": "Conduct usability testing and iterate on UI based on findings"<br /> },<br /> \{<br /> "team": "UX",<br /> "task": "Create a feature discovery guide or onboarding flow"<br /> },<br /> \{<br /> "team": "Marketing",<br /> "task": "Review pricing strategy and communicate value proposition"<br /> },<br /> \{<br /> "team": "Customer Success",<br /> "task": "Reach out to user, offer concessions to prevent churn"<br /> }<br /> ]<br />} |
+</Accordion>
+
+## Prefill Claude's response
+
+Prefill the `Assistant` turn with your desired format. This trick bypasses Claude's friendly preamble and enforces your structure.
+
+<Accordion title="Example: Daily sales report">
+ | Role | Content |
+ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | You're an insightful Sales Intelligence AI. Generate today's sales report.<br /><br />Structure the report like this:<br /><br />\<report><br /> \<summary><br /> \<metric name="total\_revenue">\$0.00\</metric><br /> \<metric name="units\_sold">0\</metric><br /> \<metric name="avg\_order\_value">\$0.00\</metric><br /> \</summary><br /> \<top\_products><br /> \<product><br /> \<name>Product Name\</name><br /> \<revenue>\$0.00\</revenue><br /> \<units>0\</units><br /> \</product><br /> ...<br /> \</top\_products><br /> \<regional\_performance><br /> \<region><br /> \<name>Region Name\</name><br /> \<revenue>\$0.00\</revenue><br /> \<growth>0.0%\</growth><br /> \</region><br /> ...<br /> \</regional\_performance><br /> \<action\_items><br /> \<item>Action item.\</item><br /> ...<br /> \</action\_items><br />\</report> |
+ | Assistant (prefill) | \<report><br /> \<summary><br /> \<metric name= |
+ | Assistant | "total\_revenue">\$842,567.00\</metric><br /> \<metric name="units\_sold">15,238\</metric><br /> \<metric name="avg\_order\_value">\$55.29\</metric><br /> \</summary><br /> \<top\_products><br /> \<product><br /> \<name>AcmeGuard Pro\</name><br /> \<revenue>\$325,890.00\</revenue><br /> \<units>3,621\</units><br /> \</product><br /> \<product><br /> \<name>AcmeVault Enterprise\</name><br /> \<revenue>\$254,400.00\</revenue><br /> \<units>1,272\</units><br /> \</product><br /> \<product><br /> \<name>AcmeBoost XL\</name><br /> \<revenue>\$147,690.00\</revenue><br /> \<units>4,923\</units><br /> \</product><br /> \</top\_products><br /> \<regional\_performance><br /> \<region><br /> \<name>APAC\</name><br /> \<revenue>\$258,960.00\</revenue><br /> \<growth>12.8%\</growth><br /> \</region><br /> \<region><br /> \<name>EMEA\</name><br /> \<revenue>\$325,478.00\</revenue><br /> \<growth>3.2%\</growth><br /> \</region><br /> \<region><br /> \<name>Americas\</name><br /> \<revenue>\$258,129.00\</revenue><br /> \<growth>-2.1%\</growth><br /> \</region><br /> \</regional\_performance><br /> \<action\_items><br /> \<item>Investigate Americas revenue drop; schedule regional sales team meeting.\</item><br /> \<item>Accelerate CloudGuard Pro rollout in APAC to capitalize on growth.\</item><br /> \<item>Review NetBoost XL pricing; high volume but lower revenue.\</item><br /> \</action\_items><br />\</report> |
+</Accordion>
+
+## Constrain with examples
+
+Provide examples of your desired output. This trains Claude's understanding better than abstract instructions.
+
+<Accordion title="Example: Generating consistent market intelligence">
+ | Role | Content |
+ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | User | As a Market Intelligence AI, your task is to analyze data about our competitors. Here is our competitor data:<br />\<data><br />\{\{DATA}}<br />\</data><br /><br />Output following this example format:<br /><br />\<competitor><br /> \<name>Rival Inc\</name><br /> \<overview>A 50-word summary.\</overview><br /> \<swot><br /> \<strengths>- Bullet points\</strengths><br /> \<weaknesses>- Bullet points\</weaknesses><br /> \<opportunities>- Bullet points\</opportunities><br /> \<threats>- Bullet points\</threats><br /> \</swot><br /> \<strategy>A 30-word strategic response.\</strategy><br />\</competitor><br /><br />Now, analyze AcmeGiant and AcmeDataCo using this format. |
+ | Assistant | \<competitor><br /> \<name>AcmeGiant\</name><br /> \<overview>Global tech leader with a vast ecosystem of consumer and enterprise products. Known for innovation, strong brand, and deep customer lock-in through integrated hardware, software, and services.\</overview><br /> \<swot><br /> \<strengths><br /> - Massive R\&D budget fuels continuous innovation<br /> - Loyal customer base and powerful brand recognition<br /> - Synergistic product ecosystem increases switching costs<br /> \</strengths><br /> \<weaknesses><br /> - High prices may deter cost-sensitive customers<br /> - Slow to address enterprise-specific customization needs<br /> - Privacy concerns and regulatory scrutiny in multiple markets<br /> \</weaknesses><br /> \<opportunities><br /> - Growing demand for AI and ML capabilities<br /> - Expansion into emerging markets<br /> - Acquisitions to fill product or talent gaps<br /> \</opportunities><br /> \<threats><br /> - Rapid rise of cloud-native competitors<br /> - Antitrust lawsuits and regulatory actions<br /> - Talent poaching by startups and competitors<br /> \</threats><br /> \</swot><br /> \<strategy>Focus on our agility and customization. Target TechGiant's slow enterprise response and privacy issues in our marketing.\</strategy><br />\</competitor><br /><br />\<competitor><br /> \<name>AcmeDataCo\</name><br /> \<overview>Rising star in data analytics and visualization. Offers intuitive, self-service BI tools with a freemium model, appealing to startups and enterprise teams alike.\</overview><br /> \<swot><br /> \<strengths><br /> - User-friendly interface reduces need for specialized training<br /> - Freemium model lowers barrier to entry, drives viral growth<br /> - Strong product-market fit with rise of data-driven decisions<br /> \</strengths><br /> \<weaknesses><br /> - Limited advanced analytics compared to established BI tools<br /> - Scaling issues reported with very large datasets<br /> - Dependent on third-party cloud infrastructure (AWS)<br /> \</weaknesses><br /> \<opportunities><br /> - Expanding into predictive analytics and AI-driven insights<br /> - Forming strategic alliances with complementary tech vendors<br /> - Customizable dashboards for industry-specific solutions<br /> \</opportunities><br /> \<threats><br /> - Market saturation; many new entrants in self-service BI<br /> - Enterprise BI giants developing more user-friendly tools<br /> - Data privacy regulations increasing compliance complexity<br /> \</threats><br /> \</swot><br /> \<strategy>Highlight our robust enterprise features and data governance. Target accounts struggling with DataCo's scale limitations.\</strategy><br />\</competitor> |
+</Accordion>
+
+## Use retrieval for contextual consistency
+
+For tasks requiring consistent context (e.g., chatbots, knowledge bases), use retrieval to ground Claude's responses in a fixed information set.
+
+<Accordion title="Example: Enhancing IT support consistency">
+ | Role | Content |
+ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+ | User | You're our IT Support AI that draws on knowledge base data. Here are entries from your knowledge base:<br /><br />\<kb><br /> \<entry><br /> \<id>1\</id><br /> \<title>Reset Active Directory password\</title><br /> \<content>1. Go to password.ourcompany.com<br />2. Enter your username<br />3. Click "Forgot Password"<br />4. Follow email instructions\</content><br /> \</entry><br /> \<entry><br /> \<id>2\</id><br /> \<title>Connect to VPN\</title><br /> \<content>1. Install GlobalProtect from software center<br />2. Open GlobalProtect, enter "vpn.ourcompany.com"<br />3. Use AD credentials to log in\</content><br /> \</entry><br />\</kb><br /><br />When helping users, always check the knowledge base first. Respond in this format:<br /><br />\<response><br /> \<kb\_entry>Knowledge base entry used\</kb\_entry><br /> \<answer>Your response\</answer><br />\</response> Write some test questions for yourself and answer them using the knowledge base, just to make sure you understand how to use the knowledge base properly. |
+ | Assistant | Understood. I'll use the knowledge base for consistent responses. Let's test with a couple of scenarios.<br /><br />User: Hey, I can't log into my email. I think I forgot my password.<br /><br />\<response><br /> \<kb\_entry>1: Reset Active Directory password\</entry><br /> \<answer>I understand you're having trouble logging into your email due to a forgotten password. No worries, this is a common issue. To reset your Active Directory password, which is used for email access, follow these steps:<br /><br />1. Go to password.ourcompany.com<br />2. Enter your username (same as your email address)<br />3. Click on the "Forgot Password" link<br />4. You'll receive an email with instructions. Follow them to reset your password.<br /><br />After resetting, you should be able to log into your email. Let me know if you need any further assistance.\</answer><br />\</response><br /><br />User: I'm working from home today. How do I access internal resources?<br /><br />\<response><br /> \<kb\_entry>2: Connect to VPN\</entry><br /> \<answer>Great question! To access internal resources while working from home, you'll need to connect to our company VPN (Virtual Private Network). Here's how to set that up:<br /><br />1. First, install the GlobalProtect VPN client. You can find this in our software center.<br />2. Once installed, open the GlobalProtect application.<br />3. In the server field, enter "vpn.ourcompany.com".<br />4. Use your Active Directory (AD) credentials to log in - the same username and password you use for your email.<br /><br />Once connected, you'll have secure access to all internal resources as if you were in the office. Let me know if you run into any issues during setup.\</answer><br />\</response> |
+</Accordion>
+
+## Chain prompts for complex tasks
+
+Break down complex tasks into smaller, consistent subtasks. Each subtask gets Claude's full attention, reducing inconsistency errors across scaled workflows.
+
+[END OF DOCUMENT: CLAUDE15FBYH4PPH]
+---
+
+[START OF DOCUMENT: CLAUDE22S0UL21MW | Title: Intro]
+
+# Intro to Claude
+
+> Claude is a highly performant, trustworthy, and intelligent AI platform built by Anthropic. Claude excels at tasks involving language, reasoning, analysis, coding, and more.
+
+<Tip>The latest generation of Claude models:<br /><br />
+**Claude Sonnet 4.5** - Our smartest model. Best for complex agents, coding, and most advanced tasks. [Learn more](https://www.anthropic.com/news/claude-sonnet-4-5).<br /><br />
+**Claude Haiku 4.5** - Our fastest model with near-frontier intelligence. [Learn more](https://www.anthropic.com/news/claude-haiku-4-5).<br /><br />
+**Claude Opus 4.1** - Exceptional model for specialized tasks requiring advanced reasoning. [Learn more](https://www.anthropic.com/news/claude-opus-4-1).</Tip>
+
+<Note>
+ Looking to chat with Claude? Visit [claude.ai](http://www.claude.ai)!
+</Note>
+
+## Get started
+
+If you’re new to Claude, start here to learn the essentials and make your first API call.
+
+<CardGroup cols={3}>
+ <Card title="Get started" icon="check" href="/en/docs/get-started">
+ Set up your development environment for building with Claude.
+ </Card>
+
+ <Card title="Learn about Claude" icon="head-side-gear" href="/en/docs/about-claude/models/overview">
+ Learn about the family of Claude models.
+ </Card>
+
+ <Card title="Prompt Library" icon="books" href="/en/resources/prompt-library/library">
+ Explore example prompts for inspiration.
+ </Card>
+</CardGroup>
+
+***
+
+## Develop with Claude
+
+Anthropic has best-in-class developer tools to build scalable applications with Claude.
+
+<CardGroup cols={3}>
+ <Card title="Developer Console" icon="laptop" href="https://console.anthropic.com">
+ Enjoy easier, more powerful prompting in your browser with the Workbench and prompt generator tool.
+ </Card>
+
+ <Card title="API Reference" icon="code" href="/en/api/overview">
+ Explore, implement, and scale with the Claude API and SDKs.
+ </Card>
+
+ <Card title="Claude Cookbook" icon="hat-chef" href="https://github.com/anthropics/anthropic-cookbook">
+ Learn with interactive Jupyter notebooks that demonstrate uploading PDFs, embeddings, and more.
+ </Card>
+</CardGroup>
+
+***
+
+## Key capabilities
+
+Claude can assist with many tasks that involve text, code, and images.
+
+<CardGroup cols={2}>
+ <Card title="Text and code generation" icon="input-text" href="/en/docs/build-with-claude/text-generation">
+ Summarize text, answer questions, extract data, translate text, and explain and generate code.
+ </Card>
+
+ <Card title="Vision" icon="image" href="/en/docs/build-with-claude/vision">
+ Process and analyze visual input and generate text and code from images.
+ </Card>
+</CardGroup>
+
+***
+
+## Support
+
+<CardGroup cols={2}>
+ <Card title="Help Center" icon="circle-question" href="https://support.claude.com/en/">
+ Find answers to frequently asked account and billing questions.
+ </Card>
+
+ <Card title="Service Status" icon="chart-line" href="https://www.claude.com/status">
+ Check the status of Anthropic services.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE22S0UL21MW]
+---
+
+[START OF DOCUMENT: CLAUDE1B8J8SEIV5 | Title: Keep-Claude-In-Character]
+
+# Keep Claude in character with role prompting and prefilling
+
+This guide provides actionable tips to keep Claude in character, even during long, complex interactions.
+
+* **Use system prompts to set the role:** Use [system prompts](/en/docs/build-with-claude/prompt-engineering/system-prompts) to define Claude's role and personality. This sets a strong foundation for consistent responses.
+ <Tip>When setting up the character, provide detailed information about the personality, background, and any specific traits or quirks. This will help the model better emulate and generalize the character's traits.</Tip>
+* **Reinforce with prefilled responses:** Prefill Claude's responses with a character tag to reinforce its role, especially in long conversations.
+* **Prepare Claude for possible scenarios:** Provide a list of common scenarios and expected responses in your prompts. This "trains" Claude to handle diverse situations without breaking character.
+
+<Accordion title="Example: Enterprise chatbot for role prompting">
+ | Role | Content |
+ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+ | System | You are AcmeBot, the enterprise-grade AI assistant for AcmeTechCo. Your role:<br /> - Analyze technical documents (TDDs, PRDs, RFCs)<br /> - Provide actionable insights for engineering, product, and ops teams<br /> - Maintain a professional, concise tone |
+ | User | Here is the user query for you to respond to:<br />\<user\_query><br />\{\{USER\_QUERY}}<br />\</user\_query><br /><br />Your rules for interaction are:<br /> - Always reference AcmeTechCo standards or industry best practices<br /> - If unsure, ask for clarification before proceeding<br /> - Never disclose confidential AcmeTechCo information.<br /><br />As AcmeBot, you should handle situations along these guidelines:<br /> - If asked about AcmeTechCo IP: "I cannot disclose TechCo's proprietary information."<br /> - If questioned on best practices: "Per ISO/IEC 25010, we prioritize..."<br /> - If unclear on a doc: "To ensure accuracy, please clarify section 3.2..." |
+ | Assistant (prefill) | \[AcmeBot] |
+</Accordion>
+
+[END OF DOCUMENT: CLAUDE1B8J8SEIV5]
+---
+
+[START OF DOCUMENT: CLAUDE2C3YNPSHNI | Title: Long-Context-Tips]
+
+# Long context prompting tips
+
+<Note>
+ While these tips apply broadly to all Claude models, you can find prompting tips specific to extended thinking models [here](/en/docs/build-with-claude/prompt-engineering/extended-thinking-tips).
+</Note>
+
+Claude's extended context window (200K tokens for Claude 3 models) enables handling complex, data-rich tasks. This guide will help you leverage this power effectively.
+
+## Essential tips for long context prompts
+
+* **Put longform data at the top**: Place your long documents and inputs (\~20K+ tokens) near the top of your prompt, above your query, instructions, and examples. This can significantly improve Claude's performance across all models.
+
+ <Note>Queries at the end can improve response quality by up to 30% in tests, especially with complex, multi-document inputs.</Note>
+
+* **Structure document content and metadata with XML tags**: When using multiple documents, wrap each document in `<document>` tags with `<document_content>` and `<source>` (and other metadata) subtags for clarity.
+
+ <Accordion title="Example multi-document structure">```xml  theme={null}
+    <documents>
+      <document index="1">
+        <source>annual_report_2023.pdf</source>
+        <document_content>
+          {{ANNUAL_REPORT}}
+        </document_content>
+      </document>
+      <document index="2">
+        <source>competitor_analysis_q2.xlsx</source>
+        <document_content>
+          {{COMPETITOR_ANALYSIS}}
+        </document_content>
+      </document>
+    </documents>
+
+    Analyze the annual report and competitor analysis. Identify strategic advantages and recommend Q3 focus areas.
+    ```</Accordion>
+
+* **Ground responses in quotes**: For long document tasks, ask Claude to quote relevant parts of the documents first before carrying out its task. This helps Claude cut through the "noise" of the rest of the document's contents.
+
+ <Accordion title="Example quote extraction">```xml  theme={null}
+    You are an AI physician's assistant. Your task is to help doctors diagnose possible patient illnesses.
+
+    <documents>
+      <document index="1">
+        <source>patient_symptoms.txt</source>
+        <document_content>
+          {{PATIENT_SYMPTOMS}}
+        </document_content>
+      </document>
+      <document index="2">
+        <source>patient_records.txt</source>
+        <document_content>
+          {{PATIENT_RECORDS}}
+        </document_content>
+      </document>
+      <document index="3">
+        <source>patient01_appt_history.txt</source>
+        <document_content>
+          {{PATIENT01_APPOINTMENT_HISTORY}}
+        </document_content>
+      </document>
+    </documents>
+
+    Find quotes from the patient records and appointment history that are relevant to diagnosing the patient's reported symptoms. Place these in <quotes> tags. Then, based on these quotes, list all information that would help the doctor diagnose the patient's symptoms. Place your diagnostic information in <info> tags.
+    ```</Accordion>
+
+***
+
+<CardGroup cols={3}>
+ <Card title="Prompt library" icon="link" href="/en/resources/prompt-library/library">
+ Get inspired by a curated selection of prompts for various tasks and use cases.
+ </Card>
+
+ <Card title="GitHub prompting tutorial" icon="link" href="https://github.com/anthropics/prompt-eng-interactive-tutorial">
+ An example-filled tutorial that covers the prompt engineering concepts found in our docs.
+ </Card>
+
+ <Card title="Google Sheets prompting tutorial" icon="link" href="https://docs.google.com/spreadsheets/d/19jzLgRruG9kjUQNKtCg1ZjdD6l6weA6qRXG5zLIAhC8">
+ A lighter weight version of our prompt engineering tutorial via an interactive spreadsheet.
+ </Card>
+</CardGroup>
+
+[END OF DOCUMENT: CLAUDE2C3YNPSHNI]
+---
+
+[START OF DOCUMENT: CLAUDE1MTQKBACSK | Title: Mcp-Connector]
+
+# MCP connector
+
+Claude's Model Context Protocol (MCP) connector feature enables you to connect to remote MCP servers directly from the Messages API without a separate MCP client.
+
+<Note>
+ This feature requires the beta header: `"anthropic-beta": "mcp-client-2025-04-04"`
+</Note>
+
+## Key features
+
+* **Direct API integration**: Connect to MCP servers without implementing an MCP client
+* **Tool calling support**: Access MCP tools through the Messages API
+* **OAuth authentication**: Support for OAuth Bearer tokens for authenticated servers
+* **Multiple servers**: Connect to multiple MCP servers in a single request
+
+## Limitations
+
+* Of the feature set of the [MCP specification](https://modelcontextprotocol.io/introduction#explore-mcp), only [tool calls](https://modelcontextprotocol.io/docs/concepts/tools) are currently supported.
+* The server must be publicly exposed through HTTP (supports both Streamable HTTP and SSE transports). Local STDIO servers cannot be connected directly.
+* The MCP connector is currently not supported on Amazon Bedrock and Google Vertex.
+
+## Using the MCP connector in the Messages API
+
+To connect to a remote MCP server, include the `mcp_servers` parameter in your Messages API request:
+
+<CodeGroup>```bash cURL theme={null}
+  curl https://api.anthropic.com/v1/messages \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: mcp-client-2025-04-04" \
+    -d '{
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 1000,
+      "messages": [{"role": "user", "content": "What tools do you have available?"}],
+      "mcp_servers": [
+        {
+          "type": "url",
+          "url": "https://example-server.modelcontextprotocol.io/sse",
+          "name": "example-mcp",
+          "authorization_token": "YOUR_TOKEN"
+        }
+      ]
+    }'
+  ``````typescript TypeScript theme={null}
+  import { Anthropic } from '@anthropic-ai/sdk';
+
+  const anthropic = new Anthropic();
+
+  const response = await anthropic.beta.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 1000,
+    messages: [
+      {
+        role: "user",
+        content: "What tools do you have available?",
+      },
+    ],
+    mcp_servers: [
+      {
+        type: "url",
+        url: "https://example-server.modelcontextprotocol.io/sse",
+        name: "example-mcp",
+        authorization_token: "YOUR_TOKEN",
+      },
+    ],
+    betas: ["mcp-client-2025-04-04"],
+  });
+  ``````python Python theme={null}
+  import anthropic
+
+  client = anthropic.Anthropic()
+
+  response = client.beta.messages.create(
+      model="claude-sonnet-4-5",
+      max_tokens=1000,
+      messages=[{
+          "role": "user",
+          "content": "What tools do you have available?"
+      }],
+      mcp_servers=[{
+          "type": "url",
+          "url": "https://mcp.example.com/sse",
+          "name": "example-mcp",
+          "authorization_token": "YOUR_TOKEN"
+      }],
+      betas=["mcp-client-2025-04-04"]
+  )
+  ```</CodeGroup>
+
+## MCP server configuration
+
+Each MCP server in the `mcp_servers` array supports the following configuration:```json  theme={null}
+{
+  "type": "url",
+  "url": "https://example-server.modelcontextprotocol.io/sse",
+  "name": "example-mcp",
+  "tool_configuration": {
+    "enabled": true,
+    "allowed_tools": ["example_tool_1", "example_tool_2"]
+  },
+  "authorization_token": "YOUR_TOKEN"
+}
+```### Field descriptions
+
+| Property | Type | Required | Description |
+| ---------------------------------- | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type` | string | Yes | Currently only "url" is supported |
+| `url` | string | Yes | The URL of the MCP server. Must start with https\:// |
+| `name` | string | Yes | A unique identifier for this MCP server. It will be used in `mcp_tool_call` blocks to identify the server and to disambiguate tools to the model. |
+| `tool_configuration` | object | No | Configure tool usage |
+| `tool_configuration.enabled` | boolean | No | Whether to enable tools from this server (default: true) |
+| `tool_configuration.allowed_tools` | array | No | List to restrict the tools to allow (by default, all tools are allowed) |
+| `authorization_token` | string | No | OAuth authorization token if required by the MCP server. See [MCP specification](https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization). |
+
+## Response content types
+
+When Claude uses MCP tools, the response will include two new content block types:
+
+### MCP Tool Use Block```json  theme={null}
+{
+  "type": "mcp_tool_use",
+  "id": "mcptoolu_014Q35RayjACSWkSj4X2yov1",
+  "name": "echo",
+  "server_name": "example-mcp",
+  "input": { "param1": "value1", "param2": "value2" }
+}
+```### MCP Tool Result Block```json  theme={null}
+{
+  "type": "mcp_tool_result",
+  "tool_use_id": "mcptoolu_014Q35RayjACSWkSj4X2yov1",
+  "is_error": false,
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello"
+    }
+  ]
+}
+```## Multiple MCP servers
+
+You can connect to multiple MCP servers by including multiple objects in the `mcp_servers` array:```json  theme={null}
+{
+  "model": "claude-sonnet-4-5",
+  "max_tokens": 1000,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Use tools from both mcp-server-1 and mcp-server-2 to complete this task"
+    }
+  ],
+  "mcp_servers": [
+    {
+      "type": "url",
+      "url": "https://mcp.example1.com/sse",
+      "name": "mcp-server-1",
+      "authorization_token": "TOKEN1"
+    },
+    {
+      "type": "url",
+      "url": "https://mcp.example2.com/sse",
+      "name": "mcp-server-2",
+      "authorization_token": "TOKEN2"
+    }
+  ]
+}
+```## Authentication
+
+For MCP servers that require OAuth authentication, you'll need to obtain an access token. The MCP connector beta supports passing an `authorization_token` parameter in the MCP server definition.
+API consumers are expected to handle the OAuth flow and obtain the access token prior to making the API call, as well as refreshing the token as needed.
+
+### Obtaining an access token for testing
+
+The MCP inspector can guide you through the process of obtaining an access token for testing purposes.
+
+1. Run the inspector with the following command. You need Node.js installed on your machine.```bash  theme={null}
+   npx @modelcontextprotocol/inspector
+   ```2. In the sidebar on the left, for "Transport type", select either "SSE" or "Streamable HTTP".
+
+3. Enter the URL of the MCP server.
+
+4. In the right area, click on the "Open Auth Settings" button after "Need to configure authentication?".
+
+5. Click "Quick OAuth Flow" and authorize on the OAuth screen.
+
+6. Follow the steps in the "OAuth Flow Progress" section of the inspector and click "Continue" until you reach "Authentication complete".
+
+7. Copy the `access_token` value.
+
+8. Paste it into the `authorization_token` field in your MCP server configuration.
+
+### Using the access token
+
+Once you've obtained an access token using either OAuth flow above, you can use it in your MCP server configuration:```json  theme={null}
+{
+  "mcp_servers": [
+    {
+      "type": "url",
+      "url": "https://example-server.modelcontextprotocol.io/sse",
+      "name": "authenticated-server",
+      "authorization_token": "YOUR_ACCESS_TOKEN_HERE"
+    }
+  ]
+}
+```For detailed explanations of the OAuth flow, refer to the [Authorization section](https://modelcontextprotocol.io/docs/concepts/authentication) in the MCP specification.
+
+[END OF DOCUMENT: CLAUDE1MTQKBACSK]
+---
+
