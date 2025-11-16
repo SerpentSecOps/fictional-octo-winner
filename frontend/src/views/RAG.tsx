@@ -19,6 +19,8 @@ const RAG: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('');
@@ -44,16 +46,21 @@ const RAG: React.FC = () => {
 
   const loadDocuments = async () => {
     if (!selectedProject) return;
+    setIsLoadingDocuments(true);
     try {
       const docs = await listDocuments(selectedProject.id);
       setDocuments(docs);
     } catch (error) {
       console.error('Failed to load documents:', error);
+      showError('Failed to load documents');
+    } finally {
+      setIsLoadingDocuments(false);
     }
   };
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
+    setIsCreatingProject(true);
     try {
       const project = await createProject(newProjectName);
       const updatedProjects = await listProjects();
@@ -61,9 +68,12 @@ const RAG: React.FC = () => {
       setSelectedProject(project);
       setNewProjectName('');
       setShowNewProject(false);
+      showSuccess('Project created successfully!');
     } catch (error) {
       console.error('Failed to create project:', error);
       showError('Failed to create project');
+    } finally {
+      setIsCreatingProject(false);
     }
   };
 
@@ -190,9 +200,10 @@ const RAG: React.FC = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={handleCreateProject}
-                  className="flex-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                  disabled={isCreatingProject}
+                  className="flex-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
                 >
-                  Create
+                  {isCreatingProject ? 'Creating...' : 'Create'}
                 </button>
                 <button
                   onClick={() => {
@@ -248,7 +259,11 @@ const RAG: React.FC = () => {
               </button>
             </div>
 
-            {documents.length === 0 ? (
+            {isLoadingDocuments ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={24} className="animate-spin text-gray-400" />
+              </div>
+            ) : documents.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 No documents yet. Upload a .txt or .md file to get started.
               </p>

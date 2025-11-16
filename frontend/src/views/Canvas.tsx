@@ -22,6 +22,8 @@ const Canvas: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
 
@@ -35,6 +37,7 @@ const Canvas: React.FC = () => {
   const loadCanvasState = async () => {
     if (!selectedProject) return;
 
+    setIsLoading(true);
     try {
       const state = await getCanvasState(selectedProject.id);
       if (state) {
@@ -62,6 +65,9 @@ const Canvas: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load canvas:', error);
+      showError('Failed to load canvas');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,6 +119,7 @@ const Canvas: React.FC = () => {
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
 
+    setIsCreatingProject(true);
     try {
       const project = await createProject(newProjectName);
       const updatedProjects = await listProjects();
@@ -120,9 +127,12 @@ const Canvas: React.FC = () => {
       setSelectedProject(project);
       setNewProjectName('');
       setShowNewProject(false);
+      showSuccess('Project created successfully!');
     } catch (error) {
       console.error('Failed to create project:', error);
       showError('Failed to create project');
+    } finally {
+      setIsCreatingProject(false);
     }
   };
 
@@ -196,9 +206,10 @@ const Canvas: React.FC = () => {
             />
             <button
               onClick={handleCreateProject}
-              className="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 text-sm"
+              disabled={isCreatingProject}
+              className="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 text-sm"
             >
-              Create
+              {isCreatingProject ? 'Creating...' : 'Create'}
             </button>
             <button
               onClick={() => {
@@ -215,7 +226,11 @@ const Canvas: React.FC = () => {
 
       {/* Canvas */}
       <div className="flex-1">
-        {selectedProject ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            <p>Loading canvas...</p>
+          </div>
+        ) : selectedProject ? (
           <ReactFlow
             nodes={nodes}
             edges={edges}

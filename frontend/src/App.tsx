@@ -12,10 +12,12 @@ import { listProjects } from './api/rag';
 
 const App: React.FC = () => {
   const { currentView, setProviders, setProjects, setError } = useAppStore();
+  const [isInitialLoading, setIsInitialLoading] = React.useState(true);
 
   useEffect(() => {
     // Load initial data
     const loadData = async () => {
+      setIsInitialLoading(true);
       try {
         const [providers, projects] = await Promise.all([
           getProviders(),
@@ -26,6 +28,8 @@ const App: React.FC = () => {
       } catch (error) {
         console.error('Failed to load initial data:', error);
         setError(error instanceof Error ? error.message : 'Failed to load data');
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
@@ -48,6 +52,17 @@ const App: React.FC = () => {
         return <ChatV2 />;
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading LLM Workbench...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
