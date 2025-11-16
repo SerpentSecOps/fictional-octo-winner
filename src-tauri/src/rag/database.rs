@@ -17,6 +17,12 @@ pub enum DatabaseError {
 
     #[error("Serialization error: {0}")]
     SerializationError(String),
+
+    #[error("Conversation not found: {0}")]
+    ConversationNotFound(i64),
+
+    #[error("Message not found: {0}")]
+    MessageNotFound(i64),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -53,6 +59,25 @@ pub struct ChunkMatch {
     pub chunk: Chunk,
     pub similarity: f32,
     pub document_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Conversation {
+    pub id: i64,
+    pub title: String,
+    pub provider_id: String,
+    pub model: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Message {
+    pub id: i64,
+    pub conversation_id: i64,
+    pub role: String,  // "system", "user", "assistant"
+    pub content: String,
+    pub created_at: String,
 }
 
 pub struct RagDatabase {
@@ -128,6 +153,41 @@ impl RagDatabase {
             .await?;
 
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)")
+            .execute(&self.pool)
+            .await?;
+
+        // Conversation tables
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                provider_id TEXT NOT NULL,
+                model TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+            )
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id)")
             .execute(&self.pool)
             .await?;
 
@@ -309,5 +369,127 @@ impl RagDatabase {
         let doc_name: String = row.get("doc_name");
 
         Ok((chunk, doc_name))
+    }
+
+    // Conversation operations
+    pub async fn create_conversation(
+        &self,
+        title: String,
+        provider_id: String,
+        model: String,
+    ) -> Result<Conversation, DatabaseError> {
+        let id = sqlx::query(
+            "INSERT INTO conversations (title, provider_id, model) VALUES (?, ?, ?)"
+        )
+        .bind(&title)
+        .bind(&provider_id)
+        .bind(&model)
+        .execute(&self.pool)
+        .await?
+        .last_insert_rowid();
+
+        self.get_conversation(id).await
+    }
+
+    pub async fn get_conversation(&self, id: i64) -> Result<Conversation, DatabaseError> {
+        sqlx::query_as::<_, Conversation>("SELECT * FROM conversations WHERE id = ?")
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|_| DatabaseError::ConversationNotFound(id))
+    }
+
+    pub async fn list_conversations(&self) -> Result<Vec<Conversation>, DatabaseError> {
+        Ok(
+            sqlx::query_as::<_, Conversation>(
+                "SELECT * FROM conversations ORDER BY updated_at DESC"
+            )
+            .fetch_all(&self.pool)
+            .await?,
+        )
+    }
+
+    pub async fn update_conversation_title(
+        &self,
+        id: i64,
+        title: String,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query(
+            "UPDATE conversations SET title = ?, updated_at = datetime('now') WHERE id = ?"
+        )
+        .bind(title)
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn delete_conversation(&self, id: i64) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM conversations WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn touch_conversation(&self, id: i64) -> Result<(), DatabaseError> {
+        sqlx::query("UPDATE conversations SET updated_at = datetime('now') WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    // Message operations
+    pub async fn add_message(
+        &self,
+        conversation_id: i64,
+        role: String,
+        content: String,
+    ) -> Result<Message, DatabaseError> {
+        let id = sqlx::query(
+            "INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)"
+        )
+        .bind(conversation_id)
+        .bind(&role)
+        .bind(&content)
+        .execute(&self.pool)
+        .await?
+        .last_insert_rowid();
+
+        // Touch the conversation to update its timestamp
+        self.touch_conversation(conversation_id).await?;
+
+        self.get_message(id).await
+    }
+
+    pub async fn get_message(&self, id: i64) -> Result<Message, DatabaseError> {
+        sqlx::query_as::<_, Message>("SELECT * FROM messages WHERE id = ?")
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|_| DatabaseError::MessageNotFound(id))
+    }
+
+    pub async fn get_conversation_messages(
+        &self,
+        conversation_id: i64,
+    ) -> Result<Vec<Message>, DatabaseError> {
+        Ok(
+            sqlx::query_as::<_, Message>(
+                "SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC"
+            )
+            .bind(conversation_id)
+            .fetch_all(&self.pool)
+            .await?,
+        )
+    }
+
+    pub async fn delete_message(&self, id: i64) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM messages WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 }

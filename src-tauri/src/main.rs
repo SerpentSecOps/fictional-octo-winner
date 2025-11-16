@@ -60,6 +60,15 @@ async fn main() {
             // Canvas commands
             commands::get_canvas_state,
             commands::save_canvas_state,
+            // Conversation commands
+            commands::create_conversation,
+            commands::list_conversations,
+            commands::get_conversation_with_messages,
+            commands::update_conversation_title,
+            commands::delete_conversation,
+            commands::add_message,
+            commands::get_conversation_messages,
+            commands::delete_message,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
