@@ -187,6 +187,7 @@ impl LlmProvider for ClaudeProvider {
         tx: tokio::sync::mpsc::Sender<ChatChunk>,
     ) -> Result<(), ProviderError> {
         use reqwest_eventsource::{Event, EventSource};
+        use futures_util::stream::StreamExt;
 
         let url = format!("{}/v1/messages", self.base_url);
 
@@ -209,14 +210,13 @@ impl LlmProvider for ClaudeProvider {
             body["top_p"] = json!(top_p);
         }
 
-        let req = self
+        let req_builder = self
             .client
             .post(&url)
             .headers(self.create_headers())
-            .json(&body)
-            .build()?;
+            .json(&body);
 
-        let mut event_source = EventSource::new(req)?;
+        let mut event_source = EventSource::new(req_builder)?;
 
         while let Some(event) = event_source.next().await {
             match event {

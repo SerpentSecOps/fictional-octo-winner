@@ -9,6 +9,9 @@ pub enum DatabaseError {
     #[error("SQLx error: {0}")]
     SqlxError(#[from] sqlx::Error),
 
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+
     #[error("Project not found: {0}")]
     ProjectNotFound(i64),
 

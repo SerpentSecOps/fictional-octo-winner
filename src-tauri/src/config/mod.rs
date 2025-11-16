@@ -1,3 +1,3 @@
 pub mod store;
 
-pub use store::{ConfigStore, ProviderConfig, AppConfig};
+pub use store::{ConfigStore, ProviderConfig, AppConfig, MaskedProviderConfig};
