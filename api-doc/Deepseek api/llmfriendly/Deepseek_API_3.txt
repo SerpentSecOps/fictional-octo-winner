@@ -1,0 +1,566 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: DEEPSEEK2LHP80AEZK (sha256-efe127e45a606eda4978f4e9e439fd5bd70c8533a6fa7c167758bc1713075969) | Title: Model-Selection-Guide]
+[DocID: DEEPSEEKBCUI8B21L (sha256-1d23a84e4f19fdf8f3debc8362d635a4dbdd2cfbd7378310cc60c5a66369b0db) | Title: Pricing-Structure]
+[DocID: DEEPSEEK6CGETBSLX (sha256-10484f469a95f224e58288f17cffe7683f903303ffcaac1c47f669316278ec7b) | Title: Streaming-Responses]
+[DocID: DEEPSEEKQA47DVG1E (sha256-436e72e2cbf25bfed9c2ea57ee6afbda5392ecb5d15f464491de4cf09eb3c447) | Title: Token-Limits]
+--- END OF TOC ---
+
+[START OF DOCUMENT: DEEPSEEK2LHP80AEZK | Title: Model-Selection-Guide]
+
+# Model Selection Guide
+
+## Quick Decision Matrix
+
+| Requirement | deepseek-chat | deepseek-reasoner |
+|-------------|--------------|-------------------|
+| Fast responses | ✅ Best | ❌ Slower |
+| Function calling | ✅ Yes | ❌ No |
+| Low cost | ✅ Lower | ❌ Higher |
+| Simple queries | ✅ Ideal | ⚠️ Overkill |
+| Complex reasoning | ⚠️ Basic | ✅ Excellent |
+| Chain of Thought | ❌ No | ✅ Yes |
+| Long outputs | ⚠️ Up to 8K | ✅ Up to 65K |
+| Transparency | ❌ No reasoning | ✅ Shows thinking |
+
+## Choose deepseek-chat When:
+
+### Speed is Critical
+- Real-time chat applications
+- Interactive systems
+- High-throughput services
+- User-facing applications
+
+### Using Function Calling
+- Tool integration required
+- API calls needed
+- External service integration
+- Database queries
+
+### Standard Conversation Tasks
+- General Q&A
+- Content generation
+- Text summarization
+- Translation
+
+### Cost Optimization is Priority
+- High-volume applications
+- Budget-constrained projects
+- Non-critical accuracy requirements
+
+### Examples:```python
+# Customer support chatbot
+response = client.chat.completions.create(
+    model="deepseek-chat",  # Fast, cost-effective
+    messages=[
+        {"role": "system", "content": "You are a support agent"},
+        {"role": "user", "content": "How do I reset my password?"}
+    ]
+)
+``````python
+# Content generation
+response = client.chat.completions.create(
+    model="deepseek-chat",  # Quick generation
+    messages=[{"role": "user", "content": "Write a blog intro about AI"}],
+    temperature=0.8
+)
+```## Choose deepseek-reasoner When:
+
+### Complex Reasoning is Required
+- Multi-step problem solving
+- Strategic planning
+- Complex decision making
+- Algorithm design
+
+### Need Chain of Thought Analysis
+- Educational explanations
+- Debugging reasoning
+- Verification of logic
+- Transparent decision-making
+
+### Problem Requires Step-by-Step Thinking
+- Mathematical proofs
+- Logic puzzles
+- Code analysis
+- Scientific reasoning
+
+### Quality is More Important Than Speed
+- Research applications
+- Critical decisions
+- Academic use cases
+- High-stakes scenarios
+
+### Examples:```python
+# Complex math problem
+response = client.chat.completions.create(
+    model="deepseek-reasoner",  # Shows work
+    messages=[{
+        "role": "user",
+        "content": "A farmer has chickens and rabbits. There are 30 heads and 88 legs. How many of each?"
+    }]
+)
+
+# Access reasoning
+print("Reasoning:", response.choices[0].message.reasoning_content)
+print("Answer:", response.choices[0].message.content)
+``````python
+# Code debugging with explanation
+response = client.chat.completions.create(
+    model="deepseek-reasoner",  # Detailed analysis
+    messages=[{
+        "role": "user",
+        "content": "Why doesn't this code work? [code here]"
+    }]
+)
+```## Hybrid Approach
+
+Use both models strategically:
+
+### Initial Triage with deepseek-chat```python
+# Quick classification
+triage = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[{
+        "role": "user",
+        "content": f"Is this a complex problem requiring deep reasoning? {user_query}"
+    }]
+)
+
+# Route based on complexity
+if "complex" in triage.choices[0].message.content.lower():
+    model = "deepseek-reasoner"
+else:
+    model = "deepseek-chat"
+
+# Process with appropriate model
+response = client.chat.completions.create(model=model, ...)
+```### Function Calling + Reasoning```python
+# Use deepseek-chat for function calls
+tools_response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[...],
+    tools=[weather_tool, calculator_tool]
+)
+
+# Execute tool calls
+results = execute_tools(tools_response)
+
+# Use reasoner for final analysis
+final_response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[
+        {"role": "user", "content": "Analyze these results: " + results}
+    ]
+)
+```## Use Case Examples
+
+### E-commerce Chatbot
+**Model**: deepseek-chat
+- **Why**: Fast responses, function calling for product lookup
+- **Priority**: Speed, cost
+
+### Research Assistant
+**Model**: deepseek-reasoner
+- **Why**: Complex analysis, transparent reasoning
+- **Priority**: Quality, transparency
+
+### Code Completion
+**Model**: deepseek-chat
+- **Why**: Quick suggestions, FIM support
+- **Priority**: Speed, real-time
+
+### Homework Tutor
+**Model**: deepseek-reasoner
+- **Why**: Step-by-step explanations, educational value
+- **Priority**: Understanding, quality
+
+### Content Moderation
+**Model**: deepseek-chat
+- **Why**: Fast classification, high volume
+- **Priority**: Speed, throughput
+
+### Legal Analysis
+**Model**: deepseek-reasoner
+- **Why**: Complex reasoning, high stakes
+- **Priority**: Accuracy, transparency
+
+## Cost vs Quality Trade-off```
+deepseek-chat:          Fast + Cheap + Good for most tasks
+deepseek-reasoner:      Slow + Expensive + Best for complex tasks
+
+Choose based on:
+- Task complexity
+- Budget constraints
+- Speed requirements
+- Quality needs
+```## Performance Comparison
+
+| Metric | deepseek-chat | deepseek-reasoner |
+|--------|--------------|-------------------|
+| Response Time | ~1-2s | ~3-10s |
+| Cost per Query | $0.001-0.01 | $0.01-0.10 |
+| Output Quality (simple) | ★★★★★ | ★★★★★ |
+| Output Quality (complex) | ★★★☆☆ | ★★★★★ |
+| Token Efficiency | ★★★★★ | ★★★☆☆ |
+
+## Summary
+
+**Start with deepseek-chat** for most applications. Switch to **deepseek-reasoner** only when you specifically need:
+- Transparent reasoning
+- Complex problem solving
+- Educational explanations
+- High-accuracy requirements
+
+**When in doubt**: Try deepseek-chat first—it's faster and cheaper, and handles most tasks well.
+
+[END OF DOCUMENT: DEEPSEEK2LHP80AEZK]
+---
+
+[START OF DOCUMENT: DEEPSEEKBCUI8B21L | Title: Pricing-Structure]
+
+# Pricing Structure
+
+## Token-Based Pricing
+
+All prices are calculated per 1 million tokens.
+
+## Pricing Table
+
+| Token Type | Cost per 1M Tokens | Savings |
+|------------|-------------------|---------|
+| **Input tokens (cache hit)** | $0.028 | 90% off |
+| **Input tokens (cache miss)** | $0.28 | Standard |
+| **Output tokens** | $0.42 | Standard |
+
+## Cost Calculation Formula```
+Total Cost = (Number of Tokens / 1,000,000) × Price per 1M Tokens
+```## Detailed Examples
+
+### Example 1: Simple Query (No Cache)
+
+**Input**: 10,000 tokens (cache miss)```
+10,000 / 1,000,000 × $0.28 = $0.0028
+```**Output**: 5,000 tokens```
+5,000 / 1,000,000 × $0.42 = $0.0021
+```**Total Cost**: $0.0049
+
+### Example 2: With Cache Hit
+
+**Input**: 10,000 tokens (cache hit)```
+10,000 / 1,000,000 × $0.028 = $0.00028
+```**Output**: 5,000 tokens```
+5,000 / 1,000,000 × $0.42 = $0.0021
+```**Total Cost**: $0.00238 (52% savings!)
+
+### Example 3: Large Document Processing
+
+**Input**: 100,000 tokens (50% cache hit, 50% cache miss)```
+Cache hit: 50,000 / 1,000,000 × $0.028 = $0.0014
+Cache miss: 50,000 / 1,000,000 × $0.28 = $0.014
+Input total: $0.0154
+```**Output**: 2,000 tokens```
+2,000 / 1,000,000 × $0.42 = $0.00084
+```**Total Cost**: $0.01624
+
+## Billing Details
+
+### Payment Priority
+
+Charges are deducted from your account balance in this order:
+1. **Granted balance** (promotional credits, bonuses)
+2. **Topped-up balance** (purchased credits)
+
+### Account Management
+
+- Monitor balance in your dashboard
+- Set up alerts for low balance
+- Top up before running out of credits
+- Review usage reports regularly
+
+## Important Notes
+
+### Pricing Changes
+- Pricing is subject to change
+- DeepSeek reserves the right to adjust rates
+- Check official pricing page for updates
+- Subscribe to announcements
+
+### Cost Optimization Tips
+
+1. **Use Context Caching**: Save 90% on repeated content
+2. **Optimize Prompts**: Shorter prompts = lower costs
+3. **Set max_tokens**: Limit output length
+4. **Use deepseek-chat**: When reasoning not needed
+5. **Batch Requests**: Process multiple queries efficiently
+
+## Token Estimation
+
+### Rough Guidelines
+- **1 token** ≈ 4 characters in English
+- **1 token** ≈ 3⁄4 of a word
+- **100 tokens** ≈ 75 words
+- **1,000 tokens** ≈ 750 words
+
+### Example Texts
+- "Hello, how are you?" ≈ **6 tokens**
+- Short paragraph (100 words) ≈ **133 tokens**
+- Page of text (500 words) ≈ **667 tokens**
+- Full article (2000 words) ≈ **2,667 tokens**
+
+## Comparing Model Costs
+
+### deepseek-chat
+- Lower per-token cost
+- Faster responses = less wait time
+- Suitable for high-volume applications
+
+### deepseek-reasoner
+- Higher per-token cost (includes reasoning)
+- More tokens per response
+- Better for accuracy-critical tasks
+
+[END OF DOCUMENT: DEEPSEEKBCUI8B21L]
+---
+
+[START OF DOCUMENT: DEEPSEEK6CGETBSLX | Title: Streaming-Responses]
+
+# Streaming Responses
+
+## Overview
+
+Streaming allows you to receive responses in real-time as they are generated, instead of waiting for the complete response.
+
+## Python Example```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://api.deepseek.com"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[
+        {"role": "user", "content": "Tell me a story"}
+    ],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='')
+```## Node.js Example```javascript
+const OpenAI = require('openai');
+
+const client = new OpenAI({
+    apiKey: 'YOUR_API_KEY',
+    baseURL: 'https://api.deepseek.com'
+});
+
+async function streamResponse() {
+    const stream = await client.chat.completions.create({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: 'Tell me a story' }],
+        stream: true
+    });
+
+    for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        process.stdout.write(content);
+    }
+}
+
+streamResponse();
+```## cURL Example```bash
+curl https://api.deepseek.com/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [{"role": "user", "content": "Tell me a story"}],
+    "stream": true
+  }'
+```## Stream Response Format```
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"deepseek-chat","choices":[{"index":0,"delta":{"role":"assistant","content":"Once"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"deepseek-chat","choices":[{"index":0,"delta":{"content":" upon"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"deepseek-chat","choices":[{"index":0,"delta":{"content":" a"},"finish_reason":null}]}
+
+data: [DONE]
+```## Benefits of Streaming
+
+- **Improved UX**: Users see responses immediately
+- **Lower Perceived Latency**: Feels faster than waiting
+- **Progressive Display**: Show content as it generates
+- **Better for Long Responses**: Especially useful for lengthy outputs
+
+## Use Cases
+
+- Chatbot interfaces
+- Real-time content generation
+- Interactive applications
+- Long-form text generation
+
+[END OF DOCUMENT: DEEPSEEK6CGETBSLX]
+---
+
+[START OF DOCUMENT: DEEPSEEKQA47DVG1E | Title: Token-Limits]
+
+# Token Limits
+
+## Overview
+
+Token limits define the maximum number of tokens that can be processed in a single API request, including both input (prompt) and output (completion).
+
+## deepseek-chat Limits
+
+| Limit Type | Value | Notes |
+|-----------|-------|-------|
+| **Context Window** | 128,000 tokens | Total input + output |
+| **Default Max Output** | 4,096 tokens | Standard generation |
+| **Maximum Max Output** | 8,192 tokens | Configurable limit |
+
+### Example Configuration```python
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[...],
+    max_tokens=8192  # Maximum allowed
+)
+```## deepseek-reasoner Limits
+
+| Limit Type | Value | Notes |
+|-----------|-------|-------|
+| **Context Window** | 128,000 tokens | Total input + output |
+| **Default Max Output** | 32,768 tokens | Includes reasoning |
+| **Maximum Max Output** | 65,536 tokens | Configurable limit |
+
+### Example Configuration```python
+response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[...],
+    max_tokens=65536  # Maximum allowed
+)
+```## Understanding Context Window
+
+The context window is the total capacity for both input and output tokens:```
+Context Window = Input Tokens + Output Tokens
+```### Example Scenario
+
+**deepseek-chat** (128K context window):
+- Input: 120,000 tokens
+- Available for output: 8,000 tokens (capped at max 8,192)
+
+**deepseek-reasoner** (128K context window):
+- Input: 100,000 tokens
+- Available for output: 28,000 tokens (up to 65,536 if within context)
+
+## Setting max_tokens
+
+### Optimal Settings
+
+**For Short Responses** (Q&A, summaries):```python
+max_tokens=500  # Quick, concise answers
+```**For Medium Responses** (Explanations, descriptions):```python
+max_tokens=2000  # Detailed explanations
+```**For Long Responses** (Articles, analysis):```python
+max_tokens=4096  # deepseek-chat
+max_tokens=32768  # deepseek-reasoner
+```## Token Estimation
+
+### Character to Token Conversion
+
+Approximate guidelines for English text:
+- **1 token** ≈ 4 characters
+- **1 token** ≈ 3⁄4 of a word
+- **100 tokens** ≈ 75 words ≈ 300 characters
+
+### Common Text Lengths
+
+| Text Type | Approx Words | Approx Tokens |
+|-----------|--------------|---------------|
+| Tweet | 40 | 53 |
+| Paragraph | 100 | 133 |
+| Email | 250 | 333 |
+| Blog post | 1,000 | 1,333 |
+| Article | 2,000 | 2,667 |
+| Document | 10,000 | 13,333 |
+
+## Handling Token Limits
+
+### Check Token Count```python
+import tiktoken
+
+# Estimate tokens in text
+def count_tokens(text):
+    encoding = tiktoken.encoding_for_model("gpt-4")
+    return len(encoding.encode(text))
+
+prompt = "Your long prompt here..."
+token_count = count_tokens(prompt)
+print(f"Prompt uses {token_count} tokens")
+```### Truncate Long Inputs```python
+def truncate_to_limit(text, max_tokens=100000):
+    encoding = tiktoken.encoding_for_model("gpt-4")
+    tokens = encoding.encode(text)
+
+    if len(tokens) > max_tokens:
+        tokens = tokens[:max_tokens]
+
+    return encoding.decode(tokens)
+
+safe_prompt = truncate_to_limit(long_document, 100000)
+```### Split Large Documents```python
+def chunk_document(text, chunk_size=50000):
+    encoding = tiktoken.encoding_for_model("gpt-4")
+    tokens = encoding.encode(text)
+
+    chunks = []
+    for i in range(0, len(tokens), chunk_size):
+        chunk_tokens = tokens[i:i + chunk_size]
+        chunks.append(encoding.decode(chunk_tokens))
+
+    return chunks
+
+# Process document in chunks
+for chunk in chunk_document(large_document):
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": chunk}]
+    )
+```## Error Handling
+
+### Token Limit Exceeded```python
+from openai import OpenAI, APIError
+
+try:
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": very_long_text}]
+    )
+except APIError as e:
+    if "maximum context length" in str(e).lower():
+        print("Token limit exceeded. Reduce input or max_tokens.")
+    else:
+        raise
+```## Best Practices
+
+1. **Monitor Token Usage**: Track token consumption in responses
+2. **Set Reasonable Limits**: Don't max out unnecessarily
+3. **Optimize Prompts**: Be concise to save tokens
+4. **Use Caching**: Reduce effective token usage
+5. **Plan for Limits**: Design systems with token limits in mind
+
+[END OF DOCUMENT: DEEPSEEKQA47DVG1E]
+---
+

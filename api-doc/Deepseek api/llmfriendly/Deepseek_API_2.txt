@@ -1,0 +1,295 @@
+
+[SYSTEM INSTRUCTION]
+This is a structured knowledge file. Interpret it according to these rules:
+1.  **File Structure:** Begins with a Table of Contents (TOC).
+2.  **Document ID (DocID):** Each document has a short, unique `DocID` for citation.
+3.  **Content Hash:** A full SHA256 hash is provided for data integrity.
+4.  **Markers:** Content is encapsulated by `[START/END OF DOCUMENT]` markers.
+5.  **Usage:** Use the content to answer queries, citing the `DocID` and Title.
+[/SYSTEM INSTRUCTION]
+---
+
+--- TABLE OF CONTENTS ---
+[DocID: DEEPSEEK1SG1VDPBAV (sha256-a55ab0fc1e7715ba2b50a7c2eef3b5ed6b14e536496da289be32bc36db2bb260) | Title: First-Api-Call-Curl]
+[DocID: DEEPSEEK1SM204HF8O (sha256-a5c83b4a8b688ce3fe2a89353c5b4c6bc35d8f3d518d90dd6986e26164218772) | Title: First-Api-Call-Nodejs]
+[DocID: DEEPSEEK1SPVKYYW0I (sha256-a60df5ac38926c38b21db235baf798cae3a08f486404e53cd07d14d87c01b3e5) | Title: First-Api-Call-Python]
+[DocID: DEEPSEEK8FFTIGZBR (sha256-15a06d9dacd701ed4e1e957876ea34b109bebeaded8f068a711fdcc10a61bee8) | Title: Key-Concepts]
+--- END OF TOC ---
+
+[START OF DOCUMENT: DEEPSEEK1SG1VDPBAV | Title: First-Api-Call-Curl]
+
+# First API Call - Using cURL
+
+## Basic Request```bash
+curl https://api.deepseek.com/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Hello!"}
+    ]
+  }'
+```## Response```json
+{
+  "id": "chatcmpl-123",
+  "object": "chat.completion",
+  "created": 1234567890,
+  "model": "deepseek-chat",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I help you today?"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 20,
+    "completion_tokens": 10,
+    "total_tokens": 30
+  }
+}
+```## Request with Parameters```bash
+curl https://api.deepseek.com/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [
+      {"role": "user", "content": "Write a haiku about coding"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 100
+  }'
+```
+
+[END OF DOCUMENT: DEEPSEEK1SG1VDPBAV]
+---
+
+[START OF DOCUMENT: DEEPSEEK1SM204HF8O | Title: First-Api-Call-Nodejs]
+
+# First API Call - Using Node.js
+
+## Installation```bash
+npm install openai
+```## Basic Usage```javascript
+const OpenAI = require('openai');
+
+const client = new OpenAI({
+    apiKey: 'YOUR_API_KEY',
+    baseURL: 'https://api.deepseek.com'
+});
+
+async function main() {
+    const response = await client.chat.completions.create({
+        model: 'deepseek-chat',
+        messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: 'Hello!' }
+        ]
+    });
+
+    console.log(response.choices[0].message.content);
+}
+
+main();
+```## With Environment Variables```javascript
+const OpenAI = require('openai');
+require('dotenv').config();
+
+const client = new OpenAI({
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    baseURL: 'https://api.deepseek.com'
+});
+
+async function generateText() {
+    try {
+        const response = await client.chat.completions.create({
+            model: 'deepseek-chat',
+            messages: [
+                { role: 'user', content: 'Explain async/await in JavaScript' }
+            ],
+            temperature: 0.7,
+            max_tokens: 200
+        });
+
+        console.log(response.choices[0].message.content);
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+generateText();
+```## TypeScript Example```typescript
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+    apiKey: process.env.DEEPSEEK_API_KEY!,
+    baseURL: 'https://api.deepseek.com'
+});
+
+async function chat(message: string): Promise<string> {
+    const response = await client.chat.completions.create({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: message }]
+    });
+
+    return response.choices[0].message.content || '';
+}
+
+chat('What is TypeScript?').then(console.log);
+```
+
+[END OF DOCUMENT: DEEPSEEK1SM204HF8O]
+---
+
+[START OF DOCUMENT: DEEPSEEK1SPVKYYW0I | Title: First-Api-Call-Python]
+
+# First API Call - Using Python
+
+## Installation```bash
+pip install openai
+```## Basic Usage```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://api.deepseek.com"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+
+print(response.choices[0].message.content)
+```## With Environment Variables```python
+import os
+from openai import OpenAI
+
+# Set API key as environment variable: export DEEPSEEK_API_KEY=your_key_here
+client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[
+        {"role": "user", "content": "Explain recursion simply"}
+    ],
+    temperature=0.7,
+    max_tokens=200
+)
+
+print(response.choices[0].message.content)
+```## Error Handling```python
+from openai import OpenAI, APIError, RateLimitError
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://api.deepseek.com"
+)
+
+try:
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": "Hello"}]
+    )
+    print(response.choices[0].message.content)
+except RateLimitError:
+    print("Rate limit exceeded. Please slow down requests.")
+except APIError as e:
+    print(f"API error: {e}")
+```
+
+[END OF DOCUMENT: DEEPSEEK1SPVKYYW0I]
+---
+
+[START OF DOCUMENT: DEEPSEEK8FFTIGZBR | Title: Key-Concepts]
+
+# Key Concepts
+
+## Messages
+
+Conversations are represented as arrays of message objects with different roles:
+
+### System Messages
+Sets the assistant's behavior and personality:```json
+{"role": "system", "content": "You are a helpful assistant."}
+```### User Messages
+User's input or questions:```json
+{"role": "user", "content": "What is Python?"}
+```### Assistant Messages
+Model's previous responses (for multi-turn conversations):```json
+{"role": "assistant", "content": "Python is a programming language..."}
+```### Tool Messages
+Results from function calls:```json
+{"role": "tool", "content": "{\"temperature\": 72}", "tool_call_id": "call_123"}
+```## Models
+
+### deepseek-chat
+- Standard chat model for general tasks
+- 128K context window
+- Max output: 4K tokens (default) / 8K tokens (maximum)
+- Supports function calling, JSON output, FIM
+
+### deepseek-reasoner
+- Reasoning model with Chain of Thought analysis
+- 128K context window
+- Max output: 32K tokens (default) / 64K tokens (maximum)
+- Best for complex reasoning tasks
+
+## Common Parameters
+
+### temperature (0-2)
+Controls randomness in the output:
+- **0**: Deterministic, focused
+- **1**: Balanced (default)
+- **2**: More creative, random
+
+### max_tokens
+Maximum number of tokens to generate:```python
+max_tokens=500  # Limit response length
+```### top_p (0-1)
+Nucleus sampling parameter (alternative to temperature):
+- **0.1**: Very focused
+- **1.0**: Full distribution (default)
+
+### stream (boolean)
+Enable real-time streaming responses:```python
+stream=True  # Enable streaming
+stream=False  # Wait for complete response (default)
+```## Token Usage
+
+Understanding tokens:
+- 1 token ≈ 4 characters in English
+- 1 token ≈ 3⁄4 of a word
+- Both input and output consume tokens
+
+Example:
+- "Hello, how are you?" ≈ 6 tokens
+- Longer responses cost more
+
+## Context Window
+
+- Maximum total tokens (input + output) per request
+- deepseek-chat: 128,000 tokens
+- deepseek-reasoner: 128,000 tokens
+
+## Next Steps
+
+- Learn about [Models and Pricing](./models-and-pricing.md)
+- Explore [Function Calling](./function-calling.md)
+- Review [API Reference](./api-reference.md)
+
+[END OF DOCUMENT: DEEPSEEK8FFTIGZBR]
+---
+

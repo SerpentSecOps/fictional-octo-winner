@@ -1,0 +1,24 @@
+
+[SYSTEM INSTRUCTION]
+This is an AI Reference Sheet, a global manifest for multiple knowledge files.
+1.  **Purpose:** This file is an index linking a document's `DocID`, `Title`, and `Description` to its `SourceFile`. It does not contain document text.
+2.  **Structure:** `[DocID: ... | Title: ... | Description: ...] | [SourceFile: ...]`
+3.  **Usage:** Use this manifest to identify which `SourceFile` contains the relevant document for a query before retrieving the content. The Description field provides context about the document's contents to aid in routing decisions.
+4.  **Canonical Identifier:** The `DocID` is the unique identifier.
+[/SYSTEM INSTRUCTION]
+---
+
+--- GLOBAL DOCUMENT INDEX ---
+[DocID: DEEPSEEKY1DNLF5RU | Title: Authentication | Description: API key setup and management; obtaining keys from dashboard; base URLs (standard and OpenAI-compatible); authorization header format; security best practices; environment variables] | [SourceFile: Deepseek_API_1.txt]
+[DocID: DEEPSEEK1J007V3UHY | Title: Context-Caching | Description: Automatic context caching system; 90% cost savings on cache hits; cache hit vs miss pricing ($0.028 vs $0.28 per 1M tokens); API response format with cache statistics; use cases and optimization strategies] | [SourceFile: Deepseek_API_1.txt]
+[DocID: DEEPSEEK2FO59X9U8F | Title: Deepseek-Chat-Model | Description: Standard chat model (DeepSeek-V3.2-Exp); 128K context window; 4K-8K max output; features (JSON, function calling, FIM); use cases; performance characteristics; when to use vs reasoner] | [SourceFile: Deepseek_API_1.txt]
+[DocID: DEEPSEEK2PGPEC99SP | Title: Deepseek-Reasoner-Model | Description: Advanced reasoning model with Chain of Thought; 128K context; 32K-65K max output; reasoning_content and content fields; complex problem solving; when to use; limitations (no function calling)] | [SourceFile: Deepseek_API_1.txt]
+[DocID: DEEPSEEK1SG1VDPBAV | Title: First-Api-Call-Curl | Description: First API call using cURL; basic request format; authentication headers; request/response examples; parameters (temperature, max_tokens); chat completions endpoint] | [SourceFile: Deepseek_API_2.txt]
+[DocID: DEEPSEEK1SM204HF8O | Title: First-Api-Call-Nodejs | Description: First API call using Node.js/JavaScript; OpenAI SDK installation; basic usage; environment variables; TypeScript examples; error handling; async/await patterns] | [SourceFile: Deepseek_API_2.txt]
+[DocID: DEEPSEEK1SPVKYYW0I | Title: First-Api-Call-Python | Description: First API call using Python; OpenAI SDK installation (pip install openai); client setup; basic examples; environment variables; error handling; RateLimitError and APIError] | [SourceFile: Deepseek_API_2.txt]
+[DocID: DEEPSEEK8FFTIGZBR | Title: Key-Concepts | Description: Core concepts; message roles (system, user, assistant, tool); model comparison; parameters (temperature, max_tokens, top_p, stream); token estimation; context windows; next steps] | [SourceFile: Deepseek_API_2.txt]
+[DocID: DEEPSEEK2LHP80AEZK | Title: Model-Selection-Guide | Description: Decision matrix for choosing models; speed vs quality tradeoffs; use case examples; deepseek-chat (fast, function calling) vs deepseek-reasoner (reasoning, transparency); hybrid approaches; cost comparison] | [SourceFile: Deepseek_API_3.txt]
+[DocID: DEEPSEEKBCUI8B21L | Title: Pricing-Structure | Description: Token-based pricing per 1M tokens; cost calculation formula; input ($0.28 cache miss, $0.028 cache hit) and output ($0.42) pricing; detailed examples; billing details; payment priority; cost optimization tips] | [SourceFile: Deepseek_API_3.txt]
+[DocID: DEEPSEEK6CGETBSLX | Title: Streaming-Responses | Description: Real-time streaming responses; stream=True parameter; Python, Node.js, and cURL examples; server-sent events format; benefits (lower perceived latency, progressive display); use cases] | [SourceFile: Deepseek_API_3.txt]
+[DocID: DEEPSEEKQA47DVG1E | Title: Token-Limits | Description: Context window limits (128K tokens); max output limits (deepseek-chat: 4K-8K, deepseek-reasoner: 32K-65K); token estimation; handling limits; truncation strategies; error handling; best practices] | [SourceFile: Deepseek_API_3.txt]
+--- END OF INDEX ---
