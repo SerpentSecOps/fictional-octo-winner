@@ -23,6 +23,9 @@ pub enum ProviderError {
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 
+    #[error("EventSource error: {0}")]
+    EventSourceError(#[from] reqwest_eventsource::Error),
+
     #[error("Unsupported feature: {0}")]
     UnsupportedFeature(String),
 
