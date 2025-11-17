@@ -1,4 +1,5 @@
 use crate::rag::{Conversation, Message, RagDatabase};
+use crate::validation;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -31,6 +32,17 @@ pub async fn create_conversation(
     rag_db: tauri::State<'_, Arc<Mutex<RagDatabase>>>,
     request: CreateConversationRequest,
 ) -> Result<CommandResult<Conversation>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_name("conversation title", &request.title) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("model", &request.model) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     let db = rag_db.lock().await;
 
     match db
@@ -86,6 +98,11 @@ pub async fn update_conversation_title(
     conversation_id: i64,
     title: String,
 ) -> Result<CommandResult<()>, String> {
+    // Validate title
+    if let Err(e) = validation::validate_name("conversation title", &title) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     let db = rag_db.lock().await;
 
     match db.update_conversation_title(conversation_id, title).await {
@@ -114,6 +131,18 @@ pub async fn add_message(
     rag_db: tauri::State<'_, Arc<Mutex<RagDatabase>>>,
     request: AddMessageRequest,
 ) -> Result<CommandResult<Message>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_not_empty("role", &request.role) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("content", &request.content) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    // Limit message content to reasonable size (1MB)
+    if let Err(e) = validation::validate_length("content", &request.content, None, Some(1_048_576)) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     let db = rag_db.lock().await;
 
     match db

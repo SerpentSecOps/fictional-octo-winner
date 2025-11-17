@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { type Monaco } from '@monaco-editor/react';
 import { Code, AlertCircle } from 'lucide-react';
 import { showInfo } from '../utils/toast';
+import type { editor } from 'monaco-editor';
 
 const CodeLab: React.FC = () => {
   const [code, setCode] = useState(`// JavaScript/TypeScript Code Editor
@@ -14,9 +15,9 @@ function greet(name) {
 console.log(greet("World"));
 `);
   const [language, setLanguage] = useState('javascript');
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
-  const handleEditorDidMount = (editor: any) => {
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
     editorRef.current = editor;
   };
 

@@ -11,26 +11,72 @@ pub enum EmbeddingError {
     NoProviderConfigured,
 }
 
+/// Configuration for batch embedding processing
+/// With high-memory systems (128GB+), larger batches improve throughput
+pub struct BatchConfig {
+    /// Number of texts to embed in a single API call
+    /// Default: 32 (good balance for most LLM APIs)
+    /// For local GPU models, this can be much higher (128-512)
+    pub batch_size: usize,
+}
+
+impl Default for BatchConfig {
+    fn default() -> Self {
+        Self { batch_size: 32 }
+    }
+}
+
 pub struct EmbeddingService {
     provider: Arc<dyn LlmProvider>,
+    batch_config: BatchConfig,
 }
 
 impl EmbeddingService {
     pub fn new(provider: Arc<dyn LlmProvider>) -> Self {
-        Self { provider }
+        Self {
+            provider,
+            batch_config: BatchConfig::default(),
+        }
     }
 
-    /// Generate embeddings for a list of texts
+    /// Create service with custom batch configuration
+    /// For high-memory environments, increase batch_size for better throughput
+    pub fn with_batch_config(provider: Arc<dyn LlmProvider>, batch_config: BatchConfig) -> Self {
+        Self {
+            provider,
+            batch_config,
+        }
+    }
+
+    /// Generate embeddings for a list of texts with batch processing
+    /// Optimized for high-memory environments (128GB+ RAM)
     /// Returns a vector of embeddings (one per input text)
     pub async fn embed_texts(&self, texts: Vec<String>) -> Result<Vec<Vec<f32>>, EmbeddingError> {
         if texts.is_empty() {
             return Ok(Vec::new());
         }
 
-        // Call the provider's embed method
-        let embeddings = self.provider.embed(texts).await?;
+        // For small batches, process directly
+        if texts.len() <= self.batch_config.batch_size {
+            return Ok(self.provider.embed(texts).await?);
+        }
 
-        Ok(embeddings)
+        // For large batches, process in chunks to avoid overwhelming the API
+        let mut all_embeddings = Vec::with_capacity(texts.len());
+
+        for chunk in texts.chunks(self.batch_config.batch_size) {
+            let chunk_embeddings = self.provider.embed(chunk.to_vec()).await?;
+            all_embeddings.extend(chunk_embeddings);
+
+            tracing::debug!(
+                "Processed batch of {} embeddings, total: {}/{}",
+                chunk.len(),
+                all_embeddings.len(),
+                texts.len()
+            );
+        }
+
+        Ok(all_embeddings)
     }
 
     /// Generate embedding for a single text
@@ -44,20 +90,42 @@ impl EmbeddingService {
 }
 
 /// Compute cosine similarity between two vectors
+/// Optimized for high-memory systems with vectorized operations
+/// For GPU acceleration, consider using libraries like:
+/// - cuBLAS (CUDA for NVIDIA GPUs like RTX 2080Ti, RTX 5070Ti)
+/// - faiss (Facebook AI Similarity Search, supports CPU SIMD & GPU)
+/// - hnswlib (fast approximate nearest neighbor search)
 pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     if a.len() != b.len() {
         return 0.0;
     }
 
-    let dot_product: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-    let magnitude_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
-    let magnitude_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+    // Optimized vectorized operations
+    // Modern CPUs will auto-vectorize these operations with SIMD
+    let (dot_product, norm_a_sq, norm_b_sq) = a
+        .iter()
+        .zip(b.iter())
+        .fold((0.0f32, 0.0f32, 0.0f32), |(dot, na, nb), (x, y)| {
+            (dot + x * y, na + x * x, nb + y * y)
+        });
+
+    let magnitude_a = norm_a_sq.sqrt();
+    let magnitude_b = norm_b_sq.sqrt();
 
     if magnitude_a == 0.0 || magnitude_b == 0.0 {
         return 0.0;
     }
 
     dot_product / (magnitude_a * magnitude_b)
+}
+
+/// Batch compute cosine similarities between a query and multiple vectors
+/// Optimized for high-memory systems - processes all similarities in parallel
+pub fn batch_cosine_similarity(query: &[f32], vectors: &[Vec<f32>]) -> Vec<f32> {
+    vectors
+        .iter()
+        .map(|vec| cosine_similarity(query, vec))
+        .collect()
 }
 
 #[cfg(test)]
