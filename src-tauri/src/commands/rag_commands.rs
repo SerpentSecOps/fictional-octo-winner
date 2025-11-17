@@ -1,6 +1,7 @@
 use crate::config::ConfigStore;
 use crate::llm_providers::{create_provider, ChatMessage, ChatRequest, ChatRole};
 use crate::rag::{chunk_text, search_similar, ChunkMatch, Document, EmbeddingService, Project, RagDatabase};
+use crate::validation;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -13,6 +14,11 @@ pub async fn create_project(
     rag_db: tauri::State<'_, Arc<Mutex<RagDatabase>>>,
     name: String,
 ) -> Result<CommandResult<Project>, String> {
+    // Validate project name
+    if let Err(e) = validation::validate_name("project name", &name) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     let db = rag_db.lock().await;
 
     match db.create_project(name).await {
@@ -83,6 +89,17 @@ pub async fn add_document(
     config_store: tauri::State<'_, Arc<Mutex<ConfigStore>>>,
     request: AddDocumentRequest,
 ) -> Result<CommandResult<AddDocumentResponse>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_name("document name", &request.name) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_document_content(&request.content) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     // Get provider for embeddings
     let store = config_store.lock().await;
     let provider_config = match store.get_provider(&request.provider_id) {
@@ -160,6 +177,17 @@ pub async fn rag_search(
     config_store: tauri::State<'_, Arc<Mutex<ConfigStore>>>,
     request: RagSearchRequest,
 ) -> Result<CommandResult<Vec<ChunkMatch>>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_query(&request.query) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_top_k(request.top_k) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+
     // Get provider for query embedding
     let store = config_store.lock().await;
     let provider_config = match store.get_provider(&request.provider_id) {
@@ -214,6 +242,30 @@ pub async fn rag_chat(
     config_store: tauri::State<'_, Arc<Mutex<ConfigStore>>>,
     request: RagChatRequest,
 ) -> Result<CommandResult<RagChatResponse>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_query(&request.query) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_top_k(request.top_k) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("model", &request.model) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Some(temp) = request.temperature {
+        if let Err(e) = validation::validate_temperature(temp) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+    if let Some(max_tokens) = request.max_tokens {
+        if let Err(e) = validation::validate_max_tokens(max_tokens) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+
     // First, perform RAG search
     let search_request = RagSearchRequest {
         project_id: request.project_id,

@@ -71,11 +71,19 @@ export interface CanvasState {
   edges: CanvasEdge[];
 }
 
+export interface CanvasNodeData {
+  label?: string;
+  text?: string;
+  code?: string;
+  language?: string;
+  [key: string]: unknown; // Allow additional dynamic properties
+}
+
 export interface CanvasNode {
   id: string;
   node_type: string;
   position: { x: number; y: number };
-  data: any;
+  data: CanvasNodeData;
 }
 
 export interface CanvasEdge {

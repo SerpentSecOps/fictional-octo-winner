@@ -1,5 +1,6 @@
 use crate::config::ConfigStore;
 use crate::llm_providers::{create_provider, ChatChunk, ChatMessage, ChatRequest, ChatResponse};
+use crate::validation;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
@@ -24,6 +25,27 @@ pub async fn send_chat_message(
     config_store: tauri::State<'_, Arc<Mutex<ConfigStore>>>,
     request: SendChatRequest,
 ) -> Result<CommandResult<ChatResponse>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("model", &request.model) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if request.messages.is_empty() {
+        return Ok(CommandResult::err("Messages cannot be empty".to_string()));
+    }
+    if let Some(temp) = request.temperature {
+        if let Err(e) = validation::validate_temperature(temp) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+    if let Some(max_tokens) = request.max_tokens {
+        if let Err(e) = validation::validate_max_tokens(max_tokens) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+
     let store = config_store.lock().await;
 
     // Get provider config
@@ -65,6 +87,30 @@ pub async fn send_chat_message_stream(
     request: SendChatRequest,
     request_id: String, // Unique ID for this request
 ) -> Result<CommandResult<()>, String> {
+    // Validate inputs
+    if let Err(e) = validation::validate_not_empty("provider_id", &request.provider_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("model", &request.model) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if let Err(e) = validation::validate_not_empty("request_id", &request_id) {
+        return Ok(CommandResult::err(e.to_string()));
+    }
+    if request.messages.is_empty() {
+        return Ok(CommandResult::err("Messages cannot be empty".to_string()));
+    }
+    if let Some(temp) = request.temperature {
+        if let Err(e) = validation::validate_temperature(temp) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+    if let Some(max_tokens) = request.max_tokens {
+        if let Err(e) = validation::validate_max_tokens(max_tokens) {
+            return Ok(CommandResult::err(e.to_string()));
+        }
+    }
+
     let store = config_store.lock().await;
 
     // Get provider config
