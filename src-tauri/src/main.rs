@@ -6,6 +6,7 @@ mod config;
 mod llm_providers;
 mod rag;
 mod security;
+mod validation;
 
 use config::ConfigStore;
 use rag::RagDatabase;

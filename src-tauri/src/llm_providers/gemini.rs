@@ -1,7 +1,9 @@
 use super::traits::*;
 use super::ProviderError;
 use async_trait::async_trait;
+use futures::StreamExt;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
+use reqwest_eventsource::{Event, EventSource};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -178,7 +180,7 @@ impl LlmProvider for GeminiProvider {
         tx: tokio::sync::mpsc::Sender<ChatChunk>,
     ) -> Result<(), ProviderError> {
         let url = format!(
-            "{}/models/{}:streamGenerateContent?key={}&alt=sse",
+            "{}/models/{}:streamGenerateContent?alt=sse&key={}",
             self.base_url, request.model, self.api_key
         );
 
@@ -205,32 +207,47 @@ impl LlmProvider for GeminiProvider {
             body["generationConfig"]["topP"] = json!(top_p);
         }
 
-        let response = self
-            .client
-            .post(&url)
-            .headers(self.create_headers())
-            .json(&body)
-            .send()
-            .await?;
+        // Create EventSource for SSE streaming
+        let event_source = EventSource::new(
+            self.client
+                .post(&url)
+                .headers(self.create_headers())
+                .json(&body)
+        )?;
 
-        if !response.status().is_success() {
-            let error_text = response.text().await?;
-            return Err(ProviderError::ApiError(format!(
-                "Gemini stream API error: {}",
-                error_text
-            )));
-        }
+        let mut stream = event_source;
 
-        // TODO: Implement proper SSE streaming for Gemini
-        // For now, we'll use a simplified approach
-        let full_response: GeminiResponse = response.json().await?;
+        while let Some(event) = stream.next().await {
+            match event {
+                Ok(Event::Open) => {
+                    // Connection opened, continue
+                }
+                Ok(Event::Message(message)) => {
+                    // Parse the SSE message data
+                    if let Ok(gemini_response) = serde_json::from_str::<GeminiResponse>(&message.data) {
+                        if let Some(candidate) = gemini_response.candidates.first() {
+                            if let Some(part) = candidate.content.parts.first() {
+                                let chunk = ChatChunk {
+                                    delta: part.text.clone(),
+                                    finish_reason: candidate.finish_reason.clone(),
+                                };
 
-        if let Some(candidate) = full_response.candidates.first() {
-            if let Some(part) = candidate.content.parts.first() {
-                let _ = tx.send(ChatChunk {
-                    delta: part.text.clone(),
-                    finish_reason: candidate.finish_reason.clone(),
-                }).await;
+                                if tx.send(chunk).await.is_err() {
+                                    // Receiver dropped, stop streaming
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    // Stream error
+                    tracing::error!("Gemini SSE stream error: {}", err);
+                    return Err(ProviderError::ApiError(format!(
+                        "Stream error: {}",
+                        err
+                    )));
+                }
             }
         }
 
