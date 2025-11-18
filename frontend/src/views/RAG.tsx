@@ -14,6 +14,7 @@ import { readTextFile } from '@tauri-apps/api/fs';
 import { Upload, FileText, Trash2, Loader2, MessageSquare } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
 import { logError } from '../utils/logger';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const RAG: React.FC = () => {
   const { providers, selectedProject, setSelectedProject, projects, setProjects } =
@@ -29,6 +30,7 @@ const RAG: React.FC = () => {
   const [searchResults, setSearchResults] = useState<ChunkMatch[] | null>(null);
   const [chatResponse, setChatResponse] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; documentId: number; documentName: string } | null>(null);
 
   const enabledProviders = providers.filter((p) => p.enabled && p.has_api_key);
 
@@ -59,14 +61,13 @@ const RAG: React.FC = () => {
     }
   };
 
-  const handleDeleteDocument = async (documentId: number, documentName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${documentName}"?`)) {
-      return;
-    }
+  const handleDeleteDocument = async () => {
+    if (!deleteModal) return;
 
     try {
-      await deleteDocument(documentId);
+      await deleteDocument(deleteModal.documentId);
       showSuccess('Document deleted successfully!');
+      setDeleteModal(null);
       // Reload documents list
       await loadDocuments();
     } catch (error) {
@@ -304,7 +305,7 @@ const RAG: React.FC = () => {
                     </div>
                     <button
                       className="text-red-500 hover:text-red-700"
-                      onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                      onClick={() => setDeleteModal({ isOpen: true, documentId: doc.id, documentName: doc.name })}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -414,6 +415,19 @@ const RAG: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal(null)}
+          onConfirm={handleDeleteDocument}
+          title="Delete Document"
+          message={`Are you sure you want to delete "${deleteModal.documentName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
     </div>
   );
 };

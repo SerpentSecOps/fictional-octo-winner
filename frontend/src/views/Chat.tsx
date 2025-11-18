@@ -5,6 +5,7 @@ import { ragChat } from '../api/rag';
 import type { ChatMessage, ChunkMatch } from '../api/types';
 import { Send, Loader2, Database } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { logError } from '../utils/logger';
 
 interface Message extends ChatMessage {
   id: string;
@@ -119,7 +120,7 @@ const Chat: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('Chat error:', error);
+      logError('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

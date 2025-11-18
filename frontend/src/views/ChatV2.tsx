@@ -14,6 +14,7 @@ import { Send, Loader2, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { showError, showSuccess } from '../utils/toast';
 import { logError } from '../utils/logger';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 interface UIMessage {
   id: string;
@@ -38,6 +39,7 @@ const ChatV2: React.FC = () => {
   const [editTitle, setEditTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const cleanupStreamRef = useRef<(() => void) | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; conversationId: number; title: string } | null>(null);
 
   const enabledProviders = providers.filter((p) => p.enabled && p.has_api_key);
 
@@ -93,7 +95,7 @@ const ChatV2: React.FC = () => {
         setSelectedConversation(convos[0]);
       }
     } catch (error) {
-      console.error('Failed to load conversations:', error);
+      logError('Failed to load conversations:', error);
       showError('Failed to load conversations');
     }
   };
@@ -109,7 +111,7 @@ const ChatV2: React.FC = () => {
       }));
       setMessages(uiMessages);
     } catch (error) {
-      console.error('Failed to load messages:', error);
+      logError('Failed to load messages:', error);
       showError('Failed to load messages');
     } finally {
       setIsLoading(false);
@@ -133,30 +135,32 @@ const ChatV2: React.FC = () => {
       setMessages([]);
       showSuccess('Created new conversation');
     } catch (error) {
-      console.error('Failed to create conversation:', error);
+      logError('Failed to create conversation:', error);
       showError('Failed to create conversation');
     }
   };
 
   const handleDeleteConversation = async (conv: Conversation, e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteModal({ isOpen: true, conversationId: conv.id, title: conv.title });
+  };
 
-    if (!confirm(`Delete conversation "${conv.title}"?`)) {
-      return;
-    }
+  const confirmDeleteConversation = async () => {
+    if (!deleteModal) return;
 
     try {
-      await deleteConversationApi(conv.id);
-      const newConvos = conversations.filter((c) => c.id !== conv.id);
+      await deleteConversationApi(deleteModal.conversationId);
+      const newConvos = conversations.filter((c) => c.id !== deleteModal.conversationId);
       setConversations(newConvos);
 
-      if (selectedConversation?.id === conv.id) {
+      if (selectedConversation?.id === deleteModal.conversationId) {
         setSelectedConversation(newConvos[0] || null);
       }
 
+      setDeleteModal(null);
       showSuccess('Conversation deleted');
     } catch (error) {
-      console.error('Failed to delete conversation:', error);
+      logError('Failed to delete conversation:', error);
       showError('Failed to delete conversation');
     }
   };
@@ -181,7 +185,7 @@ const ChatV2: React.FC = () => {
       setEditingTitle(null);
       showSuccess('Conversation renamed');
     } catch (error) {
-      console.error('Failed to rename conversation:', error);
+      logError('Failed to rename conversation:', error);
       showError('Failed to rename conversation');
     }
   };
@@ -286,7 +290,7 @@ const ChatV2: React.FC = () => {
                 setSelectedConversation({ ...selectedConversation, title });
               }
             } catch (error) {
-              console.error('Failed to save assistant message:', error);
+              logError('Failed to save assistant message:', error);
             }
           }
         }
@@ -521,6 +525,19 @@ const ChatV2: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal(null)}
+          onConfirm={confirmDeleteConversation}
+          title="Delete Conversation"
+          message={`Are you sure you want to delete "${deleteModal.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
     </div>
   );
 };
