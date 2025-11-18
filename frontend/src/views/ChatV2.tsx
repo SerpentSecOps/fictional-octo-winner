@@ -10,7 +10,7 @@ import {
   updateConversationTitle,
 } from '../api/conversation';
 import type { Conversation } from '../api/types';
-import { Send, Loader2, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Send, Loader2, Plus, Trash2, Edit2, Check, X, Eye, EyeOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { showError, showSuccess } from '../utils/toast';
 import { logError } from '../utils/logger';
@@ -20,6 +20,7 @@ interface UIMessage {
   id: string;
   role: 'system' | 'user' | 'assistant';
   content: string;
+  includedInContext: boolean;
 }
 
 const ChatV2: React.FC = () => {
@@ -108,6 +109,7 @@ const ChatV2: React.FC = () => {
         id: msg.id.toString(),
         role: msg.role as 'system' | 'user' | 'assistant',
         content: msg.content,
+        includedInContext: true, // All messages are included by default
       }));
       setMessages(uiMessages);
     } catch (error) {
@@ -209,6 +211,7 @@ const ChatV2: React.FC = () => {
       id: Date.now().toString(),
       role: 'user',
       content: input.trim(),
+      includedInContext: true,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -228,6 +231,7 @@ const ChatV2: React.FC = () => {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: '',
+        includedInContext: true,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -242,11 +246,16 @@ const ChatV2: React.FC = () => {
       const requestId = `req_${Date.now()}`;
       let accumulatedContent = '';
 
+      // Filter messages to only include those in context
+      const contextMessages = [...messages, userMessage].filter(
+        (m) => m.includedInContext
+      );
+
       const cleanup = await sendChatMessageStream(
         {
           provider_id: selectedProvider,
           model: selectedModel,
-          messages: [...messages, userMessage].map((m) => ({
+          messages: contextMessages.map((m) => ({
             role: m.role,
             content: m.content,
           })),
@@ -310,6 +319,16 @@ const ChatV2: React.FC = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const toggleMessageContext = (messageId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? { ...msg, includedInContext: !msg.includedInContext }
+          : msg
+      )
+    );
   };
 
   return (
@@ -480,18 +499,36 @@ const ChatV2: React.FC = () => {
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
-                <div
-                  className={`max-w-3xl rounded-lg p-4 ${
-                    message.role === 'user'
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                  }`}
-                >
-                  <div className="text-xs font-semibold mb-1 opacity-70">
-                    {message.role === 'user' ? 'You' : 'Assistant'}
-                  </div>
-                  <div className="markdown-content">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                <div className={`flex items-start space-x-2 max-w-3xl ${!message.includedInContext ? 'opacity-50' : ''}`}>
+                  {/* Context toggle button */}
+                  <button
+                    onClick={() => toggleMessageContext(message.id)}
+                    className={`mt-1 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+                      message.includedInContext
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-400 dark:text-gray-600'
+                    }`}
+                    title={message.includedInContext ? 'Exclude from context' : 'Include in context'}
+                  >
+                    {message.includedInContext ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+
+                  <div
+                    className={`rounded-lg p-4 ${
+                      message.role === 'user'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    <div className="text-xs font-semibold mb-1 opacity-70">
+                      {message.role === 'user' ? 'You' : 'Assistant'}
+                      {!message.includedInContext && (
+                        <span className="ml-2 text-xs italic">(Hidden from LLM)</span>
+                      )}
+                    </div>
+                    <div className="markdown-content">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </div>

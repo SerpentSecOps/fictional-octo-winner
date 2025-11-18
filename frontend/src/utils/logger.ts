@@ -23,7 +23,7 @@ class Logger {
     includeTimestamp: true,
   };
 
-  private formatMessage(level: LogLevel, message: string, ...args: any[]): string {
+  private formatMessage(level: LogLevel, message: string, ..._args: any[]): string {
     const timestamp = this.config.includeTimestamp
       ? `[${new Date().toISOString()}]`
       : '';
