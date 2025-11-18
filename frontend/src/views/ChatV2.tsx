@@ -13,6 +13,7 @@ import type { Conversation } from '../api/types';
 import { Send, Loader2, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { showError, showSuccess } from '../utils/toast';
+import { logError } from '../utils/logger';
 
 interface UIMessage {
   id: string;
@@ -36,6 +37,7 @@ const ChatV2: React.FC = () => {
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const cleanupStreamRef = useRef<(() => void) | null>(null);
 
   const enabledProviders = providers.filter((p) => p.enabled && p.has_api_key);
 
@@ -63,6 +65,15 @@ const ChatV2: React.FC = () => {
       setMessages([]);
     }
   }, [selectedConversation]);
+
+  // Cleanup streaming listeners on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupStreamRef.current) {
+        cleanupStreamRef.current();
+      }
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -217,9 +228,17 @@ const ChatV2: React.FC = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
+      // Cleanup any previous streaming listeners
+      if (cleanupStreamRef.current) {
+        cleanupStreamRef.current();
+        cleanupStreamRef.current = null;
+      }
+
       // Streaming chat
       const requestId = `req_${Date.now()}`;
-      await sendChatMessageStream(
+      let accumulatedContent = '';
+
+      const cleanup = await sendChatMessageStream(
         {
           provider_id: selectedProvider,
           model: selectedModel,
@@ -234,6 +253,7 @@ const ChatV2: React.FC = () => {
         },
         requestId,
         (chunk) => {
+          accumulatedContent += chunk.delta;
           setMessages((prev) => {
             const newMessages = [...prev];
             const lastMessage = newMessages[newMessages.length - 1];
@@ -246,18 +266,13 @@ const ChatV2: React.FC = () => {
         async () => {
           setIsStreaming(false);
 
-          // Save assistant message to DB
-          const finalContent =
-            messages[messages.length - 1]?.role === 'assistant'
-              ? messages[messages.length - 1].content
-              : '';
-
-          if (finalContent && selectedConversation) {
+          // Save assistant message to DB using accumulated content
+          if (accumulatedContent && selectedConversation) {
             try {
               await addMessage({
                 conversation_id: selectedConversation.id,
                 role: 'assistant',
-                content: finalContent,
+                content: accumulatedContent,
               });
 
               // Auto-generate title from first message
@@ -276,8 +291,11 @@ const ChatV2: React.FC = () => {
           }
         }
       );
+
+      // Store cleanup function for later use
+      cleanupStreamRef.current = cleanup;
     } catch (error) {
-      console.error('Chat error:', error);
+      logError('Chat error:', error);
       showError(`Chat error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setIsStreaming(false);
     }

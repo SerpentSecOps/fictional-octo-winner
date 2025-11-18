@@ -9,18 +9,35 @@ const AVAILABLE_PROVIDERS = [
     name: 'Anthropic Claude',
     defaultBaseUrl: 'https://api.anthropic.com',
     defaultModel: 'claude-3-5-sonnet-20241022',
+    models: [
+      'claude-3-5-sonnet-20241022',
+      'claude-3-5-haiku-20241022',
+      'claude-3-opus-20240229',
+      'claude-3-sonnet-20240229',
+      'claude-3-haiku-20240307',
+    ],
   },
   {
     id: 'deepseek',
     name: 'DeepSeek',
     defaultBaseUrl: 'https://api.deepseek.com',
     defaultModel: 'deepseek-chat',
+    models: [
+      'deepseek-chat',
+      'deepseek-coder',
+    ],
   },
   {
     id: 'gemini',
     name: 'Google Gemini',
     defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1',
     defaultModel: 'gemini-1.5-pro',
+    models: [
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'gemini-1.0-pro',
+      'embedding-001',
+    ],
   },
 ];
 
@@ -202,15 +219,23 @@ const Settings: React.FC = () => {
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Default Model
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.default_model}
                   onChange={(e) =>
                     setFormData({ ...formData, default_model: e.target.value })
                   }
-                  placeholder="model-name"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                />
+                >
+                  <option value="">Select a model...</option>
+                  {AVAILABLE_PROVIDERS.find((p) => p.id === activeProvider)?.models.map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Select the default model for this provider
+                </p>
               </div>
 
               <div className="flex items-center">

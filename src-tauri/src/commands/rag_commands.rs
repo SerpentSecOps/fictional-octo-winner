@@ -68,6 +68,20 @@ pub async fn list_documents(
     }
 }
 
+/// Delete a document
+#[tauri::command]
+pub async fn delete_document(
+    rag_db: tauri::State<'_, Arc<Mutex<RagDatabase>>>,
+    document_id: i64,
+) -> Result<CommandResult<()>, String> {
+    let db = rag_db.lock().await;
+
+    match db.delete_document(document_id).await {
+        Ok(_) => Ok(CommandResult::ok(())),
+        Err(e) => Ok(CommandResult::err(e.to_string())),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct AddDocumentRequest {
     pub project_id: i64,

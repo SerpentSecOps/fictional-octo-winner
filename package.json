@@ -8,10 +8,25 @@
     "build": "pnpm --filter frontend build",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "prepare": "husky install",
+    "lint": "cd frontend && npm run lint",
+    "format": "cd frontend && npm run format",
+    "format:check": "cd frontend && npm run format:check"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.9"
+    "@tauri-apps/cli": "^1.5.9",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx}": [
+      "cd frontend && npm run format",
+      "cd frontend && npm run lint"
+    ],
+    "src-tauri/**/*.rs": [
+      "cd src-tauri && cargo fmt --"
+    ]
   },
   "engines": {
     "node": ">=18.0.0",

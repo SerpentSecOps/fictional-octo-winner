@@ -21,19 +21,31 @@ async fn main() {
 
     // Get app data directory
     let app_data_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
-        .expect("Failed to get app config dir");
+        .unwrap_or_else(|| {
+            eprintln!("ERROR: Failed to get application config directory.");
+            eprintln!("Please ensure the application has proper file system permissions.");
+            std::process::exit(1);
+        });
 
     // Initialize config store
     let config_store = Arc::new(Mutex::new(
-        ConfigStore::new(app_data_dir.clone()).expect("Failed to initialize config store"),
+        ConfigStore::new(app_data_dir.clone()).unwrap_or_else(|e| {
+            eprintln!("ERROR: Failed to initialize configuration store: {}", e);
+            eprintln!("Config directory: {:?}", app_data_dir);
+            std::process::exit(1);
+        }),
     ));
 
     // Initialize RAG database
     let db_path = app_data_dir.join("rag.db");
     let rag_db = Arc::new(Mutex::new(
-        RagDatabase::new(db_path)
+        RagDatabase::new(db_path.clone())
             .await
-            .expect("Failed to initialize RAG database"),
+            .unwrap_or_else(|e| {
+                eprintln!("ERROR: Failed to initialize RAG database: {}", e);
+                eprintln!("Database path: {:?}", db_path);
+                std::process::exit(1);
+            }),
     ));
 
     tracing::info!("Starting LLM Workbench...");
@@ -55,6 +67,7 @@ async fn main() {
             commands::list_projects,
             commands::delete_project,
             commands::list_documents,
+            commands::delete_document,
             commands::add_document,
             commands::rag_search,
             commands::rag_chat,

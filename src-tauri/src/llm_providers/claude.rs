@@ -20,18 +20,20 @@ impl ClaudeProvider {
         }
     }
 
-    fn create_headers(&self) -> HeaderMap {
+    fn create_headers(&self) -> Result<HeaderMap, ProviderError> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(
-            "x-api-key",
-            HeaderValue::from_str(&self.api_key).unwrap(),
-        );
+
+        let api_key_value = HeaderValue::from_str(&self.api_key)
+            .map_err(|e| ProviderError::ConfigError(format!("Invalid API key format: {}", e)))?;
+        headers.insert("x-api-key", api_key_value);
+
         headers.insert(
             "anthropic-version",
             HeaderValue::from_static("2023-06-01"),
         );
-        headers
+
+        Ok(headers)
     }
 
     fn convert_messages(&self, messages: &[ChatMessage]) -> (Option<String>, Vec<serde_json::Value>) {
@@ -147,7 +149,7 @@ impl LlmProvider for ClaudeProvider {
         let response = self
             .client
             .post(&url)
-            .headers(self.create_headers())
+            .headers(self.create_headers()?)
             .json(&body)
             .send()
             .await?;
@@ -213,7 +215,7 @@ impl LlmProvider for ClaudeProvider {
         let req_builder = self
             .client
             .post(&url)
-            .headers(self.create_headers())
+            .headers(self.create_headers()?)
             .json(&body);
 
         let mut event_source = EventSource::new(req_builder)?;

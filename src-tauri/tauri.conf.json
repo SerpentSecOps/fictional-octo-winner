@@ -27,8 +27,16 @@
         "readFile": true,
         "writeFile": true,
         "readDir": true,
-        "scope": ["$APPDATA/*", "$APPDATA/**", "$HOME/*", "$HOME/**"]
+        "scope": ["$APPDATA/*", "$APPDATA/**", "$HOME/*", "$HOME/**", "$DOCUMENT/*", "$DOCUMENT/**", "$DESKTOP/*", "$DESKTOP/**", "$DOWNLOAD/*", "$DOWNLOAD/**"]
       }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://releases.myapp.com/{{target}}/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": "YOUR_PUBLIC_KEY_HERE"
     },
     "bundle": {
       "active": true,
