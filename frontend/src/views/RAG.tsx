@@ -13,6 +13,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { readTextFile } from '@tauri-apps/api/fs';
 import { Upload, FileText, Trash2, Loader2, MessageSquare } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
+import { logError } from '../utils/logger';
 
 const RAG: React.FC = () => {
   const { providers, selectedProject, setSelectedProject, projects, setProjects } =
@@ -51,7 +52,7 @@ const RAG: React.FC = () => {
       const docs = await listDocuments(selectedProject.id);
       setDocuments(docs);
     } catch (error) {
-      console.error('Failed to load documents:', error);
+      logError('Failed to load documents:', error);
       showError('Failed to load documents');
     } finally {
       setIsLoadingDocuments(false);
@@ -69,7 +70,7 @@ const RAG: React.FC = () => {
       // Reload documents list
       await loadDocuments();
     } catch (error) {
-      console.error('Failed to delete document:', error);
+      logError('Failed to delete document:', error);
       showError('Failed to delete document');
     }
   };
@@ -86,7 +87,7 @@ const RAG: React.FC = () => {
       setShowNewProject(false);
       showSuccess('Project created successfully!');
     } catch (error) {
-      console.error('Failed to create project:', error);
+      logError('Failed to create project:', error);
       showError('Failed to create project');
     } finally {
       setIsCreatingProject(false);
@@ -134,7 +135,7 @@ const RAG: React.FC = () => {
       // Reload documents list
       await loadDocuments();
     } catch (error) {
-      console.error('Upload failed:', error);
+      logError('Upload failed:', error);
       showError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadingDoc(false);
@@ -163,7 +164,7 @@ const RAG: React.FC = () => {
       setChatResponse(response.response);
       setSearchResults(response.sources);
     } catch (error) {
-      console.error('RAG chat failed:', error);
+      logError('RAG chat failed:', error);
       showError(`Query failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSearching(false);

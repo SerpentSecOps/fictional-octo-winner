@@ -13,6 +13,7 @@ import type { Conversation } from '../api/types';
 import { Send, Loader2, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { showError, showSuccess } from '../utils/toast';
+import { logError } from '../utils/logger';
 
 interface UIMessage {
   id: string;
@@ -294,7 +295,7 @@ const ChatV2: React.FC = () => {
       // Store cleanup function for later use
       cleanupStreamRef.current = cleanup;
     } catch (error) {
-      console.error('Chat error:', error);
+      logError('Chat error:', error);
       showError(`Chat error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setIsStreaming(false);
     }

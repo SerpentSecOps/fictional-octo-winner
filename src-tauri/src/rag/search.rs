@@ -122,7 +122,44 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_search_empty() {
-        // TODO: Add proper test with in-memory SQLite
+    fn test_cosine_similarity_identical_vectors() {
+        let v1 = vec![1.0, 0.0, 0.0];
+        let v2 = vec![1.0, 0.0, 0.0];
+        let similarity = cosine_similarity(&v1, &v2);
+        assert!((similarity - 1.0).abs() < 1e-6, "Identical vectors should have similarity of 1.0");
+    }
+
+    #[test]
+    fn test_cosine_similarity_orthogonal_vectors() {
+        let v1 = vec![1.0, 0.0, 0.0];
+        let v2 = vec![0.0, 1.0, 0.0];
+        let similarity = cosine_similarity(&v1, &v2);
+        assert!(similarity.abs() < 1e-6, "Orthogonal vectors should have similarity of 0.0");
+    }
+
+    #[test]
+    fn test_cosine_similarity_opposite_vectors() {
+        let v1 = vec![1.0, 0.0, 0.0];
+        let v2 = vec![-1.0, 0.0, 0.0];
+        let similarity = cosine_similarity(&v1, &v2);
+        assert!((similarity + 1.0).abs() < 1e-6, "Opposite vectors should have similarity of -1.0");
+    }
+
+    #[test]
+    fn test_cosine_similarity_normalized() {
+        let v1 = vec![2.0, 0.0, 0.0];
+        let v2 = vec![3.0, 0.0, 0.0];
+        let similarity = cosine_similarity(&v1, &v2);
+        assert!((similarity - 1.0).abs() < 1e-6, "Parallel vectors should have similarity of 1.0");
+    }
+
+    #[test]
+    fn test_cosine_similarity_general_case() {
+        let v1 = vec![1.0, 2.0, 3.0];
+        let v2 = vec![4.0, 5.0, 6.0];
+        let similarity = cosine_similarity(&v1, &v2);
+        // Expected: (1*4 + 2*5 + 3*6) / (sqrt(14) * sqrt(77))
+        // = 32 / sqrt(1078) ≈ 0.9746
+        assert!(similarity > 0.97 && similarity < 0.98, "Expected similarity around 0.9746");
     }
 }
