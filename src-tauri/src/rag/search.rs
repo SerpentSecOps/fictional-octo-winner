@@ -93,7 +93,7 @@ pub async fn search_similar(
 /// Advanced search with filtering and re-ranking
 /// For high-memory systems, this performs multi-stage retrieval:
 /// 1. Fast cosine similarity to get top-N candidates (N > k)
-/// 2. Optional re-ranking with more expensive models
+/// 2. Diversity-aware re-ranking to avoid redundant results
 /// 3. Return top-k final results
 pub async fn search_with_rerank(
     db: &RagDatabase,
@@ -104,18 +104,59 @@ pub async fn search_with_rerank(
 ) -> Result<Vec<ChunkMatch>, SearchError> {
     // First stage: Get more candidates than needed
     let candidate_count = top_k * candidate_multiplier;
-    let mut results = search_similar(db, project_id, query_embedding, candidate_count).await?;
+    let mut candidates = search_similar(db, project_id, query_embedding, candidate_count).await?;
 
-    // Second stage: Re-rank (placeholder for future enhancement)
-    // TODO: Implement re-ranking with:
-    // - Cross-encoder models (more accurate but slower)
-    // - Hybrid search (combine semantic + keyword matching)
-    // - Diversity-aware ranking
+    if candidates.len() <= top_k {
+        return Ok(candidates);
+    }
 
-    // For now, just return top-k from initial results
-    results.truncate(top_k);
-    Ok(results)
+    // Second stage: Diversity-aware re-ranking
+    // Select results that are both relevant and diverse to avoid redundancy
+    let mut selected = Vec::new();
+    selected.push(candidates.remove(0)); // Always take the top result
+
+    // For each remaining slot, select the candidate that maximizes:
+    // relevance_score - (diversity_penalty * max_similarity_to_selected)
+    let diversity_penalty = 0.3; // Tune this value (0.0 = no diversity, 1.0 = max diversity)
+
+    while selected.len() < top_k && !candidates.is_empty() {
+        let mut best_idx = 0;
+        let mut best_score = f32::NEG_INFINITY;
+
+        for (idx, candidate) in candidates.iter().enumerate() {
+            // Calculate maximum similarity to already selected results
+            let max_sim_to_selected = selected
+                .iter()
+                .map(|s| cosine_similarity(&candidate.chunk.embedding, &s.chunk.embedding))
+                .fold(0.0f32, f32::max);
+
+            // Penalize similar results
+            let diversity_score =
+                candidate.similarity - (diversity_penalty * max_sim_to_selected);
+
+            if diversity_score > best_score {
+                best_score = diversity_score;
+                best_idx = idx;
+            }
+        }
+
+        selected.push(candidates.remove(best_idx));
+    }
+
+    tracing::debug!(
+        "Re-ranked {} candidates to {} diverse results",
+        candidate_count,
+        selected.len()
+    );
+
+    Ok(selected)
 }
+
+// TODO: Future enhancements for re-ranking:
+// - Cross-encoder models (Hugging Face transformers for accurate relevance scoring)
+// - Hybrid search (combine semantic embeddings with BM25 keyword matching)
+// - MMR (Maximal Marginal Relevance) algorithm with configurable lambda
+// - Query expansion for better recall
 
 #[cfg(test)]
 mod tests {
