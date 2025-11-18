@@ -255,50 +255,70 @@ impl LlmProvider for GeminiProvider {
     }
 
     async fn embed(&self, texts: Vec<String>) -> Result<Vec<Vec<f32>>, ProviderError> {
-        // Gemini supports embeddings via the embedding-001 model
+        // Handle empty input
+        if texts.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Use batch embedding endpoint for better performance
+        // Note: Using v1beta for batchEmbedContents support
         let url = format!(
-            "{}/models/embedding-001:embedContent?key={}",
-            self.base_url, self.api_key
+            "{}/models/embedding-001:batchEmbedContents?key={}",
+            self.base_url.replace("/v1", "/v1beta"),
+            self.api_key
         );
 
-        let mut embeddings = Vec::new();
+        // Build batch request with all texts
+        let requests: Vec<_> = texts
+            .iter()
+            .map(|text| {
+                json!({
+                    "model": "models/embedding-001",
+                    "content": {
+                        "parts": [{"text": text}]
+                    }
+                })
+            })
+            .collect();
 
-        for text in texts {
-            let body = json!({
-                "content": {
-                    "parts": [{"text": text}]
-                }
-            });
+        let body = json!({
+            "requests": requests
+        });
 
-            let response = self
-                .client
-                .post(&url)
-                .headers(self.create_headers())
-                .json(&body)
-                .send()
-                .await?;
+        let response = self
+            .client
+            .post(&url)
+            .headers(self.create_headers())
+            .json(&body)
+            .send()
+            .await?;
 
-            if !response.status().is_success() {
-                let error_text = response.text().await?;
-                return Err(ProviderError::ApiError(format!(
-                    "Gemini embedding API error: {}",
-                    error_text
-                )));
-            }
-
-            #[derive(Deserialize)]
-            struct EmbedResponse {
-                embedding: EmbeddingData,
-            }
-
-            #[derive(Deserialize)]
-            struct EmbeddingData {
-                values: Vec<f32>,
-            }
-
-            let embed_response: EmbedResponse = response.json().await?;
-            embeddings.push(embed_response.embedding.values);
+        if !response.status().is_success() {
+            let error_text = response.text().await?;
+            return Err(ProviderError::ApiError(format!(
+                "Gemini batch embedding API error: {}",
+                error_text
+            )));
         }
+
+        #[derive(Deserialize)]
+        struct BatchEmbedResponse {
+            embeddings: Vec<EmbeddingData>,
+        }
+
+        #[derive(Deserialize)]
+        struct EmbeddingData {
+            values: Vec<f32>,
+        }
+
+        let batch_response: BatchEmbedResponse = response.json().await?;
+
+        // Extract embeddings in the same order as input
+        let embeddings: Vec<Vec<f32>> = batch_response
+            .embeddings
+            .into_iter()
+            .map(|e| e.values)
+            .collect();
 
         Ok(embeddings)
     }
