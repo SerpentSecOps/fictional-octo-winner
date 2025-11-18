@@ -16,6 +16,7 @@ import { getCanvasState, saveCanvasState } from '../api/canvas';
 import { createProject, listProjects } from '../api/rag';
 import { Plus, Save, FolderPlus } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
+import { logError } from '../utils/logger';
 
 const Canvas: React.FC = () => {
   const { selectedProject, setSelectedProject, projects, setProjects } = useAppStore();
@@ -64,7 +65,7 @@ const Canvas: React.FC = () => {
         setEdges([]);
       }
     } catch (error) {
-      console.error('Failed to load canvas:', error);
+      logError('Failed to load canvas:', error);
       showError('Failed to load canvas');
     } finally {
       setIsLoading(false);
@@ -94,7 +95,7 @@ const Canvas: React.FC = () => {
       await saveCanvasState(selectedProject.id, state);
       showSuccess('Canvas saved successfully!');
     } catch (error) {
-      console.error('Failed to save canvas:', error);
+      logError('Failed to save canvas:', error);
       showError('Failed to save canvas');
     } finally {
       setIsSaving(false);
@@ -129,7 +130,7 @@ const Canvas: React.FC = () => {
       setShowNewProject(false);
       showSuccess('Project created successfully!');
     } catch (error) {
-      console.error('Failed to create project:', error);
+      logError('Failed to create project:', error);
       showError('Failed to create project');
     } finally {
       setIsCreatingProject(false);

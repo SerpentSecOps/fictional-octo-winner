@@ -9,6 +9,7 @@ import RAG from './views/RAG';
 import { useAppStore } from './store/appStore';
 import { getProviders } from './api/config';
 import { listProjects } from './api/rag';
+import { logError } from './utils/logger';
 
 const App: React.FC = () => {
   const { currentView, setProviders, setProjects, setError } = useAppStore();
@@ -26,7 +27,7 @@ const App: React.FC = () => {
         setProviders(providers);
         setProjects(projects);
       } catch (error) {
-        console.error('Failed to load initial data:', error);
+        logError('Failed to load initial data:', error);
         setError(error instanceof Error ? error.message : 'Failed to load data');
       } finally {
         setIsInitialLoading(false);
