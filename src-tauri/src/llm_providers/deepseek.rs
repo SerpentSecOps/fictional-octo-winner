@@ -20,14 +20,15 @@ impl DeepSeekProvider {
         }
     }
 
-    fn create_headers(&self) -> HeaderMap {
+    fn create_headers(&self) -> Result<HeaderMap, ProviderError> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(
-            AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", self.api_key)).unwrap(),
-        );
-        headers
+
+        let auth_value = HeaderValue::from_str(&format!("Bearer {}", self.api_key))
+            .map_err(|e| ProviderError::ConfigError(format!("Invalid API key format: {}", e)))?;
+        headers.insert(AUTHORIZATION, auth_value);
+
+        Ok(headers)
     }
 
     fn convert_messages(&self, messages: &[ChatMessage]) -> Vec<serde_json::Value> {
@@ -114,7 +115,7 @@ impl LlmProvider for DeepSeekProvider {
         let response = self
             .client
             .post(&url)
-            .headers(self.create_headers())
+            .headers(self.create_headers()?)
             .json(&body)
             .send()
             .await?;
@@ -168,7 +169,7 @@ impl LlmProvider for DeepSeekProvider {
         let req_builder = self
             .client
             .post(&url)
-            .headers(self.create_headers())
+            .headers(self.create_headers()?)
             .json(&body);
 
         let mut event_source = EventSource::new(req_builder)?;

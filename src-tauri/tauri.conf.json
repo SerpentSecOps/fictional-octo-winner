@@ -27,7 +27,7 @@
         "readFile": true,
         "writeFile": true,
         "readDir": true,
-        "scope": ["$APPDATA/*", "$APPDATA/**", "$HOME/*", "$HOME/**"]
+        "scope": ["$APPDATA/*", "$APPDATA/**", "$HOME/*", "$HOME/**", "$DOCUMENT/*", "$DOCUMENT/**", "$DESKTOP/*", "$DESKTOP/**", "$DOWNLOAD/*", "$DOWNLOAD/**"]
       }
     },
     "bundle": {

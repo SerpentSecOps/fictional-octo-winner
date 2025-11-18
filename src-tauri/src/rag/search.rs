@@ -60,21 +60,30 @@ pub async fn search_similar(
     scored_chunks.par_sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
 
     // Take top-k
-    let top_chunks = scored_chunks.into_iter().take(top_k);
+    let top_chunks: Vec<_> = scored_chunks.into_iter().take(top_k).collect();
 
-    // Build ChunkMatch results (need to fetch document names)
-    let mut results = Vec::new();
-    for (similarity, chunk) in top_chunks {
-        // TODO: This is inefficient (N queries). Should be optimized with a JOIN
-        // For high-performance scenarios, fetch all document names in one query
-        let (_chunk, doc_name) = db.get_chunk_with_document(chunk.id).await?;
+    // Build ChunkMatch results (fetch all document names in one optimized query)
+    let chunk_ids: Vec<i64> = top_chunks.iter().map(|(_, chunk)| chunk.id).collect();
+    let chunks_with_docs = db.get_chunks_with_documents(&chunk_ids).await?;
 
-        results.push(ChunkMatch {
-            chunk,
-            similarity,
-            document_name: doc_name,
-        });
-    }
+    // Create a map of chunk_id -> document_name for quick lookup
+    let mut doc_name_map: std::collections::HashMap<i64, String> =
+        chunks_with_docs
+            .into_iter()
+            .map(|(chunk, doc_name)| (chunk.id, doc_name))
+            .collect();
+
+    // Build results maintaining the original order and similarity scores
+    let results: Vec<ChunkMatch> = top_chunks
+        .into_iter()
+        .filter_map(|(similarity, chunk)| {
+            doc_name_map.remove(&chunk.id).map(|doc_name| ChunkMatch {
+                chunk,
+                similarity,
+                document_name: doc_name,
+            })
+        })
+        .collect();
 
     tracing::debug!("Search completed, returning {} results", results.len());
 

@@ -71,6 +71,15 @@ export async function listDocuments(projectId: number): Promise<Document[]> {
   return result.data;
 }
 
+export async function deleteDocument(documentId: number): Promise<void> {
+  const result = await invoke<CommandResult<void>>('delete_document', {
+    documentId,
+  });
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to delete document');
+  }
+}
+
 export async function addDocument(
   request: AddDocumentRequest
 ): Promise<AddDocumentResponse> {

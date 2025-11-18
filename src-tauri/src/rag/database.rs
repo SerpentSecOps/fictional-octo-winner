@@ -374,6 +374,56 @@ impl RagDatabase {
         Ok((chunk, doc_name))
     }
 
+    /// Get multiple chunks with their document names in one query (optimized)
+    pub async fn get_chunks_with_documents(
+        &self,
+        chunk_ids: &[i64],
+    ) -> Result<Vec<(Chunk, String)>, DatabaseError> {
+        if chunk_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Build placeholders for IN clause
+        let placeholders = chunk_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+        let query_str = format!(
+            r#"
+            SELECT c.id, c.document_id, c.project_id, c.content, c.embedding, c.chunk_index, d.name as doc_name
+            FROM chunks c
+            JOIN documents d ON c.document_id = d.id
+            WHERE c.id IN ({})
+            "#,
+            placeholders
+        );
+
+        let mut query = sqlx::query(&query_str);
+        for id in chunk_ids {
+            query = query.bind(id);
+        }
+
+        let rows = query.fetch_all(&self.pool).await?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let embedding_bytes: Vec<u8> = row.get("embedding");
+            let embedding: Vec<f32> = bincode::deserialize(&embedding_bytes)
+                .map_err(|e| DatabaseError::SerializationError(e.to_string()))?;
+
+            let chunk = Chunk {
+                id: row.get("id"),
+                document_id: row.get("document_id"),
+                project_id: row.get("project_id"),
+                content: row.get("content"),
+                embedding,
+                chunk_index: row.get("chunk_index"),
+            };
+
+            let doc_name: String = row.get("doc_name");
+            results.push((chunk, doc_name));
+        }
+
+        Ok(results)
+    }
+
     // Conversation operations
     pub async fn create_conversation(
         &self,

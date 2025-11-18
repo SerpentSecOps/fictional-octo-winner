@@ -55,6 +55,7 @@ async fn main() {
             commands::list_projects,
             commands::delete_project,
             commands::list_documents,
+            commands::delete_document,
             commands::add_document,
             commands::rag_search,
             commands::rag_chat,

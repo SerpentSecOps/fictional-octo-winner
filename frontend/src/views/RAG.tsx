@@ -5,6 +5,7 @@ import {
   listProjects,
   listDocuments,
   addDocument,
+  deleteDocument,
   ragChat,
 } from '../api/rag';
 import type { Document, ChunkMatch } from '../api/types';
@@ -54,6 +55,22 @@ const RAG: React.FC = () => {
       showError('Failed to load documents');
     } finally {
       setIsLoadingDocuments(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: number, documentName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${documentName}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteDocument(documentId);
+      showSuccess('Document deleted successfully!');
+      // Reload documents list
+      await loadDocuments();
+    } catch (error) {
+      console.error('Failed to delete document:', error);
+      showError('Failed to delete document');
     }
   };
 
@@ -284,7 +301,10 @@ const RAG: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <button className="text-red-500 hover:text-red-700">
+                    <button
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>

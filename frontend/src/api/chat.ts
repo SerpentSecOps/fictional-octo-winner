@@ -33,32 +33,52 @@ export async function sendChatMessageStream(
   requestId: string,
   onChunk: (chunk: ChatChunk) => void,
   onComplete: () => void
-): Promise<void> {
-  // Listen for chunks
-  const unlisten1 = await listen<ChatChunk>('chat-chunk', (event) => {
-    if (event.payload.request_id === requestId) {
-      onChunk(event.payload);
-    }
-  });
+): Promise<() => void> {
+  let unlisten1: (() => void) | null = null;
+  let unlisten2: (() => void) | null = null;
 
-  // Listen for completion
-  const unlisten2 = await listen<string>('chat-complete', (event) => {
-    if (event.payload === requestId) {
-      onComplete();
+  const cleanup = () => {
+    if (unlisten1) {
       unlisten1();
-      unlisten2();
+      unlisten1 = null;
     }
-  });
+    if (unlisten2) {
+      unlisten2();
+      unlisten2 = null;
+    }
+  };
 
-  // Start streaming
-  const result = await invoke<CommandResult<void>>('send_chat_message_stream', {
-    request,
-    requestId,
-  });
+  try {
+    // Listen for chunks
+    unlisten1 = await listen<ChatChunk>('chat-chunk', (event) => {
+      if (event.payload.request_id === requestId) {
+        onChunk(event.payload);
+      }
+    });
 
-  if (!result.success) {
-    unlisten1();
-    unlisten2();
-    throw new Error(result.error || 'Failed to start streaming');
+    // Listen for completion
+    unlisten2 = await listen<string>('chat-complete', (event) => {
+      if (event.payload === requestId) {
+        onComplete();
+        cleanup();
+      }
+    });
+
+    // Start streaming
+    const result = await invoke<CommandResult<void>>('send_chat_message_stream', {
+      request,
+      requestId,
+    });
+
+    if (!result.success) {
+      cleanup();
+      throw new Error(result.error || 'Failed to start streaming');
+    }
+
+    // Return cleanup function for caller to use if component unmounts
+    return cleanup;
+  } catch (error) {
+    cleanup();
+    throw error;
   }
 }
